@@ -3,12 +3,17 @@ import os
 import json
 import shutil
 from inspect import getfullargspec
+from typing import Dict
 
 import joblib
 from os.path import exists, join
 
 import pyspark.sql.types as st
+import torch
 from pyspark.ml.feature import StringIndexerModel, IndexToString
+from pytorch_ranger import Ranger
+from torch import nn
+from torch.optim import Optimizer
 
 from replay.data_preparator import Indexer
 from replay.models import *
@@ -174,3 +179,43 @@ def load_splitter(path: str) -> Splitter:
     del args["_splitter_name"]
     splitter = globals()[name]
     return splitter(**args)
+
+def save_optimizers(optimizers: Dict[str, Optimizer], path: str):
+    """
+    Save fitted indexer to disk as a folder
+
+    :param optimizers: dict with trained Optimizers
+    :param path: destination where Optimizer files will be stored
+    """
+
+    for optimizer_name, optimizer in optimizers.items():
+        current_path = join(path, optimizer_name)
+        prepare_dir(current_path)
+
+        torch.save(
+            optimizer.state_dict(),
+            join(current_path, f"{optimizer_name}.pt")
+        )
+
+
+def load_optimizers(path: str, models: Dict[str, nn.Module]) -> Dict[str, Optimizer]:
+    """
+    Load saved indexer from disk
+
+    :param path: path to folder
+    :param models: dict with models to get trainable parameters
+    :return: restored Optimizer
+    """
+    State()
+    optimizers = dict()
+
+    for optimizer_name in os.listdir(path):
+        current_path = join(path, optimizer_name)
+        
+        optimizer = Ranger(models[optimizer_name].parameters())
+        optimizer.load_state_dict(
+            torch.load(join(current_path, f"{optimizer_name}.pt"))
+        )
+        optimizers[optimizer_name] = optimizer
+
+    return optimizers
