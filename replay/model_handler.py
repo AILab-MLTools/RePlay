@@ -182,10 +182,10 @@ def load_splitter(path: str) -> Splitter:
 
 def save_optimizers(optimizers: Dict[str, Optimizer], path: str):
     """
-    Save fitted indexer to disk as a folder
+    Save fitted optimizer to disk as a folder
 
-    :param optimizers: dict with trained Optimizers
-    :param path: destination where Optimizer files will be stored
+    :param optimizers: dict with trained optimizers
+    :param path: destination where optimizer files will be stored
     """
 
     for optimizer_name, optimizer in optimizers.items():
@@ -200,11 +200,11 @@ def save_optimizers(optimizers: Dict[str, Optimizer], path: str):
 
 def load_optimizers(path: str, models: Dict[str, nn.Module]) -> Dict[str, Optimizer]:
     """
-    Load saved indexer from disk
+    Load saved optimizer from disk
 
     :param path: path to folder
     :param models: dict with models to get trainable parameters
-    :return: restored Optimizer
+    :return: restored optimizer
     """
     State()
     optimizers = dict()
