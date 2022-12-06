@@ -222,5 +222,13 @@ class TorchRecommender(Recommender):
         self.logger.debug("-- Loading model from file")
         self.model.load_state_dict(torch.load(path))
 
+    # pylint: disable=no-member
     def _save_model(self, path: str) -> None:
         torch.save(self.model.state_dict(), path)
+        torch.save(
+            {
+                "model": self.model.state_dict(),
+                "optimizer": self.optimizer.state_dict(),
+            },
+            path,
+        )

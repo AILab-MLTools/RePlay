@@ -362,6 +362,7 @@ class MultVAE(TorchRecommender):
             cnt=None,
         )
 
+    # pylint: disable=attribute-defined-outside-init
     def _load_model(self, path: str):
         self.model = VAE(
             item_count=self._item_dim,
@@ -369,5 +370,14 @@ class MultVAE(TorchRecommender):
             hidden_dim=self.hidden_dim,
             dropout=self.dropout,
         ).to(self.device)
-        self.model.load_state_dict(torch.load(path))
+        self.optimizer = Adam(
+            self.model.parameters(),
+            lr=self.learning_rate,
+            weight_decay=self.l2_reg / self.batch_size_users,
+        )
+
+        checkpoint = torch.load(path)
+
+        self.model.load_state_dict(checkpoint["model"])
+        self.optimizer.load_state_dict(checkpoint["optimizer"])
         self.model.eval()
