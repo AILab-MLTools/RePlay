@@ -348,20 +348,18 @@ class NeuroMF(TorchRecommender):
             embedding_mlp_dim=self.embedding_mlp_dim,
             hidden_mlp_dims=self.hidden_mlp_dims,
         ).to(self.device)
-        optimizer = Adam(
+        self.optimizer = Adam(
             self.model.parameters(),
             lr=self.learning_rate,
             weight_decay=self.l2_reg / self.batch_size_users,
         )
-        lr_scheduler = ReduceLROnPlateau(
-            optimizer, factor=self.factor, patience=self.patience
+        self.lr_scheduler = ReduceLROnPlateau(
+            self.optimizer, factor=self.factor, patience=self.patience
         )
 
         self.train(
             train_data_loader,
             valid_data_loader,
-            optimizer,
-            lr_scheduler,
             self.epochs,
             "neuromf",
         )

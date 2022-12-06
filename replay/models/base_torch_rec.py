@@ -7,8 +7,6 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
 import torch
 from torch import nn
-from torch.optim.optimizer import Optimizer
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from replay.constants import REC_SCHEMA
@@ -53,13 +51,11 @@ class TorchRecommender(Recommender):
             self.logger.debug(valid_debug_message)
         return valid_loss.item()
 
-    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-arguments,no-member
     def train(
         self,
         train_data_loader: DataLoader,
         valid_data_loader: DataLoader,
-        optimizer: Optimizer,
-        lr_scheduler: ReduceLROnPlateau,
         epochs: int,
         model_name: str,
     ) -> None:
@@ -67,9 +63,6 @@ class TorchRecommender(Recommender):
         Run training loop
         :param train_data_loader: data loader for training
         :param valid_data_loader: data loader for validation
-        :param optimizer: optimizer
-        :param lr_scheduler: scheduler used to decrease learning rate
-        :param lr_scheduler: scheduler used to decrease learning rate
         :param epochs: num training epochs
         :param model_name: model name for checkpoint saving
         :return:
@@ -77,14 +70,14 @@ class TorchRecommender(Recommender):
         best_valid_loss = np.inf
         for epoch in range(epochs):
             for batch in train_data_loader:
-                train_loss = self._run_train_step(batch, optimizer)
+                train_loss = self._run_train_step(batch, self.optimizer)
 
             train_debug_message = f"""Epoch[{epoch}] current loss:
                                     {train_loss:.5f}"""
             self.logger.debug(train_debug_message)
 
             valid_loss = self._run_validation(valid_data_loader, epoch)
-            lr_scheduler.step(valid_loss)
+            self.lr_scheduler.step(valid_loss)
 
             if valid_loss < best_valid_loss:
                 best_checkpoint = "/".join(
