@@ -220,7 +220,10 @@ class TorchRecommender(Recommender):
         :return:
         """
         self.logger.debug("-- Loading model from file")
-        self.model.load_state_dict(torch.load(path))
+        checkpoint = torch.load(path)
+
+        self.model.load_state_dict(checkpoint["model"])
+        self.optimizer.load_state_dict(checkpoint["optimizer"])
 
     # pylint: disable=no-member
     def _save_model(self, path: str) -> None:
