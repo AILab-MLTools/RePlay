@@ -4,6 +4,7 @@ from datetime import datetime
 import pytest
 import torch
 import numpy as np
+from torch.optim import Adam
 
 from replay.constants import LOG_SCHEMA
 from replay.models import NeuroMF
@@ -129,6 +130,7 @@ def test_save_load(log, model, spark):
     old_params = [
         param.detach().cpu().numpy() for param in model.model.parameters()
     ]
+    old_optimizer_params = model.optimizer.state_dict()['param_groups'][0]
     path = find_file_by_pattern(spark_local_dir, pattern)
     assert path is not None
 
@@ -136,10 +138,15 @@ def test_save_load(log, model, spark):
     new_model.model = NMF(3, 4, 2, 2, [2])
     assert len(old_params) == len(list(new_model.model.parameters()))
 
+    new_model.optimizer = Adam(new_model.model.parameters())
     new_model.load_model(path)
     for i, parameter in enumerate(new_model.model.parameters()):
         assert np.allclose(
             parameter.detach().cpu().numpy(), old_params[i], atol=1.0e-3,
+        )
+    for param_name, parameter in new_model.optimizer.state_dict()['param_groups'][0].items():
+        assert np.allclose(
+            parameter, old_optimizer_params[param_name], atol=1.0e-3,
         )
 
 
