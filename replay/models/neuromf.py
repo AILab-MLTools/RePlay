@@ -465,3 +465,7 @@ class NeuroMF(TorchRecommender):
         self.model.load_state_dict(checkpoint["model"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
         self.model.eval()
+
+        self.lr_scheduler = ReduceLROnPlateau(
+            self.optimizer, factor=self.factor, patience=self.patience
+        )
