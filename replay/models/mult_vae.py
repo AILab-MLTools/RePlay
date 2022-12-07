@@ -221,7 +221,7 @@ class MultVAE(TorchRecommender):
 
         return user_batch, data_loader, user_idx.categories.values
 
-    # pylint: disable=too-many-locals,attribute-defined-outside-init
+    # pylint: disable=too-many-locals
     def _fit(
         self,
         log: DataFrame,
@@ -362,7 +362,6 @@ class MultVAE(TorchRecommender):
             cnt=None,
         )
 
-    # pylint: disable=attribute-defined-outside-init
     def _load_model(self, path: str):
         self.model = VAE(
             item_count=self._item_dim,

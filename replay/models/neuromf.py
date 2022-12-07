@@ -446,7 +446,6 @@ class NeuroMF(TorchRecommender):
             cnt=None,
         )
 
-    # pylint: disable=attribute-defined-outside-init
     def _load_model(self, path: str):
         self.model = NMF(
             user_count=self._user_dim,

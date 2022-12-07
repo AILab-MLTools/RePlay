@@ -7,6 +7,8 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
 import torch
 from torch import nn
+from torch.optim.optimizer import Optimizer
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from replay.constants import REC_SCHEMA
@@ -19,6 +21,8 @@ class TorchRecommender(Recommender):
 
     model: Any
     device: torch.device
+    optimizer: Optimizer
+    lr_scheduler: ReduceLROnPlateau
 
     def __init__(self):
         self.logger.info(
@@ -51,7 +55,7 @@ class TorchRecommender(Recommender):
             self.logger.debug(valid_debug_message)
         return valid_loss.item()
 
-    # pylint: disable=too-many-arguments,no-member
+    # pylint: disable=too-many-arguments
     def train(
         self,
         train_data_loader: DataLoader,
@@ -225,7 +229,6 @@ class TorchRecommender(Recommender):
         self.model.load_state_dict(checkpoint["model"])
         self.optimizer.load_state_dict(checkpoint["optimizer"])
 
-    # pylint: disable=no-member
     def _save_model(self, path: str) -> None:
         torch.save(self.model.state_dict(), path)
         torch.save(
