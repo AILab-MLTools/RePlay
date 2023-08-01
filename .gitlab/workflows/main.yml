@@ -66,8 +66,7 @@ sphinx-job:
   <<: *install_replay
   stage: code_quality
   script:
-    - cd docs
-    - make clean html
+    - make -C docs clean html
 
 test-job:
   <<: *install_replay
