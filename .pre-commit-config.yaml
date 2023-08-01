@@ -8,7 +8,7 @@ repos:
             types: [python]
         -   id: pycodestyle
             name: pycodestyle
-            entry: pycodestyle --ignore=E501,W605,W503,E203,E231 --max-doc-length=160
+            entry: pycodestyle
             language: system
             types: [python]
         -   id: pylint
