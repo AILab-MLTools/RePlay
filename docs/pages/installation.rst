@@ -49,6 +49,7 @@ You can also clone repository and install with poetry
     cd RePlay
     pip install -U pip wheel
     pip install -U requests pypandoc cython optuna poetry lightfm
+    export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
     poetry install
 
 Poetry resolves dependencies from ``pyproject.toml`` and fixes versions into ``poetry.lock`` file.
