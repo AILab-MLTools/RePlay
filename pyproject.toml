@@ -111,7 +111,6 @@ ghp-import = "2.1.0"
 docutils = "0.16"
 # stubs
 data-science-types = "0.2.23"
-pyspark-stubs = "3.0.0"
 
 [tool.black]
 line-length = 120
