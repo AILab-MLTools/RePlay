@@ -41,7 +41,7 @@ jobs:
       - name: pylint
         run: |
           . ./venv/bin/activate
-          pylint --rcfile=.pylintrc replay
+          pylint replay
       - name: pytest
         run: |
           . ./venv/bin/activate

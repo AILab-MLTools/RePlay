@@ -54,7 +54,7 @@ pylint-job:
   <<: *install_replay
   stage: code_quality
   script:
-    - pylint --rcfile=.pylintrc replay
+    - pylint replay
 
 pycodestyle-job:
   <<: *install_replay
