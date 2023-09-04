@@ -69,9 +69,9 @@ pytorch-ranger = "^0.1.1"
 d3rlpy = "1.1.1"
 # required by d3rlpy
 gym = "0.17.2"
-nmslib = "*"
-hnswlib = "*"
-cached-property = "*"
+nmslib = "2.1.1"
+hnswlib = "0.7.0"
+cached-property = "1.5.2"
 
 
 [tool.poetry.dev-dependencies]
