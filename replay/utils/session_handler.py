@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 from math import floor
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import psutil
@@ -48,6 +49,7 @@ def get_spark_session(
                 "Replay ALS model support only spark 3.1-3.4 versions! "
                 "Replay will use 'jars/replay_2.12-0.1_spark_3.1.jar' in 'spark.jars' property."
             )
+        path_to_replay_jar = Path(__file__).absolute().parent.parent.parent / path_to_replay_jar
 
     if spark_memory is None:
         spark_memory = floor(psutil.virtual_memory().total / 1024**3 * 0.7)
