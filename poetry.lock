@@ -4293,22 +4293,22 @@ files = [
 
 [[package]]
 name = "pyspark"
-version = "3.3.3"
+version = "3.2.4"
 description = "Apache Spark Python API"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.6"
 files = [
-    {file = "pyspark-3.3.3.tar.gz", hash = "sha256:384d2ad7090cd1db5b2d2ac497bda409d86ab3a27272833e1a27efadf45e4d2f"},
+    {file = "pyspark-3.2.4.tar.gz", hash = "sha256:aaa592f2f03fbef34c91bfcfee389cf53cbff6662ae47bd5f700573ed9ed61f2"},
 ]
 
 [package.dependencies]
 py4j = "0.10.9.5"
 
 [package.extras]
-ml = ["numpy (>=1.15)"]
-mllib = ["numpy (>=1.15)"]
-pandas-on-spark = ["numpy (>=1.15)", "pandas (>=1.0.5)", "pyarrow (>=1.0.0)"]
-sql = ["pandas (>=1.0.5)", "pyarrow (>=1.0.0)"]
+ml = ["numpy (>=1.7)"]
+mllib = ["numpy (>=1.7)"]
+pandas-on-spark = ["numpy (>=1.14)", "pandas (>=0.23.2)", "pyarrow (>=1.0.0)"]
+sql = ["pandas (>=0.23.2)", "pyarrow (>=1.0.0)"]
 
 [[package]]
 name = "pytest"
@@ -6183,4 +6183,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7.1, <3.11"
-content-hash = "c805d7b55fcb9a1adef33c75b715e9efd703a449983c5410f6119b3226a3d1d6"
+content-hash = "aa41386214895c66127dc6a0a9407a8bd700ff24114a8c084931cac80ba79541"

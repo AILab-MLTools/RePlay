@@ -69,6 +69,7 @@ def preprocess_gt(
 
 
 def drop_duplicates(recommendations: AnyDataFrame) -> DataFrame:
+
     """
     Filter duplicated predictions by choosing the most relevant
     """
@@ -76,9 +77,7 @@ def drop_duplicates(recommendations: AnyDataFrame) -> DataFrame:
         recommendations.withColumn(
             "_num",
             sf.row_number().over(
-                Window.partitionBy("user_idx", "item_idx").orderBy(
-                    sf.col("relevance").desc()
-                )
+                Window.partitionBy("user_idx", "item_idx").orderBy(sf.col("relevance").desc())
             ),
         )
         .where(sf.col("_num") == 1)
@@ -86,9 +85,7 @@ def drop_duplicates(recommendations: AnyDataFrame) -> DataFrame:
     )
 
 
-def filter_sort(
-    recommendations: DataFrame, extra_column: str = None
-) -> DataFrame:
+def filter_sort(recommendations: DataFrame, extra_column: str = None) -> DataFrame:
     """
     Filters duplicated predictions by choosing items with the highest relevance,
     Sorts items in predictions by its relevance,
@@ -101,39 +98,29 @@ def filter_sort(
         or ``[user_idx, item_idx, extra_column]`` if extra_column exists.
     """
     item_type = recommendations.schema["item_idx"].dataType
-    extra_column_type = (
-        recommendations.schema[extra_column].dataType if extra_column else None
-    )
+    extra_column_type = recommendations.schema[extra_column].dataType if extra_column else None
 
     recommendations = drop_duplicates(recommendations)
 
     recommendations = (
-        recommendations.groupby("user_idx")
+        recommendations
+        .groupby("user_idx")
         .agg(
             sf.collect_list(
-                sf.struct(
-                    *[
-                        c
-                        for c in ["relevance", "item_idx", extra_column]
-                        if c is not None
-                    ]
-                )
-            ).alias("pred_list")
-        )
+                sf.struct(*[c for c in ["relevance", "item_idx", extra_column] if c is not None]))
+            .alias("pred_list"))
         .withColumn("pred_list", sf.reverse(sf.array_sort("pred_list")))
     )
 
     selection = [
         "user_idx",
         sf.col("pred_list.item_idx")
-        .cast(st.ArrayType(item_type, True))
-        .alias("pred"),
+        .cast(st.ArrayType(item_type, True)).alias("pred")
     ]
     if extra_column:
         selection.append(
             sf.col(f"pred_list.{extra_column}")
-            .cast(st.ArrayType(extra_column_type, True))
-            .alias(extra_column)
+            .cast(st.ArrayType(extra_column_type, True)).alias(extra_column)
         )
 
     recommendations = recommendations.select(*selection)
@@ -217,9 +204,7 @@ class Metric(ABC):
         if self._scala_udf_name:
             return self._scala_udf_name
         else:
-            raise NotImplementedError(
-                f"Scala UDF not implemented for {type(self).__name__} class!"
-            )
+            raise NotImplementedError(f"Scala UDF not implemented for {type(self).__name__} class!")
 
     def __str__(self):
         return type(self).__name__
@@ -409,9 +394,7 @@ class RecOnlyMetric(Metric):
     """Base class for metrics that do not need holdout data"""
 
     @abstractmethod
-    def __init__(
-        self, log: AnyDataFrame, *args, **kwargs
-    ):  # pylint: disable=super-init-not-called
+    def __init__(self, log: AnyDataFrame, *args, **kwargs):  # pylint: disable=super-init-not-called
         pass
 
     # pylint: disable=no-self-use

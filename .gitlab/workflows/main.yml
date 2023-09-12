@@ -9,7 +9,6 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 .setup_venv: &setup_venv
-  - export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
   - python -m venv venv
   - source ./venv/bin/activate
   - pip install -q --upgrade pip wheel poetry lightfm
