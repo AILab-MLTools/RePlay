@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.7", "3.8", "3.9"]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -25,7 +25,7 @@ jobs:
         run: |
           python -m venv venv
           . ./venv/bin/activate
-          pip install --upgrade pip wheel poetry lightfm
+          pip install --upgrade pip wheel poetry==1.5.1 lightfm
 
           poetry cache clear pypi --all
           poetry install
