@@ -8,7 +8,6 @@ from replay.data import LOG_SCHEMA
 from replay.models.cql import MdpDatasetBuilder
 from replay.models import (
     ALSWrap,
-    ADMMSLIM,
     ClusterRec,
     ItemKNN,
     LightFMWrap,
@@ -25,6 +24,7 @@ from replay.models import (
     CQL,
 )
 from replay.models.base_rec import HybridRecommender, UserRecommender
+from replay.experimental.models import ADMMSLIM
 
 from tests.utils import (
     spark,

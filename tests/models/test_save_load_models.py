@@ -33,6 +33,7 @@ from replay.preprocessing.data_preparator import Indexer
 from replay.models.cql import MdpDatasetBuilder
 from replay.utils.model_handler import save, load
 from replay.models import *
+from replay.experimental.models import *
 from replay.utils.spark_utils import convert2spark
 from tests.utils import long_log_with_features, sparkDataFrameEqual, spark
 from tests.models.test_cat_pop_rec import cat_tree, cat_log, requested_cats

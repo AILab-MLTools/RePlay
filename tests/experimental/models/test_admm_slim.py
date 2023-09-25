@@ -6,7 +6,7 @@ import numpy as np
 from pyspark.sql import functions as sf
 
 from replay.data import LOG_SCHEMA
-from replay.models import ADMMSLIM
+from replay.experimental.models import ADMMSLIM
 from tests.utils import spark
 
 
