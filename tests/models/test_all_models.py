@@ -8,7 +8,6 @@ from replay.data import LOG_SCHEMA
 from replay.models.cql import MdpDatasetBuilder
 from replay.models import (
     ALSWrap,
-    ADMMSLIM,
     ClusterRec,
     ItemKNN,
     LightFMWrap,
@@ -42,7 +41,6 @@ SEED = 123
     "model",
     [
         ALSWrap(seed=SEED),
-        ADMMSLIM(seed=SEED),
         ItemKNN(),
         LightFMWrap(random_state=SEED),
         MultVAE(),
@@ -54,7 +52,6 @@ SEED = 123
     ],
     ids=[
         "als",
-        "admm_slim",
         "knn",
         "lightfm",
         "multvae",
@@ -105,7 +102,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     "model",
     [
         ALSWrap(seed=SEED),
-        ADMMSLIM(seed=SEED),
         ItemKNN(),
         LightFMWrap(random_state=SEED),
         MultVAE(),
@@ -118,7 +114,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     ],
     ids=[
         "als",
-        "admm_slim",
         "knn",
         "lightfm",
         "multvae",
@@ -166,7 +161,6 @@ def test_predict_pairs_k(log, model):
     "model",
     [
         ALSWrap(seed=SEED),
-        ADMMSLIM(seed=SEED),
         ItemKNN(),
         LightFMWrap(random_state=SEED),
         MultVAE(),
@@ -179,7 +173,6 @@ def test_predict_pairs_k(log, model):
     ],
     ids=[
         "als",
-        "admm_slim",
         "knn",
         "lightfm",
         "multvae",
@@ -199,14 +192,12 @@ def test_predict_empty_log(log, model):
 @pytest.mark.parametrize(
     "model",
     [
-        ADMMSLIM(seed=SEED),
         ItemKNN(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
     ],
     ids=[
-        "admm_slim",
         "knn",
         "slim",
         "word2vec",
@@ -234,7 +225,6 @@ def test_predict_pairs_raises_pairs_format(log):
         (ALSWrap(seed=SEED), "dot_product"),
         (ALSWrap(seed=SEED), "cosine_similarity"),
         (Word2VecRec(seed=SEED, min_count=0), "cosine_similarity"),
-        (ADMMSLIM(seed=SEED), None),
         (ItemKNN(), None),
         (SLIM(seed=SEED), None),
         (AssociationRulesItemRec(min_item_count=1, min_pair_count=0), "lift"),
@@ -252,7 +242,6 @@ def test_predict_pairs_raises_pairs_format(log):
         "als_dot",
         "als_cosine",
         "w2v_cosine",
-        "admm_slim",
         "knn",
         "slim",
         "association_rules_lift",
@@ -334,7 +323,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
 @pytest.mark.parametrize(
     "model",
     [
-        ADMMSLIM(seed=SEED),
         ClusterRec(num_clusters=2),
         ItemKNN(),
         LightFMWrap(random_state=SEED, no_components=4),
@@ -347,7 +335,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
         CQL(n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=1), batch_size=512),
     ],
     ids=[
-        "admm_slim",
         "cluster",
         "knn",
         "lightfm",
