@@ -7,6 +7,7 @@ This module contains recommender system algorithms including:
     models with non-distributed training and distributed inference in PySpark.
 """
 
+from replay.models.als import ALSWrap
 from replay.models.association_rules import AssociationRulesItemRec
 from replay.models.base_rec import Recommender
 from replay.models.base_torch_rec import TorchRecommender
