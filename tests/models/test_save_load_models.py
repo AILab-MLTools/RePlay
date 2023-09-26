@@ -71,7 +71,6 @@ def df():
     "recommender",
     [
         ALSWrap,
-        ADMMSLIM,
         ItemKNN,
         MultVAE,
         NeuroMF,

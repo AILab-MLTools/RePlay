@@ -284,7 +284,7 @@ implemented in python with distributed inference in pyspark.
 
 ADMM SLIM
 `````````
-.. autoclass:: replay.models.ADMMSLIM
+.. autoclass:: replay.experimental.models.ADMMSLIM
     :special-members: __init__
 
 LightFM
