@@ -7,7 +7,6 @@ from pyspark.sql import functions as sf
 from replay.data import LOG_SCHEMA
 from replay.models.cql import MdpDatasetBuilder
 from replay.models import (
-    ALSWrap,
     ClusterRec,
     ItemKNN,
     LightFMWrap,
@@ -40,7 +39,6 @@ SEED = 123
 @pytest.mark.parametrize(
     "model",
     [
-        ALSWrap(seed=SEED),
         ItemKNN(),
         LightFMWrap(random_state=SEED),
         MultVAE(),
@@ -51,7 +49,6 @@ SEED = 123
         CQL(n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=3), batch_size=512),
     ],
     ids=[
-        "als",
         "knn",
         "lightfm",
         "multvae",
@@ -101,7 +98,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
 @pytest.mark.parametrize(
     "model",
     [
-        ALSWrap(seed=SEED),
         ItemKNN(),
         LightFMWrap(random_state=SEED),
         MultVAE(),
@@ -113,7 +109,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
         RandomRec(seed=SEED),
     ],
     ids=[
-        "als",
         "knn",
         "lightfm",
         "multvae",
@@ -160,7 +155,6 @@ def test_predict_pairs_k(log, model):
 @pytest.mark.parametrize(
     "model",
     [
-        ALSWrap(seed=SEED),
         ItemKNN(),
         LightFMWrap(random_state=SEED),
         MultVAE(),
@@ -172,7 +166,6 @@ def test_predict_pairs_k(log, model):
         RandomRec(seed=SEED),
     ],
     ids=[
-        "als",
         "knn",
         "lightfm",
         "multvae",
@@ -210,20 +203,10 @@ def test_predict_pairs_raises(log, model):
         model.predict_pairs(log.select("user_idx", "item_idx"))
 
 
-def test_predict_pairs_raises_pairs_format(log):
-    model = ALSWrap(seed=SEED)
-    with pytest.raises(ValueError, match="pairs must be a dataframe with .*"):
-        model.fit(log)
-        model.predict_pairs(log, log)
-
-
 # for NeighbourRec and ItemVectorModel
 @pytest.mark.parametrize(
     "model, metric",
     [
-        (ALSWrap(seed=SEED), "euclidean_distance_sim"),
-        (ALSWrap(seed=SEED), "dot_product"),
-        (ALSWrap(seed=SEED), "cosine_similarity"),
         (Word2VecRec(seed=SEED, min_count=0), "cosine_similarity"),
         (ItemKNN(), None),
         (SLIM(seed=SEED), None),
@@ -238,9 +221,6 @@ def test_predict_pairs_raises_pairs_format(log):
         ),
     ],
     ids=[
-        "als_euclidean",
-        "als_dot",
-        "als_cosine",
         "w2v_cosine",
         "knn",
         "slim",
@@ -278,22 +258,6 @@ def test_get_nearest_items(log, model, metric):
         )
         == 0
     )
-
-
-@pytest.mark.parametrize("metric", ["absent", None])
-def test_nearest_items_raises(log, metric):
-    model = AssociationRulesItemRec()
-    model.fit(log.filter(sf.col("item_idx") != 3))
-    with pytest.raises(
-        ValueError, match=r"Select one of the valid distance metrics.*"
-    ):
-        model.get_nearest_items(items=[0, 1], k=2, metric=metric)
-    model = ALSWrap()
-    model.fit(log)
-    with pytest.raises(
-        ValueError, match=r"Select one of the valid distance metrics.*"
-    ):
-        model.get_nearest_items(items=[0, 1], k=2, metric=metric)
 
 
 def test_filter_seen(log):
@@ -389,7 +353,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
 @pytest.mark.parametrize(
     "model",
     [
-        ALSWrap(rank=2, seed=SEED),
         ItemKNN(),
         LightFMWrap(),
         MultVAE(),
@@ -400,7 +363,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
         CQL(n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=3), batch_size=512),
     ],
     ids=[
-        "als",
         "knn",
         "lightfm_no_feat",
         "multvae",
@@ -430,13 +392,11 @@ def test_predict_cold_and_new_filter_out(model, long_log_with_features):
     "model",
     [
         PopRec(),
-        ALSWrap(rank=2, seed=SEED),
         ItemKNN(),
         DDPG(seed=SEED, user_num=6, item_num=6),
     ],
     ids=[
         "pop_rec",
-        "als",
         "knn",
         "ddpg",
     ],
@@ -466,13 +426,11 @@ def test_predict_pairs_to_file(spark, model, long_log_with_features, tmp_path):
     "model",
     [
         PopRec(),
-        ALSWrap(rank=2, seed=SEED),
         ItemKNN(),
         DDPG(seed=SEED, user_num=6, item_num=6),
     ],
     ids=[
         "pop_rec",
-        "als",
         "knn",
         "ddpg",
     ],
