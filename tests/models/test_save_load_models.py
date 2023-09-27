@@ -70,7 +70,6 @@ def df():
 @pytest.mark.parametrize(
     "recommender",
     [
-        ALSWrap,
         ItemKNN,
         MultVAE,
         NeuroMF,
@@ -177,36 +176,6 @@ def test_study(df, tmp_path):
     save(model, path)
     loaded_model = load(path)
     assert loaded_model.study == model.study
-
-
-def test_ann_als_saving_loading(long_log_with_features, tmp_path):
-    model = ALSWrap(
-        rank=2,
-        implicit_prefs=False,
-        seed=42,
-        index_builder=ExecutorHnswlibIndexBuilder(
-            index_params=HnswlibParam(
-                space="ip",
-                m=100,
-                ef_c=2000,
-                post=0,
-                ef_s=2000,
-            ),
-            index_store=SharedDiskIndexStore(
-                warehouse_dir=str(tmp_path),
-                index_dir="hnswlib_index",
-                cleanup=False,
-            ),
-        ),
-    )
-
-    path = (tmp_path / "test").resolve()
-    model.fit(long_log_with_features)
-    base_pred = model.predict(long_log_with_features, 5)
-    save(model, path)
-    loaded_model = load(path)
-    new_pred = loaded_model.predict(long_log_with_features, 5)
-    sparkDataFrameEqual(base_pred, new_pred)
 
 
 def test_ann_word2vec_saving_loading(long_log_with_features, tmp_path):

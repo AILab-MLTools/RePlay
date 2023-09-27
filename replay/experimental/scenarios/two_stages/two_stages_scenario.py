@@ -9,9 +9,10 @@ from replay.data import AnyDataFrame
 from replay.preprocessing.data_preparator import ToNumericFeatureTransformer
 from replay.preprocessing.history_based_fp import HistoryBasedFeaturesProcessor
 from replay.metrics import Metric, Precision
-from replay.models import ALSWrap, RandomRec, PopRec
+from replay.models import RandomRec, PopRec
+from replay.experimental.models import ALSWrap
 from replay.models.base_rec import BaseRecommender, HybridRecommender
-from replay.scenarios.two_stages.reranker import LamaWrap
+from replay.experimental.scenarios.two_stages.reranker import LamaWrap
 
 from replay.utils.session_handler import State
 from replay.splitters import Splitter, UserSplitter
