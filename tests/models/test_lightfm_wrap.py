@@ -7,7 +7,7 @@ from pyspark.sql import functions as sf
 
 from replay.data import LOG_SCHEMA
 from replay.models import LightFMWrap
-from replay.scenarios.two_stages.two_stages_scenario import (
+from replay.experimental.scenarios.two_stages.two_stages_scenario import (
     get_first_level_model_features,
 )
 from tests.utils import spark

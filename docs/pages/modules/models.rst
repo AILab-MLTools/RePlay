@@ -95,7 +95,7 @@ K Nearest Neighbours
 
 Alternating Least Squares
 `````````````````````````
-.. autoclass:: replay.models.ALSWrap
+.. autoclass:: replay.experimental.models.ALSWrap
     :special-members: __init__
 
 SLIM
