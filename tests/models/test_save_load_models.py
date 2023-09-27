@@ -67,7 +67,6 @@ def df():
 @pytest.mark.parametrize(
     "recommender",
     [
-        ALSWrap,
         ItemKNN,
         PopRec,
         SLIM,

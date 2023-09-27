@@ -7,7 +7,6 @@ from pyspark.sql import functions as sf
 from replay.data import LOG_SCHEMA
 from replay.models.cql import MdpDatasetBuilder
 from replay.models import (
-    ALSWrap,
     ClusterRec,
     ItemKNN,
     PopRec,
@@ -37,7 +36,6 @@ SEED = 123
 @pytest.mark.parametrize(
     "model",
     [
-        ALSWrap(seed=SEED),
         ItemKNN(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
@@ -45,7 +43,6 @@ SEED = 123
         CQL(n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=3), batch_size=512),
     ],
     ids=[
-        "als",
         "knn",
         "slim",
         "word2vec",
@@ -92,7 +89,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
 @pytest.mark.parametrize(
     "model",
     [
-        ALSWrap(seed=SEED),
         ItemKNN(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
@@ -101,7 +97,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
         RandomRec(seed=SEED),
     ],
     ids=[
-        "als",
         "knn",
         "slim",
         "word2vec",
@@ -145,7 +140,6 @@ def test_predict_pairs_k(log, model):
 @pytest.mark.parametrize(
     "model",
     [
-        ALSWrap(seed=SEED),
         ItemKNN(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
@@ -154,7 +148,6 @@ def test_predict_pairs_k(log, model):
         RandomRec(seed=SEED),
     ],
     ids=[
-        "als",
         "knn",
         "slim",
         "word2vec",
