@@ -257,7 +257,7 @@ With :math:`\beta = 0` VAE is the same as the
 Denoising AutoEncoder.
 
 
-.. autoclass:: replay.models.MultVAE
+.. autoclass:: replay.experimental.models.MultVAE
     :special-members: __init__
 
 DDPG
