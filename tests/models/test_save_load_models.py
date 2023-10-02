@@ -68,7 +68,6 @@ def df():
     "recommender",
     [
         ItemKNN,
-        MultVAE,
         NeuroMF,
         PopRec,
         SLIM,
