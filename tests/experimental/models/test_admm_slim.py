@@ -8,6 +8,7 @@ from pyspark.sql import functions as sf
 from replay.data import LOG_SCHEMA
 from replay.experimental.models import ADMMSLIM
 from replay.models.base_rec import HybridRecommender, UserRecommender
+from replay.utils.model_handler import save, load
 from tests.utils import (
     spark,
     log,
@@ -206,3 +207,15 @@ def test_predict_new_users(long_log_with_features, user_features):
     )
     assert pred.count() == 1
     assert pred.collect()[0][0] == 0
+
+
+def test_equal_preds(long_log_with_features, tmp_path):
+    recommender = ADMMSLIM
+    path = (tmp_path / "test").resolve()
+    model = recommender()
+    model.fit(long_log_with_features)
+    base_pred = model.predict(long_log_with_features, 5)
+    save(model, path)
+    loaded_model = load(path)
+    new_pred = loaded_model.predict(long_log_with_features, 5)
+    sparkDataFrameEqual(base_pred, new_pred)
