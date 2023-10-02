@@ -13,7 +13,6 @@ from replay.models import (
     PopRec,
     RandomRec,
     SLIM,
-    MultVAE,
     UCB,
     Wilson,
     Word2VecRec,
@@ -39,7 +38,6 @@ SEED = 123
     "model",
     [
         ItemKNN(),
-        MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
@@ -48,7 +46,6 @@ SEED = 123
     ],
     ids=[
         "knn",
-        "multvae",
         "neuromf",
         "slim",
         "word2vec",
@@ -96,7 +93,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     "model",
     [
         ItemKNN(),
-        MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
@@ -106,7 +102,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     ],
     ids=[
         "knn",
-        "multvae",
         "neuromf",
         "slim",
         "word2vec",
@@ -151,7 +146,6 @@ def test_predict_pairs_k(log, model):
     "model",
     [
         ItemKNN(),
-        MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
@@ -161,7 +155,6 @@ def test_predict_pairs_k(log, model):
     ],
     ids=[
         "knn",
-        "multvae",
         "neuromf",
         "slim",
         "word2vec",
@@ -282,7 +275,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
     [
         ClusterRec(num_clusters=2),
         ItemKNN(),
-        MultVAE(),
         SLIM(seed=SEED),
         PopRec(),
         RandomRec(seed=SEED),
@@ -293,7 +285,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
     ids=[
         "cluster",
         "knn",
-        "multvae",
         "slim",
         "pop_rec",
         "random_rec",
@@ -343,7 +334,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
     "model",
     [
         ItemKNN(),
-        MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
@@ -352,7 +342,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
     ],
     ids=[
         "knn",
-        "multvae",
         "neuromf",
         "slim",
         "word2vec",
