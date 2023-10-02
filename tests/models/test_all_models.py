@@ -9,7 +9,6 @@ from replay.models.cql import MdpDatasetBuilder
 from replay.models import (
     ClusterRec,
     ItemKNN,
-    LightFMWrap,
     NeuroMF,
     PopRec,
     RandomRec,
@@ -40,7 +39,6 @@ SEED = 123
     "model",
     [
         ItemKNN(),
-        LightFMWrap(random_state=SEED),
         MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
@@ -50,7 +48,6 @@ SEED = 123
     ],
     ids=[
         "knn",
-        "lightfm",
         "multvae",
         "neuromf",
         "slim",
@@ -99,7 +96,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     "model",
     [
         ItemKNN(),
-        LightFMWrap(random_state=SEED),
         MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
@@ -110,7 +106,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     ],
     ids=[
         "knn",
-        "lightfm",
         "multvae",
         "neuromf",
         "slim",
@@ -156,7 +151,6 @@ def test_predict_pairs_k(log, model):
     "model",
     [
         ItemKNN(),
-        LightFMWrap(random_state=SEED),
         MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
@@ -167,7 +161,6 @@ def test_predict_pairs_k(log, model):
     ],
     ids=[
         "knn",
-        "lightfm",
         "multvae",
         "neuromf",
         "slim",
@@ -289,7 +282,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
     [
         ClusterRec(num_clusters=2),
         ItemKNN(),
-        LightFMWrap(random_state=SEED, no_components=4),
         MultVAE(),
         SLIM(seed=SEED),
         PopRec(),
@@ -301,7 +293,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
     ids=[
         "cluster",
         "knn",
-        "lightfm",
         "multvae",
         "slim",
         "pop_rec",
@@ -327,13 +318,11 @@ def test_predict_new_users(model, long_log_with_features, user_features):
     "model",
     [
         ClusterRec(num_clusters=2),
-        LightFMWrap(random_state=SEED, no_components=4),
         PopRec(),
         RandomRec(seed=SEED),
     ],
     ids=[
         "cluster",
-        "lightfm",
         "pop_rec",
         "random_rec",
     ],
@@ -354,7 +343,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
     "model",
     [
         ItemKNN(),
-        LightFMWrap(),
         MultVAE(),
         NeuroMF(),
         SLIM(seed=SEED),
@@ -364,7 +352,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
     ],
     ids=[
         "knn",
-        "lightfm_no_feat",
         "multvae",
         "neuromf",
         "slim",
@@ -382,7 +369,7 @@ def test_predict_cold_and_new_filter_out(model, long_log_with_features):
         users=[0, 3],
     )
     # assert new/cold users are filtered out in `predict`
-    if isinstance(model, LightFMWrap) or not model.can_predict_cold_users:
+    if not model.can_predict_cold_users:
         assert pred.count() == 0
     else:
         assert 1 <= pred.count() <= 2

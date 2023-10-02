@@ -73,7 +73,6 @@ def df():
         PopRec,
         SLIM,
         UserPopRec,
-        LightFMWrap,
         partial(CQL, n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=5)),
     ],
 )

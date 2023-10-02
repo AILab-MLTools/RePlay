@@ -18,7 +18,8 @@ from replay.metrics.experiment import Experiment
 from replay.models.cql import MdpDatasetBuilder
 from replay.metrics import HitRate, NDCG, MAP, MRR, Coverage, Surprisal
 from replay.utils.model_handler import save, load
-from replay.models import UCB, CQL, Wilson, Recommender, ItemKNN, LightFMWrap, SLIM
+from replay.models import UCB, CQL, Wilson, Recommender, ItemKNN, SLIM
+from replay.experimental.models import LightFMWrap
 from replay.utils.session_handler import State, get_spark_session
 from replay.splitters import DateSplitter
 from replay.utils import get_log_info

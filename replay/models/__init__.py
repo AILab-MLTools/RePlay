@@ -12,7 +12,6 @@ from replay.models.base_rec import Recommender
 from replay.models.base_torch_rec import TorchRecommender
 from replay.models.ddpg import DDPG
 from replay.models.knn import ItemKNN
-from replay.models.lightfm_wrap import LightFMWrap
 from replay.models.mult_vae import MultVAE
 from replay.models.neuromf import NeuroMF
 from replay.models.pop_rec import PopRec
