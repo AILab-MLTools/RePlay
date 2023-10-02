@@ -4,11 +4,34 @@ from datetime import datetime
 import pytest
 import torch
 import numpy as np
+from pyspark.sql import functions as sf
 
 from replay.data import LOG_SCHEMA
-from replay.models import NeuroMF
-from replay.models.neuromf import NMF
-from tests.utils import del_files_by_pattern, find_file_by_pattern, spark
+from replay.experimental.models import NeuroMF
+from replay.experimental.models.neuromf import NMF
+from replay.utils.model_handler import save, load
+from replay.models.base_rec import HybridRecommender, UserRecommender
+from tests.utils import (
+    del_files_by_pattern, 
+    find_file_by_pattern, 
+    spark,
+    log,
+    log_to_pred,
+    long_log_with_features,
+    user_features,
+    sparkDataFrameEqual,
+)
+
+
+SEED = 123
+
+
+def fit_predict_selected(model, train_log, inf_log, user_features, users):
+    kwargs = {}
+    if isinstance(model, (HybridRecommender, UserRecommender)):
+        kwargs = {"user_features": user_features}
+    model.fit(train_log, **kwargs)
+    return model.predict(log=inf_log, users=users, k=1, **kwargs)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -157,3 +180,107 @@ def test_embeddings_size():
 def test_negative_dims_exception():
     with pytest.raises(ValueError):
         NeuroMF(embedding_gmf_dim=-2, embedding_mlp_dim=-1)
+
+
+def test_predict_pairs_warm_items_only(log, log_to_pred):
+    model = NeuroMF()
+    model.fit(log)
+    recs = model.predict(
+        log.unionByName(log_to_pred),
+        k=3,
+        users=log_to_pred.select("user_idx").distinct(),
+        items=log_to_pred.select("item_idx").distinct(),
+        filter_seen_items=False,
+    )
+
+    pairs_pred = model.predict_pairs(
+        pairs=log_to_pred.select("user_idx", "item_idx"),
+        log=log.unionByName(log_to_pred),
+    )
+
+    condition = ~sf.col("item_idx").isin([4, 5])
+    if not model.can_predict_cold_users:
+        condition = condition & (sf.col("user_idx") != 4)
+
+    sparkDataFrameEqual(
+        pairs_pred.select("user_idx", "item_idx"),
+        log_to_pred.filter(condition).select("user_idx", "item_idx"),
+    )
+
+    recs_joined = (
+        pairs_pred.withColumnRenamed("relevance", "pairs_relevance")
+        .join(recs, on=["user_idx", "item_idx"], how="left")
+        .sort("user_idx", "item_idx")
+    )
+
+    assert np.allclose(
+        recs_joined.select("relevance").toPandas().to_numpy(),
+        recs_joined.select("pairs_relevance").toPandas().to_numpy(),
+    )
+
+
+def test_predict_pairs_k(log):
+    model = NeuroMF()
+    model.fit(log)
+
+    pairs_pred_k = model.predict_pairs(
+        pairs=log.select("user_idx", "item_idx"),
+        log=log,
+        k=1,
+    )
+
+    pairs_pred = model.predict_pairs(
+        pairs=log.select("user_idx", "item_idx"),
+        log=log,
+        k=None,
+    )
+
+    assert (
+        pairs_pred_k.groupBy("user_idx")
+        .count()
+        .filter(sf.col("count") > 1)
+        .count()
+        == 0
+    )
+
+    assert (
+        pairs_pred.groupBy("user_idx")
+        .count()
+        .filter(sf.col("count") > 1)
+        .count()
+        > 0
+    )
+
+
+def test_predict_empty_log(log):
+    model = NeuroMF()
+    model.fit(log)
+    model.predict(log.limit(0), 1)
+
+
+def test_predict_cold_and_new_filter_out(long_log_with_features):
+    model = NeuroMF()
+    pred = fit_predict_selected(
+        model,
+        train_log=long_log_with_features.filter(sf.col("user_idx") != 0),
+        inf_log=long_log_with_features,
+        user_features=None,
+        users=[0, 3],
+    )
+    # assert new/cold users are filtered out in `predict`
+    if not model.can_predict_cold_users:
+        assert pred.count() == 0
+    else:
+        assert 1 <= pred.count() <= 2
+
+
+def test_equal_preds(long_log_with_features, tmp_path):
+    recommender = NeuroMF
+    path = (tmp_path / "test").resolve()
+    model = recommender()
+    model.fit(long_log_with_features)
+    base_pred = model.predict(long_log_with_features, 5)
+    save(model, path)
+    loaded_model = load(path)
+    new_pred = loaded_model.predict(long_log_with_features, 5)
+    sparkDataFrameEqual(base_pred, new_pred)
