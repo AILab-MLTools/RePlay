@@ -282,7 +282,7 @@ ____________________________________________________
 Wrappers for popular recommendation libraries and algorithms
 implemented in python with distributed inference in pyspark.
 
-ADMM SLIM
+ADMM SLIM (Experimental part)
 `````````
 .. autoclass:: replay.experimental.models.ADMMSLIM
     :special-members: __init__
@@ -293,6 +293,6 @@ LightFM (Experimental part)
     :special-members: __init__
 
 implicit (Experimental part)
-````````````````````````````
+````````
 .. autoclass:: replay.experimental.models.ImplicitWrap
     :special-members: __init__
