@@ -9,7 +9,6 @@ from replay.models.cql import MdpDatasetBuilder
 from replay.models import (
     ClusterRec,
     ItemKNN,
-    NeuroMF,
     PopRec,
     RandomRec,
     SLIM,
@@ -38,7 +37,6 @@ SEED = 123
     "model",
     [
         ItemKNN(),
-        NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
@@ -46,7 +44,6 @@ SEED = 123
     ],
     ids=[
         "knn",
-        "neuromf",
         "slim",
         "word2vec",
         "association_rules",
@@ -93,7 +90,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     "model",
     [
         ItemKNN(),
-        NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
@@ -102,7 +98,6 @@ def test_predict_pairs_warm_items_only(log, log_to_pred, model):
     ],
     ids=[
         "knn",
-        "neuromf",
         "slim",
         "word2vec",
         "association_rules",
@@ -146,7 +141,6 @@ def test_predict_pairs_k(log, model):
     "model",
     [
         ItemKNN(),
-        NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
@@ -155,7 +149,6 @@ def test_predict_pairs_k(log, model):
     ],
     ids=[
         "knn",
-        "neuromf",
         "slim",
         "word2vec",
         "association_rules",
@@ -334,7 +327,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
     "model",
     [
         ItemKNN(),
-        NeuroMF(),
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
@@ -342,7 +334,6 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
     ],
     ids=[
         "knn",
-        "neuromf",
         "slim",
         "word2vec",
         "association_rules",
