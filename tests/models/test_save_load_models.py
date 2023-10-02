@@ -68,7 +68,6 @@ def df():
     "recommender",
     [
         ItemKNN,
-        NeuroMF,
         PopRec,
         SLIM,
         UserPopRec,
