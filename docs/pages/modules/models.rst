@@ -151,12 +151,12 @@ Neural models with distributed inference
 ________________________________________
 Models implemented in pytorch with distributed inference in pyspark.
 
-Neural Matrix Factorization
+Neural Matrix Factorization (Experimental part)
 ```````````````````````````
-.. autoclass:: replay.models.NeuroMF
+.. autoclass:: replay.experimental.models.NeuroMF
     :special-members: __init__
 
-Mult-VAE
+Mult-VAE (Experimental part)
 ````````
 Variation AutoEncoder
 
