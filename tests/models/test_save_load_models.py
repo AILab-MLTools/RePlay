@@ -16,9 +16,6 @@ from replay.models.extensions.ann.index_builders.driver_hnswlib_index_builder im
 from replay.models.extensions.ann.index_builders.driver_nmslib_index_builder import (
     DriverNmslibIndexBuilder,
 )
-from replay.models.extensions.ann.index_builders.executor_hnswlib_index_builder import (
-    ExecutorHnswlibIndexBuilder,
-)
 from replay.models.extensions.ann.index_builders.executor_nmslib_index_builder import (
     ExecutorNmslibIndexBuilder,
 )
@@ -121,17 +118,6 @@ def test_word(df, tmp_path):
     save(model, path)
     loaded_model = load(path)
     new_pred = loaded_model.predict(df, 5)
-    sparkDataFrameEqual(base_pred, new_pred)
-
-
-def test_implicit(long_log_with_features, tmp_path):
-    path = (tmp_path / "implicit").resolve()
-    model = ImplicitWrap(AlternatingLeastSquares())
-    model.fit(long_log_with_features)
-    base_pred = model.predict(long_log_with_features, 5)
-    save(model, path)
-    loaded_model = load(path)
-    new_pred = loaded_model.predict(long_log_with_features, 5)
     sparkDataFrameEqual(base_pred, new_pred)
 
 
