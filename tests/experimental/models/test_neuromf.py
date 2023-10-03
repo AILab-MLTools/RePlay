@@ -12,8 +12,8 @@ from replay.experimental.models.neuromf import NMF
 from replay.utils.model_handler import save, load
 from replay.models.base_rec import HybridRecommender, UserRecommender
 from tests.utils import (
-    del_files_by_pattern, 
-    find_file_by_pattern, 
+    del_files_by_pattern,
+    find_file_by_pattern,
     spark,
     log,
     log_to_pred,
