@@ -152,7 +152,7 @@ ________________________________________
 Models implemented in pytorch with distributed inference in pyspark.
 
 Neural Matrix Factorization (Experimental part)
-```````````````````````````
+```````````````````````````````````````````````
 .. autoclass:: replay.experimental.models.NeuroMF
     :special-members: __init__
 
