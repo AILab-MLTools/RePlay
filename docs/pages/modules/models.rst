@@ -157,7 +157,7 @@ Neural Matrix Factorization (Experimental part)
     :special-members: __init__
 
 Mult-VAE (Experimental part)
-````````
+````````````````````````````
 Variation AutoEncoder
 
 .. image:: /images/vae-gaussian.png
@@ -283,16 +283,16 @@ Wrappers for popular recommendation libraries and algorithms
 implemented in python with distributed inference in pyspark.
 
 ADMM SLIM (Experimental part)
-`````````
+`````````````````````````````
 .. autoclass:: replay.experimental.models.ADMMSLIM
     :special-members: __init__
 
 LightFM (Experimental part)
-```````
+```````````````````````````
 .. autoclass:: replay.experimental.models.LightFMWrap
     :special-members: __init__
 
 implicit (Experimental part)
-````````
+````````````````````````````
 .. autoclass:: replay.experimental.models.ImplicitWrap
     :special-members: __init__
