@@ -1,6 +1,6 @@
 import numpy as np
 
-from replay.metrics.base_metric import NCISMetric
+from replay.experimental.metrics.base_metric import NCISMetric
 
 
 # pylint: disable=too-few-public-methods
@@ -20,6 +20,8 @@ class NCISPrecision(NCISMetric):
         policy score with clipping and optional activation over policy scores (relevance).
         Source: arxiv.org/abs/1801.07030
     """
+
+    _scala_udf_name = "getNCISPrecisionMetricValue"
 
     @staticmethod
     def _get_metric_value_by_user(k, *args):

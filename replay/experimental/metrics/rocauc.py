@@ -1,4 +1,4 @@
-from replay.metrics.base_metric import Metric
+from replay.experimental.metrics.base_metric import Metric
 
 
 # pylint: disable=too-few-public-methods
@@ -39,6 +39,8 @@ class RocAuc(Metric):
     0.75
 
     """
+
+    _scala_udf_name = "getRocAucMetricValue"
 
     @staticmethod
     def _get_metric_value_by_user(k, pred, ground_truth) -> float:

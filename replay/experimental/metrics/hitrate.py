@@ -1,4 +1,4 @@
-from replay.metrics.base_metric import Metric
+from replay.experimental.metrics.base_metric import Metric
 
 
 # pylint: disable=too-few-public-methods
@@ -16,6 +16,8 @@ class HitRate(Metric):
     :math:`\\mathbb{1}_{r_{ij}}` -- indicator function stating that user :math:`i` interacted with item :math:`j`
 
     """
+
+    _scala_udf_name = "getHitRateMetricValue"
 
     @staticmethod
     def _get_metric_value_by_user(k, pred, ground_truth) -> float:
