@@ -3,7 +3,7 @@ from typing import Optional
 from pyspark.sql import DataFrame
 
 from replay.data import AnyDataFrame
-from replay.metrics.base_metric import (
+from replay.experimental.metrics.base_metric import (
     RecOnlyMetric,
     fill_na_with_empty_array,
     filter_sort
@@ -28,12 +28,16 @@ class Unexpectedness(RecOnlyMetric):
     0.67
     """
 
+    _scala_udf_name = "getUnexpectednessMetricValue"
+
     def __init__(
         self, pred: AnyDataFrame,
+        use_scala_udf: bool = False
     ):  # pylint: disable=super-init-not-called
         """
         :param pred: model predictions
         """
+        self._use_scala_udf = use_scala_udf
         self.pred = convert2spark(pred)
 
     @staticmethod
