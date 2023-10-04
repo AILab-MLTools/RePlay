@@ -1,3 +1,4 @@
+# pylint: disable=R0801
 """
 Base classes for quality and diversity metrics.
 """
