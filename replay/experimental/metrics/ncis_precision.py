@@ -1,8 +1,10 @@
-from replay.experimental.metrics.base_metric import ScalaNCISMetric
+import numpy as np
+
+from replay.experimental.metrics.base_metric import NCISMetric
 
 
 # pylint: disable=too-few-public-methods
-class ScalaNCISPrecision(ScalaNCISMetric):
+class NCISPrecision(NCISMetric):
     """
     Share of relevant items among top ``K`` recommendations with NCIS weighting.
 
@@ -20,3 +22,11 @@ class ScalaNCISPrecision(ScalaNCISMetric):
     """
 
     _scala_udf_name = "getNCISPrecisionMetricValue"
+
+    @staticmethod
+    def _get_metric_value_by_user(k, *args):
+        pred, ground_truth, pred_weights = args
+        if len(pred) == 0 or len(ground_truth) == 0:
+            return 0
+        mask = np.isin(pred[:k], ground_truth)
+        return sum(np.array(pred_weights)[mask]) / sum(pred_weights[:k])

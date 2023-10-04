@@ -19,7 +19,7 @@ from replay.data import LOG_SCHEMA, REC_SCHEMA
 from replay.experimental.metrics import *
 from replay.metrics import Coverage
 from replay.utils.distributions import item_distribution
-from replay.metrics.base_metric import get_enriched_recommendations, drop_duplicates, filter_sort
+from replay.experimental.metrics.base_metric import get_enriched_recommendations, drop_duplicates, filter_sort
 
 from tests.utils import (
     assert_allclose,
@@ -116,7 +116,7 @@ def prev_relevance(spark):
 
 @pytest.fixture
 def quality_metrics():
-    return [ScalaNDCG(), ScalaHitRate(), ScalaPrecision(), ScalaRecall(), ScalaMAP(), ScalaMRR(), ScalaRocAuc()]
+    return [NDCG(), HitRate(), Precision(), Recall(), MAP(), MRR(), RocAuc()]
 
 
 @pytest.fixture
@@ -167,25 +167,37 @@ def test_metric_calc_with_gt_users(quality_metrics, recs, true):
         ) == metric(recs, true, 1), str(metric)
 
 
+def test_test_is_bigger(quality_metrics, one_user, two_users):
+    for metric in quality_metrics:
+        assert metric(one_user, two_users, 1) == 0.5, str(metric)
+
+
+def test_pred_is_bigger(quality_metrics, one_user, two_users):
+    for metric in quality_metrics:
+        assert metric(two_users, one_user, 1) == 1.0, str(metric)
+
+
 @pytest.mark.parametrize(
     "gt_users, result",
     [(False, {3: 2 / 3, 1: 1 / 3}), (True, {3: 1 / 4, 1: 0 / 3})],
 )
-def test_hit_rate_at_k(recs, true, true_users, gt_users, result):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_hit_rate_at_k(recs, true, true_users, gt_users, result, use_scala_udf):
     users = true_users if gt_users else None
     assertDictAlmostEqual(
-        ScalaHitRate()(recs, true, [3, 1], users),
+        HitRate(use_scala_udf=use_scala_udf)(recs, true, [3, 1], users),
         result,
     )
 
 
-def test_hit_rate_at_k_old(recs, true, true_users):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_hit_rate_at_k_old(recs, true, true_users, use_scala_udf):
     assertDictAlmostEqual(
-        ScalaHitRate()(recs, true, [3, 1]),
+        HitRate(use_scala_udf=use_scala_udf)(recs, true, [3, 1]),
         {3: 2 / 3, 1: 1 / 3},
     )
     assertDictAlmostEqual(
-        ScalaHitRate()(recs, true, [3, 1], true_users),
+        HitRate(use_scala_udf=use_scala_udf)(recs, true, [3, 1], true_users),
         {3: 1 / 4, 1: 0 / 3},
     )
 
@@ -200,7 +212,7 @@ def test_hit_rate_at_k_old(recs, true, true_users):
 def test_user_dist(log, recs, true, true_users, gt_users, result):
     users = true_users if gt_users else None
     vals = (
-        ScalaHitRate()
+        HitRate()
         .user_distribution(log, recs, true, 3, users)
         .sort_values("count")
     )
@@ -242,9 +254,10 @@ def test_item_dist(log, recs):
         ),
     ],
 )
-def test_ndcg_at_k(recs, true, true_users, gt_users, result):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_ndcg_at_k(recs, true, true_users, gt_users, result, use_scala_udf):
     users = true_users if gt_users else None
-    assertDictAlmostEqual(ScalaNDCG()(recs, true, [1, 3], users), result)
+    assertDictAlmostEqual(NDCG(use_scala_udf=use_scala_udf)(recs, true, [1, 3], users), result)
 
 
 @pytest.mark.parametrize(
@@ -254,10 +267,11 @@ def test_ndcg_at_k(recs, true, true_users, gt_users, result):
         (True, {3: 1 / 4 * 1 / 3, 1: 0 / 4}),
     ],
 )
-def test_precision_at_k(recs, true, true_users, gt_users, result):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_precision_at_k(recs, true, true_users, gt_users, result, use_scala_udf):
     users = true_users if gt_users else None
     assertDictAlmostEqual(
-        ScalaPrecision()(recs, true, [1, 3], users),
+        Precision(use_scala_udf=use_scala_udf)(recs, true, [1, 3], users),
         result,
     )
 
@@ -272,10 +286,11 @@ def test_precision_at_k(recs, true, true_users, gt_users, result):
         (True, {1: 0 / 4, 3: 1 / 2 * 1 / 3 * 1 / 4}),
     ],
 )
-def test_map_at_k(recs, true, true_users, gt_users, result):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_map_at_k(recs, true, true_users, gt_users, result, use_scala_udf):
     users = true_users if gt_users else None
     assertDictAlmostEqual(
-        ScalaMAP()(recs, true, [1, 3], users),
+        MAP(use_scala_udf=use_scala_udf)(recs, true, [1, 3], users),
         result,
     )
 
@@ -287,10 +302,11 @@ def test_map_at_k(recs, true, true_users, gt_users, result):
         (True, {1: 0 / 4, 3: 1 / 2 * 1 / 4}),
     ],
 )
-def test_recall_at_k(recs, true, true_users, gt_users, result):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_recall_at_k(recs, true, true_users, gt_users, result, use_scala_udf):
     users = true_users if gt_users else None
     assertDictAlmostEqual(
-        ScalaRecall()(recs, true, [1, 3], users),
+        Recall(use_scala_udf=use_scala_udf)(recs, true, [1, 3], users),
         result,
     )
 
@@ -311,12 +327,18 @@ def test_recall_at_k(recs, true, true_users, gt_users, result):
         ),
     ],
 )
-def test_surprisal_at_k(true, recs, true_users, gt_users, result):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_surprisal_at_k(true, recs, true_users, gt_users, result, use_scala_udf):
     users = true_users if gt_users else None
     assertDictAlmostEqual(
-        ScalaSurprisal(true)(recs, [1, 3], ground_truth_users=users),
+        Surprisal(true, use_scala_udf=use_scala_udf)(recs, [1, 3], ground_truth_users=users),
         result,
     )
+
+
+def test_unexpectedness_at_k_by_user():
+    assert Unexpectedness._get_metric_value_by_user(2, (), (2, 3)) == 0
+    assert Unexpectedness._get_metric_value_by_user(2, (1, 2), (1,)) == 0.5
 
 
 @pytest.mark.parametrize(
@@ -326,10 +348,11 @@ def test_surprisal_at_k(true, recs, true_users, gt_users, result):
         (True, {1: 1 / 2, 3: (2 / 3 + 1) / 4}),
     ],
 )
-def test_unexpectedness_at_k(true, recs, true_users, gt_users, result):
+@pytest.mark.parametrize("use_scala_udf", [False, True])
+def test_unexpectedness_at_k(true, recs, true_users, gt_users, result, use_scala_udf):
     users = true_users if gt_users else None
     assertDictAlmostEqual(
-        ScalaUnexpectedness(true)(recs, [1, 3], ground_truth_users=users),
+        Unexpectedness(true, use_scala_udf=use_scala_udf)(recs, [1, 3], ground_truth_users=users),
         result,
     )
 
@@ -354,6 +377,42 @@ def test_coverage(true, recs, empty_recs):
 
 def test_bad_coverage(true, recs):
     assert_allclose(Coverage(true)(recs, 3), 1.25)
+
+
+def test_empty_recs(quality_metrics):
+    for metric in quality_metrics:
+        assert_allclose(
+            metric._get_metric_value_by_user(
+                k=4, pred=[], ground_truth=[2, 4]
+            ),
+            0,
+            err_msg=str(metric),
+        )
+
+
+def test_bad_recs(quality_metrics):
+    for metric in quality_metrics:
+        assert_allclose(
+            metric._get_metric_value_by_user(
+                k=4, pred=[1, 3], ground_truth=[2, 4]
+            ),
+            0,
+            err_msg=str(metric),
+        )
+
+
+def test_not_full_recs(quality_metrics):
+    for metric in quality_metrics:
+        if not isinstance(metric, (Precision, MAP)):
+            assert_allclose(
+                metric._get_metric_value_by_user(
+                    k=4, pred=[4, 1, 2], ground_truth=[2, 4]
+                ),
+                metric._get_metric_value_by_user(
+                    k=3, pred=[4, 1, 2], ground_truth=[2, 4]
+                ),
+                err_msg=str(metric),
+            )
 
 
 def test_duplicate_recs(quality_metrics, duplicate_recs, recs, true):
@@ -403,11 +462,11 @@ def test_filter_sort(spark, duplicate_recs):
 
 def test_ncis_raises(prev_relevance):
     with pytest.raises(ValueError):
-        ScalaNCISPrecision(prev_policy_weights=prev_relevance, activation="absent")
+        NCISPrecision(prev_policy_weights=prev_relevance, activation="absent")
 
 
 def test_ncis_activations_softmax(spark, prev_relevance):
-    res = ScalaNCISPrecision._softmax_by_user(prev_relevance, "relevance")
+    res = NCISPrecision._softmax_by_user(prev_relevance, "relevance")
     gt = spark.createDataFrame(
         data=[
             [0, 0, math.e**100 / (math.e**100 + math.e**0)],
@@ -421,7 +480,7 @@ def test_ncis_activations_softmax(spark, prev_relevance):
 
 
 def test_ncis_activations_sigmoid(spark, prev_relevance):
-    res = ScalaNCISPrecision._sigmoid(prev_relevance, "relevance")
+    res = NCISPrecision._sigmoid(prev_relevance, "relevance")
     gt = spark.createDataFrame(
         data=[
             [0, 0, 1 / (1 + math.e ** (-100))],
@@ -435,7 +494,7 @@ def test_ncis_activations_sigmoid(spark, prev_relevance):
 
 
 def test_ncis_weigh_and_clip(spark, prev_relevance):
-    res = ScalaNCISPrecision._weigh_and_clip(
+    res = NCISPrecision._weigh_and_clip(
         df=(
             prev_relevance.withColumn(
                 "prev_relevance",
@@ -454,7 +513,7 @@ def test_ncis_weigh_and_clip(spark, prev_relevance):
 
 
 def test_ncis_get_enriched_recommendations(spark, recs, prev_relevance, true):
-    ncis_precision = ScalaNCISPrecision(prev_policy_weights=prev_relevance)
+    ncis_precision = NCISPrecision(prev_policy_weights=prev_relevance)
     enriched = ncis_precision._get_enriched_recommendations(recs, true, 3)
     gt = spark.createDataFrame(
         data=[
@@ -467,8 +526,26 @@ def test_ncis_get_enriched_recommendations(spark, recs, prev_relevance, true):
     sparkDataFrameEqual(enriched, gt)
 
 
+def test_ncis_precision(prev_relevance):
+    ncis_precision = NCISPrecision(prev_policy_weights=prev_relevance)
+    assert (
+        ncis_precision._get_metric_value_by_user(
+            4, [1, 0, 4], [0, 5, 4], [20.0, 5.0, 15.0]
+        )
+        == 0.5
+    )
+    assert ncis_precision._get_metric_value_by_user(4, [], [0, 5, 4], []) == 0
+    assert (
+        ncis_precision._get_metric_value_by_user(4, [1], [0, 5, 4], [100]) == 0
+    )
+    assert (
+        ncis_precision._get_metric_value_by_user(4, [1], [1, 5, 4], [100]) == 1
+    )
+    assert ncis_precision._get_metric_value_by_user(4, [1], [], [1]) == 0
+
+
 def test_ncis_precision_scala(spark, prev_relevance):
-    ncis_precision = ScalaNCISPrecision(prev_policy_weights=prev_relevance)
+    ncis_precision = NCISPrecision(prev_policy_weights=prev_relevance)
     df = spark.createDataFrame(
         [(4, [1, 0, 4], [0, 5, 4], [20.0, 5.0, 15.0]),
          (4, [], [0, 5, 4], []),
@@ -496,7 +573,7 @@ def test_ncis_precision_scala(spark, prev_relevance):
 
 def test_not_implemented_scala_udf():
 
-    class NewEmptyMetric(ScalaMetric):
+    class NewEmptyMetric(Metric):
         @staticmethod
         def _get_metric_value_by_user(k, pred, ground_truth) -> float:
             pass
