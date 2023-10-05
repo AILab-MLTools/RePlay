@@ -7,11 +7,12 @@ from pyspark.sql import types as st
 
 from replay.data import AnyDataFrame
 from replay.utils.spark_utils import convert2spark, get_top_k_recs
-from replay.experimental.metrics.base_metric import fill_na_with_empty_array, RecOnlyMetric, filter_sort
+from replay.experimental.metrics.base_metric import ScalaRecOnlyMetric
+from replay.metrics.base_metric import fill_na_with_empty_array, filter_sort
 
 
 # pylint: disable=too-few-public-methods
-class Surprisal(RecOnlyMetric):
+class ScalaSurprisal(ScalaRecOnlyMetric):
     """
     Measures how many surprising rare items are present in recommendations.
 
@@ -44,14 +45,12 @@ class Surprisal(RecOnlyMetric):
 
     def __init__(
         self, log: AnyDataFrame,
-        use_scala_udf: bool = False
     ):  # pylint: disable=super-init-not-called
         """
         Here we calculate self-information for each item
 
         :param log: historical data
         """
-        self._use_scala_udf = use_scala_udf
         self.log = convert2spark(log)
         n_users = self.log.select("user_idx").distinct().count()  # type: ignore
         self.item_weights = self.log.groupby("item_idx").agg(
@@ -60,11 +59,6 @@ class Surprisal(RecOnlyMetric):
                 / np.log2(n_users)
             ).alias("rec_weight")
         )
-
-    @staticmethod
-    def _get_metric_value_by_user(k, *args):
-        weigths = args[0]
-        return sum(weigths[:k]) / k
 
     def _get_enriched_recommendations(
         self,
