@@ -1,8 +1,8 @@
-from replay.experimental.metrics.base_metric import Metric
+from replay.experimental.metrics.base_metric import ScalaMetric
 
 
 # pylint: disable=too-few-public-methods
-class MRR(Metric):
+class ScalaMRR(ScalaMetric):
     """
     Mean Reciprocal Rank --
     Reciprocal Rank is the inverse position of the first relevant item among top-k recommendations,
@@ -20,10 +20,3 @@ class MRR(Metric):
     """
 
     _scala_udf_name = "getMRRMetricValue"
-
-    @staticmethod
-    def _get_metric_value_by_user(k, pred, ground_truth) -> float:
-        for i in range(min(k, len(pred))):
-            if pred[i] in ground_truth:
-                return 1 / (1 + i)
-        return 0
