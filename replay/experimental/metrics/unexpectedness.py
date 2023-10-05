@@ -3,8 +3,8 @@ from typing import Optional
 from pyspark.sql import DataFrame
 
 from replay.data import AnyDataFrame
-from replay.experimental.metrics.base_metric import (
-    RecOnlyMetric,
+from replay.experimental.metrics.base_metric import ScalaRecOnlyMetric
+from replay.metrics.base_metric import (
     fill_na_with_empty_array,
     filter_sort
 )
@@ -12,7 +12,7 @@ from replay.utils.spark_utils import convert2spark, get_top_k_recs
 
 
 # pylint: disable=too-few-public-methods
-class Unexpectedness(RecOnlyMetric):
+class ScalaUnexpectedness(ScalaRecOnlyMetric):
     """
     Fraction of recommended items that are not present in some baseline recommendations.
 
@@ -32,21 +32,11 @@ class Unexpectedness(RecOnlyMetric):
 
     def __init__(
         self, pred: AnyDataFrame,
-        use_scala_udf: bool = False
     ):  # pylint: disable=super-init-not-called
         """
         :param pred: model predictions
         """
-        self._use_scala_udf = use_scala_udf
         self.pred = convert2spark(pred)
-
-    @staticmethod
-    def _get_metric_value_by_user(k, *args) -> float:
-        pred = args[0]
-        base_pred = args[1]
-        if len(pred) == 0:
-            return 0
-        return 1.0 - len(set(pred[:k]) & set(base_pred[:k])) / k
 
     def _get_enriched_recommendations(
         self,
