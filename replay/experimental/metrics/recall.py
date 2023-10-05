@@ -1,8 +1,8 @@
-from replay.experimental.metrics.base_metric import Metric
+from replay.experimental.metrics.base_metric import ScalaMetric
 
 
 # pylint: disable=too-few-public-methods
-class Recall(Metric):
+class ScalaRecall(ScalaMetric):
     """
     Mean percentage of relevant items, that was shown among top ``K`` recommendations.
 
@@ -18,9 +18,3 @@ class Recall(Metric):
     """
 
     _scala_udf_name = "getRecallMetricValue"
-
-    @staticmethod
-    def _get_metric_value_by_user(k, pred, ground_truth) -> float:
-        if len(ground_truth) == 0:
-            return 0.0
-        return len(set(pred[:k]) & set(ground_truth)) / len(ground_truth)
