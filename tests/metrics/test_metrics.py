@@ -357,6 +357,7 @@ def test_surprisal_metric_value_by_user():
 
 def test_coverage_conf_interval(recs):
     assert Coverage(recs)._conf_interval(recs=recs, k_list=3) == 0
+    assert Coverage(recs)._conf_interval(recs=recs, k_list=[1, 2, 10])[2] == 0.0
 
 
 @pytest.mark.parametrize(
