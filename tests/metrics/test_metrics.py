@@ -334,8 +334,29 @@ def test_unexpectedness_at_k_by_user():
 
 
 def test_map_metric_value_by_user():
-    print(MAP._get_metric_value_by_user(2, (), (2, 3))) == 0
-    print(MAP._get_metric_value_by_user(2, (1, 2), (1,))) == 0.5
+    assert MAP._get_metric_value_by_user(2, (), (2, 3)) == 0
+    assert MAP._get_metric_value_by_user(2, (1, 2), (1,)) == 0.5
+
+
+def test_recall_metric_value_by_user():
+    assert Recall._get_metric_value_by_user(2, (), (2, 3)) == 0
+    assert Recall._get_metric_value_by_user(2, (1, 2), ()) == 0
+    assert Recall._get_metric_value_by_user(2, (1, 2), (1,)) == 1.0
+
+
+def test_rocauc_metric_value_by_user():
+    assert RocAuc._get_metric_value_by_user(2, (), (2, 3)) == 0
+    assert RocAuc._get_metric_value_by_user(2, (1, 2), (3,)) == 0
+    assert RocAuc._get_metric_value_by_user(2, (1, 2), (1,)) == 1
+
+
+def test_surprisal_metric_value_by_user():
+    assert Surprisal._get_metric_value_by_user(2, (), (2, 3)) == 0
+    assert Surprisal._get_metric_value_by_user(2, (1, 2), (1,)) == 1.5
+
+
+def test_coverage_conf_interval(recs):
+    assert Coverage(recs)._conf_interval(recs=recs, k_list=3) == 0
 
 
 @pytest.mark.parametrize(
