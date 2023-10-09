@@ -31,17 +31,6 @@ class ScalaNDCG(ScalaMetric):
 
     .. math::
         nDCG@K = \\frac {\sum_{i=1}^{N}nDCG@K(i)}{N}
-
-    >>> import pandas as pd
-    >>> pred=pd.DataFrame({"user_idx": [1, 1, 2, 2],
-    ...                    "item_idx": [4, 5, 6, 7],
-    ...                    "relevance": [1, 1, 1, 1]})
-    >>> true=pd.DataFrame({"user_idx": [1, 1, 1, 1, 1, 2],
-    ...                    "item_idx": [1, 2, 3, 4, 5, 8],
-    ...                    "relevance": [0.5, 0.1, 0.25, 0.6, 0.2, 0.3]})
-    >>> ndcg = NDCG()
-    >>> ndcg(pred, true, 2)
-    0.5
     """
 
     _scala_udf_name = "getNDCGMetricValue"

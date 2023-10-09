@@ -15,17 +15,6 @@ from replay.utils.spark_utils import convert2spark, get_top_k_recs
 class ScalaUnexpectedness(ScalaRecOnlyMetric):
     """
     Fraction of recommended items that are not present in some baseline recommendations.
-
-    >>> import pandas as pd
-    >>> from replay.utils.session_handler import get_spark_session, State
-    >>> spark = get_spark_session(1, 1)
-    >>> state = State(spark)
-
-    >>> log = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [1, 2, 3], "relevance": [5, 5, 5], "timestamp": [1, 1, 1]})
-    >>> recs = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [0, 0, 1], "relevance": [5, 5, 5], "timestamp": [1, 1, 1]})
-    >>> metric = Unexpectedness(log)
-    >>> round(metric(recs, 3), 2)
-    0.67
     """
 
     _scala_udf_name = "getUnexpectednessMetricValue"
