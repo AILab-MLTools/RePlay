@@ -333,6 +333,12 @@ def test_unexpectedness_at_k_by_user():
     assert Unexpectedness._get_metric_value_by_user(2, (1, 2), (1,)) == 0.5
 
 
+def test_map_metric_value_by_user():
+    print(MAP._get_metric_value_by_user(2, (), (2, 3))) == 0
+    print(MAP._get_metric_value_by_user(2, (1, 2), (1,))) == 0.5
+    assert False
+
+
 @pytest.mark.parametrize(
     "gt_users, result",
     [
