@@ -1,11 +1,12 @@
-image: "${CI_REGISTRY_IMAGE}:0.0.4_test"
-
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
+image: "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
+
 variables:
+  VERSION: "0.0.5"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 .setup_venv: &setup_venv
@@ -19,7 +20,7 @@ variables:
 cache: &global_cache
   key: ${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}
   paths:
-    # - ./venv/
+    - venv/
     - .cache/pip
     - .cache/pypoetry
   policy: pull
