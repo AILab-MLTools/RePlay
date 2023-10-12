@@ -2,12 +2,15 @@
 import abc
 from typing import Dict, List, Literal, Mapping, Optional, Sequence, Union
 
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame, get_spark_session
+from pandas import DataFrame as PandasDataFrame
+from pyspark.sql import functions as F
+from pyspark.storagelevel import StorageLevel
+from pyspark.sql import DataFrame as SparkDataFrame
 
-if PYSPARK_AVAILABLE:  # pragma: no cover
-    from pyspark.sql import functions as F
-    from pyspark.storagelevel import StorageLevel
+from replay.utils import get_spark_session
 
+
+DataFrameLike = Union[PandasDataFrame, SparkDataFrame]
 HandleUnknownStrategies = Literal["error", "use_default_value"]
 
 

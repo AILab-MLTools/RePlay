@@ -1,7 +1,7 @@
 import pytest
 
 from replay.data.dataset import nunique, select
-from replay.utils import SparkDataFrame
+from pyspark.sql import DataFrame as SparkDataFrame
 
 
 @pytest.mark.spark

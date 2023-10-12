@@ -1,16 +1,18 @@
 # pylint: skip-file
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
+from pandas import DataFrame as PandasDataFrame
+from pyspark.sql import DataFrame as SparkDataFrame
+import pyspark.sql.functions as F
+from pyspark.storagelevel import StorageLevel
 
 from replay.data.schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame, check_dataframe_type
 
-if PYSPARK_AVAILABLE:  # pragma: no cover
-    import pyspark.sql.functions as F
-    from pyspark.storagelevel import StorageLevel
+
+DataFrameLike = Union[PandasDataFrame, SparkDataFrame]
 
 
 class Dataset:
@@ -18,7 +20,6 @@ class Dataset:
     Universal dataset for feeding data to models.
     """
 
-    @check_dataframe_type("interactions", "query_features", "item_features")
     def __init__(
         self,
         feature_schema: FeatureSchema,
@@ -181,60 +182,58 @@ class Dataset:
         """
         return self._feature_schema
 
-    if PYSPARK_AVAILABLE:
+    def persist(self, storage_level: StorageLevel = StorageLevel(True, True, False, True, 1)) -> None:
+        """
+        Sets the storage level to persist SparkDataFrame for interactions, item_features
+        and user_features.
 
-        def persist(self, storage_level: StorageLevel = StorageLevel(True, True, False, True, 1)) -> None:
-            """
-            Sets the storage level to persist SparkDataFrame for interactions, item_features
-            and user_features.
+        Args:
+            storage_level (StorageLevel): Storage level to set for persistance.
+                default: ```MEMORY_AND_DISK_DESER```.
 
-            Args:
-                storage_level (StorageLevel): Storage level to set for persistance.
-                    default: ```MEMORY_AND_DISK_DESER```.
+        Returns:
+            None
+        """
+        if self.is_spark:
+            self.interactions.persist(storage_level)
+            if self.item_features is not None:
+                self.item_features.persist(storage_level)
+            if self.query_features is not None:
+                self.query_features.persist(storage_level)
 
-            Returns:
-                None
-            """
-            if self.is_spark:
-                self.interactions.persist(storage_level)
-                if self.item_features is not None:
-                    self.item_features.persist(storage_level)
-                if self.query_features is not None:
-                    self.query_features.persist(storage_level)
+    def unpersist(self, blocking: bool = False) -> None:
+        """
+        Marks SparkDataFrame as non-persistent, and remove all blocks for it from memory and disk
+        for interactions, item_features and user_features.
 
-        def unpersist(self, blocking: bool = False) -> None:
-            """
-            Marks SparkDataFrame as non-persistent, and remove all blocks for it from memory and disk
-            for interactions, item_features and user_features.
+        Args:
+            blocking (bool): Whether to block until all blocks are deleted.
+                default: ```False```.
 
-            Args:
-                blocking (bool): Whether to block until all blocks are deleted.
-                    default: ```False```.
+        Returns:
+            None
+        """
+        if self.is_spark:
+            self.interactions.unpersist(blocking)
+            if self.item_features is not None:
+                self.item_features.unpersist(blocking)
+            if self.query_features is not None:
+                self.query_features.unpersist(blocking)
 
-            Returns:
-                None
-            """
-            if self.is_spark:
-                self.interactions.unpersist(blocking)
-                if self.item_features is not None:
-                    self.item_features.unpersist(blocking)
-                if self.query_features is not None:
-                    self.query_features.unpersist(blocking)
+    def cache(self) -> None:
+        """
+        Persists the SparkDataFrame with the default storage level (MEMORY_AND_DISK)
+        for interactions, item_features and user_features.
 
-        def cache(self) -> None:
-            """
-            Persists the SparkDataFrame with the default storage level (MEMORY_AND_DISK)
-            for interactions, item_features and user_features.
-
-            Returns:
-                None
-            """
-            if self.is_spark:
-                self.interactions.cache()
-                if self.item_features is not None:
-                    self.item_features.cache()
-                if self.query_features is not None:
-                    self.query_features.cache()
+        Returns:
+            None
+        """
+        if self.is_spark:
+            self.interactions.cache()
+            if self.item_features is not None:
+                self.item_features.cache()
+            if self.query_features is not None:
+                self.query_features.cache()
 
     def subset(self, features_to_keep: Iterable[str]) -> Dataset:
         """

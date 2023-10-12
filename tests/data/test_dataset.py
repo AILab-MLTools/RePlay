@@ -2,11 +2,9 @@ import pandas as pd
 import pytest
 
 from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
-from replay.utils import PYSPARK_AVAILABLE
 
-if PYSPARK_AVAILABLE:
-    from pyspark.sql.functions import asc
-    from pyspark.storagelevel import StorageLevel
+from pyspark.sql.functions import asc
+from pyspark.storagelevel import StorageLevel
 
 
 def get_features(data_dict):
