@@ -27,7 +27,6 @@ from replay.models.extensions.ann.index_stores.spark_files_index_store import (
     SparkFilesIndexStore,
 )
 from replay.preprocessing.data_preparator import Indexer
-from replay.models.cql import MdpDatasetBuilder
 from replay.utils.model_handler import save, load
 from replay.models import *
 from replay.utils.spark_utils import convert2spark
@@ -71,7 +70,6 @@ def df():
         PopRec,
         SLIM,
         UserPopRec,
-        partial(CQL, n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=5)),
     ],
 )
 def test_equal_preds(long_log_with_features, recommender, tmp_path):
