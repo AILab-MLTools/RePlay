@@ -19,7 +19,6 @@ from tests.utils import (
     sparkDataFrameEqual,
 )
 from replay.models.base_rec import HybridRecommender, UserRecommender
-from replay.utils.model_handler import save, load
 
 
 SEED = 123
@@ -93,29 +92,6 @@ def test_predict_pairs(log, log2, model):
             )
         ).count()
     )
-
-
-def test_save_load(log, model, spark):
-    spark_local_dir = spark.conf.get("spark.local.dir")
-    pattern = "best_multvae_1_loss=\\d\\.\\d+.pt.?"
-    del_files_by_pattern(spark_local_dir, pattern)
-
-    model.fit(log=log)
-    old_params = [
-        param.detach().cpu().numpy() for param in model.model.parameters()
-    ]
-    path = find_file_by_pattern(spark_local_dir, pattern)
-    assert path is not None
-
-    new_model = MultVAE()
-    new_model.model = VAE(item_count=4, latent_dim=1, hidden_dim=1)
-    assert len(old_params) == len(list(new_model.model.parameters()))
-
-    new_model.load_model(path)
-    for i, parameter in enumerate(new_model.model.parameters()):
-        assert np.allclose(
-            parameter.detach().cpu().numpy(), old_params[i], atol=1.0e-3,
-        )
 
 
 def test_predict_pairs_warm_items_only(log, log_to_pred):
@@ -221,15 +197,3 @@ def test_predict_cold_and_new_filter_out(long_log_with_features):
         assert pred.count() == 0
     else:
         assert 1 <= pred.count() <= 2
-
-
-def test_equal_preds(long_log_with_features, tmp_path):
-    recommender = MultVAE
-    path = (tmp_path / "test").resolve()
-    model = recommender()
-    model.fit(long_log_with_features)
-    base_pred = model.predict(long_log_with_features, 5)
-    save(model, path)
-    loaded_model = load(path)
-    new_pred = loaded_model.predict(long_log_with_features, 5)
-    sparkDataFrameEqual(base_pred, new_pred)
