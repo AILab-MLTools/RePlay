@@ -16,7 +16,7 @@ from replay.experimental.models.ddpg import (
     ReplayBuffer,
 )
 from tests.utils import (
-    del_files_by_pattern, 
+    del_files_by_pattern,
     find_file_by_pattern,
     spark,
     log,
