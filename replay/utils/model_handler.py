@@ -11,7 +11,6 @@ from pyspark.sql import SparkSession
 
 from replay.preprocessing.data_preparator import Indexer
 from replay.models import *
-from replay.experimental.models import *
 from replay.models.base_rec import BaseRecommender
 from replay.utils.session_handler import State
 from replay.splitters import *

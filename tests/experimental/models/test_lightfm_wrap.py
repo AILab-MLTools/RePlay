@@ -19,7 +19,6 @@ from tests.utils import (
     sparkDataFrameEqual,
 )
 from replay.models.base_rec import HybridRecommender, UserRecommender
-from replay.utils.model_handler import save, load
 
 
 SEED = 123
@@ -322,15 +321,3 @@ def test_predict_cold_and_new_filter_out(long_log_with_features):
         assert pred.count() == 0
     else:
         assert 1 <= pred.count() <= 2
-
-
-def test_equal_preds(long_log_with_features, tmp_path):
-    recommender = LightFMWrap
-    path = (tmp_path / "test").resolve()
-    model = recommender()
-    model.fit(long_log_with_features)
-    base_pred = model.predict(long_log_with_features, 5)
-    save(model, path)
-    loaded_model = load(path)
-    new_pred = loaded_model.predict(long_log_with_features, 5)
-    sparkDataFrameEqual(base_pred, new_pred)

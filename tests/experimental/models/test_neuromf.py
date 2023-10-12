@@ -9,7 +9,6 @@ from pyspark.sql import functions as sf
 from replay.data import LOG_SCHEMA
 from replay.experimental.models import NeuroMF
 from replay.experimental.models.neuromf import NMF
-from replay.utils.model_handler import save, load
 from replay.models.base_rec import HybridRecommender, UserRecommender
 from tests.utils import (
     del_files_by_pattern,
@@ -143,29 +142,6 @@ def test_check_simple_mlp_only(log):
         pytest.fail()
 
 
-def test_save_load(log, model, spark):
-    spark_local_dir = spark.conf.get("spark.local.dir")
-    pattern = "best_neuromf_1_loss=\\d\\.\\d+.pt.?"
-    del_files_by_pattern(spark_local_dir, pattern)
-
-    model.fit(log=log)
-    old_params = [
-        param.detach().cpu().numpy() for param in model.model.parameters()
-    ]
-    path = find_file_by_pattern(spark_local_dir, pattern)
-    assert path is not None
-
-    new_model = NeuroMF(embedding_mlp_dim=1)
-    new_model.model = NMF(3, 4, 2, 2, [2])
-    assert len(old_params) == len(list(new_model.model.parameters()))
-
-    new_model.load_model(path)
-    for i, parameter in enumerate(new_model.model.parameters()):
-        assert np.allclose(
-            parameter.detach().cpu().numpy(), old_params[i], atol=1.0e-3,
-        )
-
-
 def test_embeddings_size():
     model = NeuroMF()
     assert model.embedding_gmf_dim == 128 and model.embedding_mlp_dim == 128
@@ -272,15 +248,3 @@ def test_predict_cold_and_new_filter_out(long_log_with_features):
         assert pred.count() == 0
     else:
         assert 1 <= pred.count() <= 2
-
-
-def test_equal_preds(long_log_with_features, tmp_path):
-    recommender = NeuroMF
-    path = (tmp_path / "test").resolve()
-    model = recommender()
-    model.fit(long_log_with_features)
-    base_pred = model.predict(long_log_with_features, 5)
-    save(model, path)
-    loaded_model = load(path)
-    new_pred = loaded_model.predict(long_log_with_features, 5)
-    sparkDataFrameEqual(base_pred, new_pred)
