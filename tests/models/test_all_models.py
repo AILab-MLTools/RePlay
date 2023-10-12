@@ -4,8 +4,6 @@ import numpy as np
 
 from pyspark.sql import functions as sf
 
-from replay.data import LOG_SCHEMA
-from replay.models.cql import MdpDatasetBuilder
 from replay.models import (
     ClusterRec,
     ItemKNN,
@@ -15,9 +13,7 @@ from replay.models import (
     UCB,
     Wilson,
     Word2VecRec,
-    DDPG,
     AssociationRulesItemRec,
-    CQL,
 )
 from replay.models.base_rec import HybridRecommender, UserRecommender
 
@@ -40,14 +36,12 @@ SEED = 123
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
-        CQL(n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=3), batch_size=512),
     ],
     ids=[
         "knn",
         "slim",
         "word2vec",
         "association_rules",
-        "cql",
     ],
 )
 def test_predict_pairs_warm_items_only(log, log_to_pred, model):
@@ -273,7 +267,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
         RandomRec(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
-        CQL(n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=1), batch_size=512),
     ],
     ids=[
         "cluster",
@@ -283,7 +276,6 @@ def fit_predict_selected(model, train_log, inf_log, user_features, users):
         "random_rec",
         "word2vec",
         "association_rules",
-        "cql",
     ],
 )
 def test_predict_new_users(model, long_log_with_features, user_features):
@@ -330,14 +322,12 @@ def test_predict_cold_users(model, long_log_with_features, user_features):
         SLIM(seed=SEED),
         Word2VecRec(seed=SEED, min_count=0),
         AssociationRulesItemRec(min_item_count=1, min_pair_count=0),
-        CQL(n_epochs=1, mdp_dataset_builder=MdpDatasetBuilder(top_k=3), batch_size=512),
     ],
     ids=[
         "knn",
         "slim",
         "word2vec",
         "association_rules",
-        "cql",
     ],
 )
 def test_predict_cold_and_new_filter_out(model, long_log_with_features):
@@ -360,12 +350,10 @@ def test_predict_cold_and_new_filter_out(model, long_log_with_features):
     [
         PopRec(),
         ItemKNN(),
-        DDPG(seed=SEED, user_num=6, item_num=6),
     ],
     ids=[
         "pop_rec",
         "knn",
-        "ddpg",
     ],
 )
 def test_predict_pairs_to_file(spark, model, long_log_with_features, tmp_path):
@@ -394,12 +382,10 @@ def test_predict_pairs_to_file(spark, model, long_log_with_features, tmp_path):
     [
         PopRec(),
         ItemKNN(),
-        DDPG(seed=SEED, user_num=6, item_num=6),
     ],
     ids=[
         "pop_rec",
         "knn",
-        "ddpg",
     ],
 )
 def test_predict_to_file(spark, model, long_log_with_features, tmp_path):

@@ -5,22 +5,29 @@ import pytest
 import torch
 import numpy as np
 from pytorch_ranger import Ranger
+from pyspark.sql import functions as sf
 
 from replay.data import LOG_SCHEMA
-from replay.models import DDPG
-from replay.models.ddpg import (
+from replay.experimental.models import DDPG
+from replay.experimental.models.ddpg import (
     ActorDRR,
     CriticDRR,
     OUNoise,
     ReplayBuffer,
 )
+from tests.utils import (
+    del_files_by_pattern, 
+    find_file_by_pattern,
+    spark,
+    log,
+    log_to_pred,
+    long_log_with_features,
+    user_features,
+    sparkDataFrameEqual,
+)
 
-from tests.utils import del_files_by_pattern, find_file_by_pattern, spark
-from tests.utils import ddpg_actor_param as actor_param
-from tests.utils import ddpg_critic_param as critic_param
-from tests.utils import ddpg_state_repr_param as state_repr_param
 
-from tests.utils import BATCH_SIZES, DF_CASES
+SEED = 123
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -282,15 +289,40 @@ def test_env_step(log, model, user=[0, 1, 2]):
 
     model.model.environment.memory[user, -1] = item_num + 100
 
-    # choose related action
-    global_action = model.model.environment.related_items[user, 0]
-    action = torch.where(
-        model.model.environment.available_items - global_action.reshape(-1, 1)
-        == 0
-    )[1]
+    user, new_memory, _, _ = model.model.environment.step(
+        action, action_emb, replay_buffer
+    )
+    assert new_memory[user][0][-1] == action
 
-    # step
-    model.model.environment.step(action, action_emb, replay_buffer)
 
-    # chech memory update
-    assert (model.model.environment.memory[user, -1] == global_action).prod()
+def test_predict_pairs_to_file(spark, long_log_with_features, tmp_path):
+    model = DDPG(seed=SEED, user_num=6, item_num=6)
+    path = str((tmp_path / "pred.parquet").resolve().absolute())
+    model.fit(long_log_with_features)
+    model.predict_pairs(
+        log=long_log_with_features,
+        pairs=long_log_with_features.filter(sf.col("user_idx") == 1).select(
+            "user_idx", "item_idx"
+        ),
+        recs_file_path=path,
+    )
+    pred_cached = model.predict_pairs(
+        log=long_log_with_features,
+        pairs=long_log_with_features.filter(sf.col("user_idx") == 1).select(
+            "user_idx", "item_idx"
+        ),
+        recs_file_path=None,
+    )
+    pred_from_file = spark.read.parquet(path)
+    sparkDataFrameEqual(pred_cached, pred_from_file)
+
+
+def test_predict_to_file(spark, long_log_with_features, tmp_path):
+    model = DDPG(seed=SEED, user_num=6, item_num=6)
+    path = str((tmp_path / "pred.parquet").resolve().absolute())
+    model.fit_predict(long_log_with_features, k=10, recs_file_path=path)
+    pred_cached = model.predict(
+        long_log_with_features, k=10, recs_file_path=None
+    )
+    pred_from_file = spark.read.parquet(path)
+    sparkDataFrameEqual(pred_cached, pred_from_file)

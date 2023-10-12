@@ -260,20 +260,20 @@ Denoising AutoEncoder.
 .. autoclass:: replay.experimental.models.MultVAE
     :special-members: __init__
 
-DDPG
+DDPG (Experimental part)
 ```````````````````````````
-.. autoclass:: replay.models.DDPG
+.. autoclass:: replay.experimental.models.DDPG
     :special-members: __init__
 
 
-CQL Recommender
-```````````````
+CQL Recommender (Experimental part)
+```````````````````````````````````
 Conservative Q-Learning (CQL) algorithm is a SAC-based data-driven deep reinforcement learning algorithm, 
 which achieves state-of-the-art performance in offline RL problems.
 
 .. image:: /images/cql_comparison.png
 
-.. autoclass:: replay.models.CQL
+.. autoclass:: replay.experimental.models.CQL
     :special-members: __init__
 
 

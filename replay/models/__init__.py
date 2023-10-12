@@ -10,7 +10,6 @@ This module contains recommender system algorithms including:
 from replay.models.association_rules import AssociationRulesItemRec
 from replay.models.base_rec import Recommender
 from replay.models.base_torch_rec import TorchRecommender
-from replay.models.ddpg import DDPG
 from replay.models.knn import ItemKNN
 from replay.models.pop_rec import PopRec
 from replay.models.user_pop_rec import UserPopRec
@@ -22,4 +21,3 @@ from replay.models.cluster import ClusterRec
 from replay.models.cat_pop_rec import CatPopRec
 from replay.models.ucb import UCB
 from replay.models.thompson_sampling import ThompsonSampling
-from replay.models.cql import CQL
