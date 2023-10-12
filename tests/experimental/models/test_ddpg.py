@@ -17,7 +17,7 @@ from replay.experimental.models.ddpg import (
     to_np,
 )
 from tests.utils import (
-    del_files_by_pattern, 
+    del_files_by_pattern,
     find_file_by_pattern,
     spark,
     log,
