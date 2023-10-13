@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Dict, Any
 
 import pyspark.sql.functions as sf
 
@@ -8,9 +8,7 @@ from pyspark.sql.types import DoubleType
 from replay.models.extensions.ann.ann_mixin import ANNMixin
 from replay.models import ALSWrap
 from replay.models.extensions.ann.index_builders.base_index_builder import IndexBuilder
-from replay.models.base_rec import Recommender, ItemVectorModel
 from replay.experimental.models.extensions.spark_custom_models.als_extension import ALS, ALSModel
-from replay.utils.spark_utils import list_to_vector_udf
 
 
 # pylint: disable=too-many-instance-attributes, too-many-ancestors
@@ -41,7 +39,7 @@ class ScalaALSWrap(ALSWrap, ANNMixin):
             log.select("item_idx").distinct()
         )
         return item_vectors
-    
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -67,7 +65,7 @@ class ScalaALSWrap(ALSWrap, ANNMixin):
             "seed": self._seed,
             "index_builder": self.index_builder.init_meta_as_dict() if self.index_builder else None,
         }
-    
+
     def _fit(
         self,
         log: DataFrame,
@@ -94,7 +92,7 @@ class ScalaALSWrap(ALSWrap, ANNMixin):
         self.model.userFactors.cache()
         self.model.itemFactors.count()
         self.model.userFactors.count()
-    
+
     def _save_model(self, path: str):
         self.model.write().overwrite().save(path)
 

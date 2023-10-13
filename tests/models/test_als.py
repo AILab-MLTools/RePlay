@@ -159,7 +159,7 @@ def test_enrich_with_features(log, model):
 
 def test_init_args(model):
     args = model._init_args
-    
+
     assert args["rank"] == 2
     assert args["implicit_prefs"] is False
     assert args["seed"] == 42
@@ -421,4 +421,3 @@ def test_equal_preds(long_log_with_features, tmp_path):
     loaded_model = load(path)
     new_pred = loaded_model.predict(long_log_with_features, 5)
     sparkDataFrameEqual(base_pred, new_pred)
-
