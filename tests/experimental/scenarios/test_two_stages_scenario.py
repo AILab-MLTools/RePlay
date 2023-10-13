@@ -4,7 +4,7 @@ import pytest
 from pyspark.sql import functions as sf
 
 from replay.models import ItemKNN, PopRec
-from replay.experimental.models import ALSWrap, LightFMWrap
+from replay.experimental.models import ScalaALSWrap as ALSWrap, LightFMWrap
 from replay.experimental.scenarios import TwoStagesScenario
 from replay.preprocessing.history_based_fp import HistoryBasedFeaturesProcessor
 from replay.preprocessing.data_preparator import ToNumericFeatureTransformer

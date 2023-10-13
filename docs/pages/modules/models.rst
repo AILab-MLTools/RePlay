@@ -95,7 +95,12 @@ K Nearest Neighbours
 
 Alternating Least Squares
 `````````````````````````
-.. autoclass:: replay.experimental.models.ALSWrap
+.. autoclass:: replay.models.ALSWrap
+    :special-members: __init__
+
+Alternating Least Squares on Scala (Experimental part)
+``````````````````````````````````````````````````````
+.. autoclass:: replay.experimental.models.ScalaALSWrap
     :special-members: __init__
 
 SLIM

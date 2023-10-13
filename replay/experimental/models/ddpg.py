@@ -13,7 +13,7 @@ from pytorch_ranger import Ranger
 from torch import nn
 
 from replay.data import REC_SCHEMA
-from replay.models.base_torch_rec import Recommender
+from replay.experimental.models.base_torch_rec import Recommender
 
 
 def to_np(tensor: torch.Tensor) -> np.array:
