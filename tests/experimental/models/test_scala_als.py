@@ -13,7 +13,7 @@ from replay.models.extensions.ann.index_stores.shared_disk_index_store import (
 )
 from replay.models import AssociationRulesItemRec
 from replay.models.base_rec import HybridRecommender, UserRecommender
-from replay.experimental.models import ALSWrap
+from replay.experimental.models import ScalaALSWrap as ALSWrap
 from replay.experimental.scenarios.two_stages.two_stages_scenario import (
     get_first_level_model_features,
 )

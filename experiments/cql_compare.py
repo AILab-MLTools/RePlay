@@ -19,7 +19,7 @@ from replay.experimental.models.cql import MdpDatasetBuilder
 from replay.metrics import HitRate, NDCG, MAP, MRR, Coverage, Surprisal
 from replay.utils.model_handler import save, load
 from replay.models import UCB, Wilson, Recommender, ItemKNN, SLIM
-from replay.experimental.models import LightFMWrap, ALSWrap, CQL
+from replay.experimental.models import LightFMWrap, ScalaALSWrap, CQL
 from replay.utils.session_handler import State, get_spark_session
 from replay.splitters import DateSplitter
 from replay.utils import get_log_info
@@ -166,7 +166,7 @@ def main():
     }
 
     algorithms.update({
-        'ALS': ALSWrap(seed=SEED),
+        'ALS': ScalaALSWrap(seed=SEED),
         'KNN': ItemKNN(num_neighbours=K),
         'LightFM': LightFMWrap(random_state=SEED),
         'SLIM': SLIM(seed=SEED),

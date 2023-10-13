@@ -14,8 +14,7 @@ from torch import nn
 from torch.distributions.gamma import Gamma
 
 from replay.data import REC_SCHEMA
-from replay.models.base_torch_rec import Recommender
-from replay.utils import convert2spark
+from replay.experimental.models.base_torch_rec import Recommender
 
 
 def to_np(tensor: torch.Tensor) -> np.array:
