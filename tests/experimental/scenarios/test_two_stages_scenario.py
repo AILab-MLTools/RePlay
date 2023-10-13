@@ -95,8 +95,7 @@ def test_fit(
         item_features=item_features,
     )
     assert res.count() == short_log_with_features.count()
-    print(res.columns)
-    assert "rel_0_ALSWrap" in res.columns
+    assert "rel_0_ScalaALSWrap" in res.columns
     assert "m_2_fm_0" in res.columns
     assert "u_pop_by_class" in res.columns
     assert "age" in res.columns
