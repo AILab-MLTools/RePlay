@@ -10,7 +10,7 @@ Fallback
    :members: optimize
 
 Two Stage Scenario (Experimental part)
-----------------------
+--------------------------------------
 .. autoclass:: replay.experimental.scenarios.TwoStagesScenario
    :special-members: __init__
    :members: fit, predict, optimize
