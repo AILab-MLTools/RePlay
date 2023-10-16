@@ -1,8 +1,9 @@
-from replay.experimental.metrics.base_metric import ScalaNCISMetric
+from replay.experimental.metrics.base_metric import ScalaMetric
+from replay.metrics.base_metric import NCISMetric
 
 
 # pylint: disable=too-few-public-methods
-class ScalaNCISPrecision(ScalaNCISMetric):
+class ScalaNCISPrecision(NCISMetric, ScalaMetric):
     """
     Share of relevant items among top ``K`` recommendations with NCIS weighting.
 
