@@ -9,10 +9,9 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
 from pyspark.sql.column import _to_java_column, _to_seq
 
-from replay.metrics.base_metric import Metric, NCISMetric
+from replay.metrics.base_metric import Metric
 from replay.data import AnyDataFrame, IntOrList, NumType
 from replay.utils.session_handler import State
-from replay.utils.spark_utils import convert2spark
 
 
 class ScalaMetric(Metric):
