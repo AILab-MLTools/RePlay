@@ -1,4 +1,3 @@
-# pylint: disable=R0801
 """
 Base classes for quality and diversity metrics.
 """
@@ -108,42 +107,3 @@ class ScalaRecOnlyMetric(ScalaMetric):
             ground_truth_users=ground_truth_users,
         )
         return self._mean(recs, k)
-
-
-class ScalaNCISMetric(NCISMetric, ScalaMetric):
-    """
-    Normalized capped importance sampling, where each recommendation is being weighted
-    by the ratio of current policy score on previous policy score.
-    The weight is also capped by some threshold value.
-
-    Source: arxiv.org/abs/1801.07030
-    """
-
-    def __init__(
-        self,
-        prev_policy_weights: AnyDataFrame,
-        threshold: float = 10.0,
-        activation: Optional[str] = None,
-    ):  # pylint: disable=super-init-not-called
-        """
-        :param prev_policy_weights: historical item of user-item relevance (previous policy values)
-        :threshold: capping threshold, applied after activation,
-            relevance values are cropped to interval [1/`threshold`, `threshold`]
-        :activation: activation function, applied over relevance values.
-            "logit"/"sigmoid", "softmax" or None
-        """
-        self.prev_policy_weights = convert2spark(
-            prev_policy_weights
-        ).withColumnRenamed("relevance", "prev_relevance")
-        self.threshold = threshold
-        if activation is None or activation in ("logit", "sigmoid", "softmax"):
-            self.activation = activation
-            if activation == "softmax":
-                self.logger.info(
-                    "For accurate softmax calculation pass only one `k` value "
-                    "in the NCISMetric metrics `call`"
-                )
-        else:
-            raise ValueError(f"Unexpected `activation` - {activation}")
-        if threshold <= 0:
-            raise ValueError("Threshold should be positive real number")
