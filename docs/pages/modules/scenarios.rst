@@ -9,7 +9,7 @@ Fallback
    :special-members: __init__
    :members: optimize
 
-Two Stage Scenario
+Two Stage Scenario (Experimental part)
 ----------------------
 .. autoclass:: replay.experimental.scenarios.TwoStagesScenario
    :special-members: __init__
