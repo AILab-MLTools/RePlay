@@ -20,6 +20,7 @@ from tests.utils import (
     user_features,
     sparkDataFrameEqual,
 )
+from replay.utils.model_handler import save, load
 
 
 SEED = 123
@@ -78,6 +79,17 @@ def model():
     }
     model = NeuroMF(**params)
     return model
+
+
+def test_equal_preds(long_log_with_features, tmp_path):
+    path = (tmp_path / "test").resolve()
+    model = NeuroMF()
+    model.fit(long_log_with_features)
+    base_pred = model.predict(long_log_with_features, 5)
+    save(model, path)
+    loaded_model = load(path, NeuroMF)
+    new_pred = loaded_model.predict(long_log_with_features, 5)
+    sparkDataFrameEqual(base_pred, new_pred)
 
 
 def test_fit(log, model):

@@ -10,6 +10,7 @@ from replay.experimental.models import LightFMWrap
 from replay.experimental.scenarios.two_stages.two_stages_scenario import (
     get_first_level_model_features,
 )
+from replay.utils.model_handler import save, load
 from tests.utils import (
     spark,
     log,
@@ -68,6 +69,17 @@ def model():
     model = LightFMWrap(no_components=1, random_state=42, loss="bpr")
     model.num_threads = 1
     return model
+
+
+def test_equal_preds(long_log_with_features, tmp_path):
+    path = (tmp_path / "test").resolve()
+    model = LightFMWrap()
+    model.fit(long_log_with_features)
+    base_pred = model.predict(long_log_with_features, 5)
+    save(model, path)
+    loaded_model = load(path, LightFMWrap)
+    new_pred = loaded_model.predict(long_log_with_features, 5)
+    sparkDataFrameEqual(base_pred, new_pred)
 
 
 def test_predict(log, user_features, item_features, model):

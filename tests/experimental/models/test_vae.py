@@ -19,6 +19,7 @@ from tests.utils import (
     sparkDataFrameEqual,
 )
 from replay.models.base_rec import HybridRecommender, UserRecommender
+from replay.utils.model_handler import save, load
 
 
 SEED = 123
@@ -51,6 +52,17 @@ def model(log):
     model = MultVAE(**params)
     model.fit(log.filter(sf.col("user_idx") != 0))
     return model
+
+
+def test_equal_preds(long_log_with_features, tmp_path):
+    path = (tmp_path / "test").resolve()
+    model = MultVAE()
+    model.fit(long_log_with_features)
+    base_pred = model.predict(long_log_with_features, 5)
+    save(model, path)
+    loaded_model = load(path, MultVAE)
+    new_pred = loaded_model.predict(long_log_with_features, 5)
+    sparkDataFrameEqual(base_pred, new_pred)
 
 
 def test_fit(model):
