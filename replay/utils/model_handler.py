@@ -95,7 +95,7 @@ def save(
         save_picklable_to_parquet(model.study, join(path, "study"))
 
 
-def load(path: str, model_type = None) -> BaseRecommender:
+def load(path: str, model_type=None) -> BaseRecommender:
     """
     Load saved model from disk
 
