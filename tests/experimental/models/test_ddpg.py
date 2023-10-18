@@ -128,9 +128,16 @@ def test_save_load(log, model, user_num=5, item_num=5):
         embedding_dim=8,
         hidden_dim=16,
         memory_size=5,
+        env_gamma_alpha=1,
+        device=torch.device("cpu"),
+        min_trajectory_len=10,
     )
     new_model.value_net = CriticDRR(
-        state_repr_dim=24, action_emb_dim=8, hidden_dim=8
+        state_repr_dim=24,
+        action_emb_dim=8,
+        hidden_dim=8,
+        heads_num=10,
+        heads_q=0.15,
     )
     assert len(old_params) == len(list(new_model.model.parameters()))
 
@@ -161,20 +168,29 @@ def test_save_load(log, model, user_num=5, item_num=5):
         )
 
 
-def test_env_step(log, model, user=0):
-    replay_buffer = ReplayBuffer()
+def test_env_step(log, model, user=[0, 1, 2]):
+    replay_buffer = ReplayBuffer(
+        torch.device("cpu"),
+        1000000,
+        5,
+        8,
+    )
     # model.replay_buffer.capacity = 4
-    train_matrix, _, _, _ = model._preprocess_log(log)
+    train_matrix, _, item_num, _ = model._preprocess_log(log)
     model.model = ActorDRR(
         model.user_num,
         model.item_num,
         model.embedding_dim,
         model.hidden_dim,
         model.memory_size,
+        1,
+        torch.device("cpu"),
+        min_trajectory_len=10,
     )
     model.model.environment.update_env(matrix=train_matrix)
     model.ou_noise = OUNoise(
         model.embedding_dim,
+        torch.device("cpu"),
         theta=model.noise_theta,
         max_sigma=model.noise_sigma,
         min_sigma=model.noise_sigma,
@@ -189,18 +205,27 @@ def test_env_step(log, model, user=0):
         action_emb = model.ou_noise.get_action(action_emb[0], 0)
 
     model.ou_noise.noise_type = "ou"
-    _, action = model.model.get_action(
+    model.model.get_action(
         action_emb,
         model.model.environment.available_items,
+        torch.ones_like(model.model.environment.available_items),
         return_scores=True,
     )
 
-    model.model.environment.memory[to_np(user), to_np(action)] = 1
+    model.model.environment.memory[user, -1] = item_num + 100
 
-    user, new_memory, _, _ = model.model.environment.step(
-        action, action_emb, replay_buffer
-    )
-    assert new_memory[user][0][-1] == action
+    # choose related action
+    global_action = model.model.environment.related_items[user, 0]
+    action = torch.where(
+        model.model.environment.available_items - global_action.reshape(-1, 1)
+        == 0
+    )[1]
+
+    # step
+    model.model.environment.step(action, action_emb, replay_buffer)
+
+    # chech memory update
+    assert (model.model.environment.memory[user, -1] == global_action).prod()
 
 
 def test_predict_pairs_to_file(spark, long_log_with_features, tmp_path):
