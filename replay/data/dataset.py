@@ -1,4 +1,3 @@
-# pylint: skip-file
 from __future__ import annotations
 
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
@@ -14,12 +13,13 @@ from replay.data.schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureS
 
 DataFrameLike = Union[PandasDataFrame, SparkDataFrame]
 
-
+# pylint: disable=too-many-instance-attributes
 class Dataset:
     """
     Universal dataset for feeding data to models.
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         feature_schema: FeatureSchema,
@@ -54,13 +54,13 @@ class Dataset:
 
         try:
             feature_schema.item_id_column
-        except Exception as e:
-            raise ValueError("Item id column is not set.") from e
+        except Exception as exception:
+            raise ValueError("Item id column is not set.") from exception
 
         try:
             feature_schema.query_id_column
-        except Exception as e:
-            raise ValueError("Query id column is not set.") from e
+        except Exception as exception:
+            raise ValueError("Query id column is not set.") from exception
 
         if self.item_features is not None and isinstance(self.item_features, PandasDataFrame) != self.is_pandas:
             raise TypeError("Interactions and item features should have the same type.")
@@ -360,6 +360,7 @@ class Dataset:
         self._set_cardinality(features_list=unlabeled_columns)
         return unlabeled_columns
 
+    # pylint: disable=no-self-use
     def _set_features_source(self, feature_list: List[FeatureInfo], source: FeatureSource) -> None:
         for feature in feature_list:
             # pylint: disable=protected-access
@@ -464,12 +465,30 @@ class Dataset:
 
 
 def nunique(data: DataFrameLike, column: str) -> int:
+    """
+    Returns number of unique values of specified column in dataframe.
+
+    Args:
+        data (DataFrameLike): Dataframe.
+        column (str): Column name.
+
+    Returns:
+        (int): Number of unique values.
+    """
     if isinstance(data, SparkDataFrame):
         return data.select(column).distinct().count()
     return data[column].nunique()
 
 
 def select(data: DataFrameLike, columns: Sequence[str]) -> DataFrameLike:
+    """
+    Args:
+        data (DataFrameLike): Dataframe.
+        columns (Sequence[str]): Sequence of column names to select.
+
+    Returns:
+        (DataFrameLike): Selected data in the same format as input dataframe.
+    """
     if isinstance(data, SparkDataFrame):
         return data.select(*columns)
     if isinstance(data, PandasDataFrame):
