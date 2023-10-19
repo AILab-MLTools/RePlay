@@ -165,131 +165,11 @@ def test_init_args(model):
     assert args["seed"] == 42
 
 
-def test_predict_pairs_warm_items_only(log, log_to_pred):
-    model = ALSWrap(seed=SEED)
-    model.fit(log)
-    recs = model.predict(
-        log.unionByName(log_to_pred),
-        k=3,
-        users=log_to_pred.select("user_idx").distinct(),
-        items=log_to_pred.select("item_idx").distinct(),
-        filter_seen_items=False,
-    )
-
-    pairs_pred = model.predict_pairs(
-        pairs=log_to_pred.select("user_idx", "item_idx"),
-        log=log.unionByName(log_to_pred),
-    )
-
-    condition = ~sf.col("item_idx").isin([4, 5])
-    if not model.can_predict_cold_users:
-        condition = condition & (sf.col("user_idx") != 4)
-
-    sparkDataFrameEqual(
-        pairs_pred.select("user_idx", "item_idx"),
-        log_to_pred.filter(condition).select("user_idx", "item_idx"),
-    )
-
-    recs_joined = (
-        pairs_pred.withColumnRenamed("relevance", "pairs_relevance")
-        .join(recs, on=["user_idx", "item_idx"], how="left")
-        .sort("user_idx", "item_idx")
-    )
-
-    assert np.allclose(
-        recs_joined.select("relevance").toPandas().to_numpy(),
-        recs_joined.select("pairs_relevance").toPandas().to_numpy(),
-    )
-
-
-def test_predict_pairs_k(log):
-    model = ALSWrap(seed=SEED)
-    model.fit(log)
-
-    pairs_pred_k = model.predict_pairs(
-        pairs=log.select("user_idx", "item_idx"),
-        log=log,
-        k=1,
-    )
-
-    pairs_pred = model.predict_pairs(
-        pairs=log.select("user_idx", "item_idx"),
-        log=log,
-        k=None,
-    )
-
-    assert (
-        pairs_pred_k.groupBy("user_idx")
-        .count()
-        .filter(sf.col("count") > 1)
-        .count()
-        == 0
-    )
-
-    assert (
-        pairs_pred.groupBy("user_idx")
-        .count()
-        .filter(sf.col("count") > 1)
-        .count()
-        > 0
-    )
-
-
-def test_predict_empty_log(log):
-    model = ALSWrap(seed=SEED)
-    model.fit(log)
-    model.predict(log.limit(0), 1)
-
-
 def test_predict_pairs_raises_pairs_format(log):
     model = ALSWrap(seed=SEED)
     with pytest.raises(ValueError, match="pairs must be a dataframe with .*"):
         model.fit(log)
         model.predict_pairs(log, log)
-
-
-@pytest.mark.parametrize(
-    "als_model, metric",
-    [
-        (ALSWrap(seed=SEED), "euclidean_distance_sim"),
-        (ALSWrap(seed=SEED), "dot_product"),
-        (ALSWrap(seed=SEED), "cosine_similarity"),
-    ],
-    ids=[
-        "als_euclidean",
-        "als_dot",
-        "als_cosine",
-    ],
-)
-def test_get_nearest_items(log, als_model, metric):
-    als_model.fit(log.filter(sf.col("item_idx") != 3))
-    res = als_model.get_nearest_items(items=[0, 1], k=2, metric=metric)
-
-    assert res.count() == 4
-    assert set(res.toPandas().to_dict()["item_idx"].values()) == {
-        0,
-        1,
-    }
-
-    res = als_model.get_nearest_items(items=[0, 1], k=1, metric=metric)
-    assert res.count() == 2
-
-    # filter neighbours
-    res = als_model.get_nearest_items(
-        items=[0, 1],
-        k=4,
-        metric=metric,
-        candidates=[0, 3],
-    )
-    assert res.count() == 1
-    assert (
-        len(
-            set(res.toPandas().to_dict()["item_idx"].values()).difference(
-                {0, 1}
-            )
-        )
-        == 0
-    )
 
 
 @pytest.mark.parametrize("metric", ["absent", None])
@@ -306,55 +186,6 @@ def test_nearest_items_raises(log, metric):
         ValueError, match=r"Select one of the valid distance metrics.*"
     ):
         model.get_nearest_items(items=[0, 1], k=2, metric=metric)
-
-
-def test_predict_cold_and_new_filter_out(long_log_with_features):
-    model = ALSWrap(rank=2, seed=SEED)
-    pred = fit_predict_selected(
-        model,
-        train_log=long_log_with_features.filter(sf.col("user_idx") != 0),
-        inf_log=long_log_with_features,
-        user_features=None,
-        users=[0, 3],
-    )
-    # assert new/cold users are filtered out in `predict`
-    if not model.can_predict_cold_users:
-        assert pred.count() == 0
-    else:
-        assert 1 <= pred.count() <= 2
-
-
-def test_predict_pairs_to_file(spark, long_log_with_features, tmp_path):
-    model = ALSWrap(rank=2, seed=SEED)
-    path = str((tmp_path / "pred.parquet").resolve().absolute())
-    model.fit(long_log_with_features)
-    model.predict_pairs(
-        log=long_log_with_features,
-        pairs=long_log_with_features.filter(sf.col("user_idx") == 1).select(
-            "user_idx", "item_idx"
-        ),
-        recs_file_path=path,
-    )
-    pred_cached = model.predict_pairs(
-        log=long_log_with_features,
-        pairs=long_log_with_features.filter(sf.col("user_idx") == 1).select(
-            "user_idx", "item_idx"
-        ),
-        recs_file_path=None,
-    )
-    pred_from_file = spark.read.parquet(path)
-    sparkDataFrameEqual(pred_cached, pred_from_file)
-
-
-def test_predict_to_file(spark, long_log_with_features, tmp_path):
-    model = ALSWrap(rank=2, seed=SEED)
-    path = str((tmp_path / "pred.parquet").resolve().absolute())
-    model.fit_predict(long_log_with_features, k=10, recs_file_path=path)
-    pred_cached = model.predict(
-        long_log_with_features, k=10, recs_file_path=None
-    )
-    pred_from_file = spark.read.parquet(path)
-    sparkDataFrameEqual(pred_cached, pred_from_file)
 
 
 @pytest.mark.parametrize(
@@ -409,15 +240,3 @@ def test_it_works(log):
     assert len(model.study.trials) == 1
     model.optimize(log, log, k=2, budget=1, new_study=False)
     assert len(model.study.trials) == 2
-
-
-def test_equal_preds(long_log_with_features, tmp_path):
-    recommender = ALSWrap
-    path = (tmp_path / "test").resolve()
-    model = recommender()
-    model.fit(long_log_with_features)
-    base_pred = model.predict(long_log_with_features, 5)
-    save(model, path)
-    loaded_model = load(path)
-    new_pred = loaded_model.predict(long_log_with_features, 5)
-    sparkDataFrameEqual(base_pred, new_pred)

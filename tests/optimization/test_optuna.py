@@ -5,6 +5,11 @@ from replay.models import SLIM, ItemKNN, ALSWrap
 from tests.utils import log, spark
 
 
+@pytest.fixture
+def model():
+    return ALSWrap()
+
+
 @pytest.mark.parametrize("borders", [{"beta": [1, 2]}, {"lambda_": [1, 2]}])
 def test_partial_borders(borders):
     model = SLIM()
@@ -35,15 +40,13 @@ def test_ItemKNN(log):
         "border's too long",
     ],
 )
-def test_bad_borders(borders):
-    model = ALSWrap()
+def test_bad_borders(model, borders):
     with pytest.raises(ValueError):
         model._prepare_param_borders(borders)
 
 
 @pytest.mark.parametrize("borders", [None, {"rank": [5, 9]}])
-def test_correct_borders(borders):
-    model = ALSWrap()
+def test_correct_borders(model, borders):
     res = model._prepare_param_borders(borders)
     assert res.keys() == model._search_space.keys()
     assert "rank" in res
@@ -54,14 +57,12 @@ def test_correct_borders(borders):
 @pytest.mark.parametrize(
     "borders,answer", [(None, True), ({"rank": [-10, -1]}, False)]
 )
-def test_param_in_borders(borders, answer):
-    model = ALSWrap()
+def test_param_in_borders(model, borders, answer):
     search_space = model._prepare_param_borders(borders)
     assert model._init_params_in_search_space(search_space) == answer
 
 
-def test_it_works(log):
-    model = ALSWrap()
+def test_it_works(model, log):
     assert model._params_tried() is False
     res = model.optimize(log, log, k=2, budget=1)
     assert isinstance(res["rank"], int)

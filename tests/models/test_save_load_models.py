@@ -19,6 +19,9 @@ from replay.models.extensions.ann.index_builders.driver_nmslib_index_builder imp
 from replay.models.extensions.ann.index_builders.executor_nmslib_index_builder import (
     ExecutorNmslibIndexBuilder,
 )
+from replay.models.extensions.ann.index_builders.executor_hnswlib_index_builder import (
+    ExecutorHnswlibIndexBuilder,
+)
 from replay.models.extensions.ann.index_stores.hdfs_index_store import HdfsIndexStore
 from replay.models.extensions.ann.index_stores.shared_disk_index_store import (
     SharedDiskIndexStore,
@@ -66,6 +69,7 @@ def df():
 @pytest.mark.parametrize(
     "recommender",
     [
+        ALSWrap,
         ItemKNN,
         PopRec,
         SLIM,
