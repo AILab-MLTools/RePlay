@@ -66,6 +66,7 @@ class LabelEncodingRule(BaseLabelEncodingRule):
 
     _ENCODED_COLUMN_SUFFIX: str = "_encoded"
     _HANDLE_UNKNOWN_STRATEGIES = ("error", "use_default_value")
+    _TRANSFORM_PERFORMANCE_THRESHOLD_FOR_PANDAS = 100_000
 
     def __init__(
         self,
@@ -221,7 +222,7 @@ class LabelEncodingRule(BaseLabelEncodingRule):
 
     def _transform_pandas(self, df: PandasDataFrame, default_value: Optional[int]) -> PandasDataFrame:
         is_unknown_label = False
-        if df.shape[0] < 100_000:  # in order to speed up
+        if df.shape[0] < self._TRANSFORM_PERFORMANCE_THRESHOLD_FOR_PANDAS:  # in order to speed up
             mapping = self.get_mapping()
             joined_df = df.copy()
             mapped_column = []
