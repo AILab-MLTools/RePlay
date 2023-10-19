@@ -13,6 +13,7 @@ from replay.data.schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureS
 
 DataFrameLike = Union[PandasDataFrame, SparkDataFrame]
 
+
 # pylint: disable=too-many-instance-attributes
 class Dataset:
     """
