@@ -94,7 +94,7 @@ test-experimental-package:
   <<: *install_experimental_replay
   stage: test
   script:
-    - pytest
+    - pytest tests/experimental/
     - mv .coverage .coverage_experimental
   artifacts:
     paths:
