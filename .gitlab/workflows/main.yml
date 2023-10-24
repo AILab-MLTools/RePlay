@@ -83,7 +83,7 @@ test-production-package:
   <<: *install_replay
   stage: test
   script:
-    - pytest -m "not experimental" --ignore=replay/experimental --ignore-glob=tests/experimental/*
+    - pytest -m "not experimental"
     - mv .coverage .coverage_production
   artifacts:
     paths:
