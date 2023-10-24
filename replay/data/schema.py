@@ -1,4 +1,3 @@
-# pylint: skip-file
 from enum import Enum
 from typing import (
     Callable,
@@ -46,6 +45,7 @@ class FeatureInfo:
     Information about a feature.
     """
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         column: str,
@@ -55,17 +55,16 @@ class FeatureInfo:
         cardinality: Optional[int] = None,
     ) -> None:
         """
-        Args:
-            column (str): name of feature.
-            feature_type (FeatureType): type of feature.
-            feature_hint (FeatureHint, optional): hint to models about feature
-                (is timestamp, is rating, is query_id, is item_id),
-                default: ``None``.
-            feature_source (FeatureSource, optional): name of DataFrame feature came from,
-                default: ``None``.
-            cardinality (int, optional): cardinality of categorical feature, required for ids columns,
-                optional for others,
-                default: ``None``.
+        :param column: name of feature.
+        :param feature_type: type of feature.
+        :param feature_hint: hint to models about feature
+            (is timestamp, is rating, is query_id, is item_id),
+            default: ``None``.
+        :param feature_source: name of DataFrame feature came from,
+            default: ``None``.
+        :param cardinality: cardinality of categorical feature, required for ids columns,
+            optional for others,
+            default: ``None``.
         """
         self._column = column
         self._feature_type = feature_type
@@ -79,32 +78,28 @@ class FeatureInfo:
     @property
     def column(self) -> str:
         """
-        Returns:
-            str: The feature name.
+        :returns: the feature name.
         """
         return self._column
 
     @property
     def feature_type(self) -> FeatureType:
         """
-        Returns:
-            FeatureType: The type of feature.
+        :returns: the type of feature.
         """
         return self._feature_type
 
     @property
     def feature_hint(self) -> Optional[FeatureHint]:
         """
-        Returns:
-            Optional[FeatureHint]: The feature hint.
+        :returns: the feature hint.
         """
         return self._feature_hint
 
     @property
     def feature_source(self) -> Optional[FeatureSource]:
         """
-        Returns:
-            Optional[FeatureSource]: The name of source dataframe of feature.
+        :returns: the name of source dataframe of feature.
         """
         return self._feature_source
 
@@ -114,8 +109,7 @@ class FeatureInfo:
     @property
     def cardinality(self) -> Optional[int]:
         """
-        Returns:
-            Optional[int]: Cardinality of the feature.
+        :returns: cardinality of the feature.
         """
         if self.feature_type != FeatureType.CATEGORICAL:
             raise RuntimeError(
@@ -125,18 +119,18 @@ class FeatureInfo:
             self._cardinality = self._cardinality_callback(self._column)
         return self._cardinality
 
+    # pylint: disable=attribute-defined-outside-init
     def _set_cardinality_callback(self, callback: Callable) -> None:
         self._cardinality_callback = callback
 
     def reset_cardinality(self) -> None:
-        """Reset cardinality of the feature to None.
-
-        Returns:
-            None
+        """
+        Reset cardinality of the feature to None.
         """
         self._cardinality = None
 
 
+# pylint: disable=too-many-public-methods
 class FeatureSchema(Mapping[str, FeatureInfo]):
     """
     Key-value like collection with information about all dataset features.
@@ -144,18 +138,17 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
 
     def __init__(self, features_list: Union[Sequence[FeatureInfo], FeatureInfo]) -> None:
         """
-        Args:
-            features_list (FeatureInfo or sequence of FeatureInfo): list of feature infos.
+        :param features_list: list of feature infos.
         """
         features_list = [features_list] if not isinstance(features_list, Sequence) else features_list
         self._check_features_naming(features_list)
         self._features_schema = {feature.column: feature for feature in features_list}
 
     def copy(self) -> "FeatureSchema":
-        """Creates a copy of all features.
+        """
+        Creates a copy of all features.
 
-        Returns:
-            FeatureSchema: Copy of the initial feature schema.
+        :returns: copy of the initial feature schema.
         """
         copy_features_list = list(self._features_schema.values())
         for feature in copy_features_list:
@@ -163,14 +156,12 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
         return FeatureSchema(copy_features_list)
 
     def subset(self, features_to_keep: Iterable[str]) -> "FeatureSchema":
-        """Creates a subset of given features.
+        """
+        Creates a subset of given features.
 
-        Args:
-            features_to_keep (Iterable[str]): A sequence of feature columns
-                in original schema to keep in subset.
-
-        Returns:
-            FeatureSchema: New feature schema of given features.
+        :param features_to_keep: a sequence of feature columns
+            in original schema to keep in subset.
+        :returns: new feature schema of given features.
         """
         features: Set[FeatureInfo] = set()
         for feature_column in features_to_keep:
@@ -180,8 +171,7 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
 
     def item(self) -> FeatureInfo:
         """
-        Returns:
-            FeatureInfo: Extract a feature information from a schema.
+        :returns: extract a feature information from a schema.
         """
         if len(self._features_schema) > 1:
             raise ValueError("Only one element feature schema can be converted to single feature")
@@ -230,32 +220,28 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     @property
     def all_features(self) -> Sequence[FeatureInfo]:
         """
-        Returns:
-            Sequence[FeatureInfo]: Sequence of all features.
+        :returns: sequence of all features.
         """
         return list(self._features_schema.values())
 
     @property
     def categorical_features(self) -> "FeatureSchema":
         """
-        Returns:
-            FeatureSchema: Sequence of categorical features in a schema.
+        :returns: sequence of categorical features in a schema.
         """
         return self.filter(feature_type=FeatureType.CATEGORICAL)
 
     @property
     def numerical_features(self) -> "FeatureSchema":
         """
-        Returns:
-            FeatureSchema: Sequence of numerical features in a schema.
+        :returns: sequence of numerical features in a schema.
         """
         return self.filter(feature_type=FeatureType.NUMERICAL)
 
     @property
     def interaction_features(self) -> "FeatureSchema":
         """
-        Returns:
-            FeatureSchema: Sequence of interaction features in a schema.
+        :returns: sequence of interaction features in a schema.
         """
         return (
             self.filter(feature_source=FeatureSource.INTERACTIONS)
@@ -266,80 +252,70 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     @property
     def query_features(self) -> "FeatureSchema":
         """
-        Returns:
-            FeatureSchema: Sequence of query features in a schema.
+        :returns: sequence of query features in a schema.
         """
         return self.filter(feature_source=FeatureSource.QUERY_FEATURES)
 
     @property
     def item_features(self) -> "FeatureSchema":
         """
-        Returns:
-            FeatureSchema: Sequence of item features in a schema.
+        :returns: sequence of item features in a schema.
         """
         return self.filter(feature_source=FeatureSource.ITEM_FEATURES)
 
     @property
     def interactions_rating_features(self) -> "FeatureSchema":
         """
-        Returns:
-            FeatureSchema: Sequence of interactions-rating features in a schema.
+        :returns: sequence of interactions-rating features in a schema.
         """
         return self.filter(feature_source=FeatureSource.INTERACTIONS, feature_hint=FeatureHint.RATING)
 
     @property
     def interactions_timestamp_features(self) -> "FeatureSchema":
         """
-        Returns:
-            FeatureSchema: Sequence of interactions-timestamp features in a schema.
+        :returns: sequence of interactions-timestamp features in a schema.
         """
         return self.filter(feature_source=FeatureSource.INTERACTIONS, feature_hint=FeatureHint.TIMESTAMP)
 
     @property
     def columns(self) -> Sequence[str]:
         """
-        Returns:
-            Sequence[str]: List of all feature's column names.
+        :returns: list of all feature's column names.
         """
         return list(self._features_schema)
 
     @property
     def query_id_feature(self) -> FeatureInfo:
         """
-        Returns:
-            FeatureSchema: Sequence of query id features in a schema.
+        :returns: sequence of query id features in a schema.
         """
         return self.filter(feature_hint=FeatureHint.QUERY_ID).item()
 
     @property
     def item_id_feature(self) -> FeatureInfo:
         """
-        Returns:
-            FeatureSchema: Sequence of item id features in a schema.
+        :returns: sequence of item id features in a schema.
         """
         return self.filter(feature_hint=FeatureHint.ITEM_ID).item()
 
     @property
     def query_id_column(self) -> str:
         """
-        Returns:
-            str: Query id column name.
+        :returns: query id column name.
         """
         return self.query_id_feature.column
 
     @property
     def item_id_column(self) -> str:
         """
-        Returns:
-            str: Item id column name.
+        :returns: item id column name.
         """
         return self.item_id_feature.column
 
     @property
     def interactions_rating_column(self) -> Optional[str]:
         """
-        Returns:
-            Optional[str]: Interactions-rating column name.
+        :returns: interactions-rating column name.
         """
         interactions_rating_features = self.interactions_rating_features
         if not interactions_rating_features:
@@ -349,8 +325,7 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     @property
     def interactions_timestamp_column(self) -> Optional[str]:
         """
-        Returns:
-            Optional[str]: Interactions-timestamp column name.
+        :returns: interactions-timestamp column name.
         """
         interactions_timestamp_features = self.interactions_timestamp_features
         if not interactions_timestamp_features:
@@ -366,18 +341,16 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     ) -> "FeatureSchema":
         """Filter list by ``column``, ``feature_source``, ``feature_type`` and ``feature_hint``.
 
-        Args:
-            column (Optional[str]): Column name to filter by.
-                default: ``None``.
-            feature_hint (Optional[FeatureHint]): Feature hint to filter by.
-                default: ``None``.
-            feature_source (Optional[FeatureSource]): Feature source to filter by.
-                default: ``None``.
-            feature_type (Optional[FeatureType]): Feature type to filter by.
-                default: ``None``.
+        :param column: Column name to filter by.
+            default: ``None``.
+        :param feature_hint: Feature hint to filter by.
+            default: ``None``.
+        :param feature_source: Feature source to filter by.
+            default: ``None``.
+        :param feature_type: Feature type to filter by.
+            default: ``None``.
 
-        Returns:
-            FeatureSchema: New filtered feature schema.
+        :returns: new filtered feature schema.
         """
         filtered_features = self.all_features
         filter_functions = [self._name_filter, self._source_filter, self._type_filter, self._hint_filter]
@@ -401,18 +374,16 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     ) -> "FeatureSchema":
         """Drop features from list by ``column``, ``feature_source``, ``feature_type`` and ``feature_hint``.
 
-        Args:
-            column (Optional[str]): Column name to filter by.
-                default: ``None``.
-            feature_hint (Optional[FeatureHint]): Feature hint to filter by.
-                default: ``None``.
-            feature_source (Optional[FeatureSource]): Feature source to filter by.
-                default: ``None``.
-            feature_type (Optional[FeatureType]): Feature type to filter by.
-                default: ``None``.
+        :param column: Column name to filter by.
+            default: ``None``.
+        :param feature_hint: Feature hint to filter by.
+            default: ``None``.
+        :param feature_source: Feature source to filter by.
+            default: ``None``.
+        :param feature_type: Feature type to filter by.
+            default: ``None``.
 
-        Returns:
-            FeatureSchema: New filtered feature schema without selected features.
+        :returns: new filtered feature schema without selected features.
         """
         filtered_features = self.all_features
         filter_functions = [self._name_drop, self._source_drop, self._type_drop, self._hint_drop]
@@ -455,6 +426,7 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     def _type_drop(value: FeatureInfo, feature_type: FeatureType) -> bool:
         return value.feature_type != feature_type if feature_type else True
 
+    # pylint: disable=no-self-use
     @staticmethod
     def _hint_drop(value: FeatureInfo, feature_hint: FeatureHint) -> bool:
         return value.feature_hint != feature_hint if feature_hint else True

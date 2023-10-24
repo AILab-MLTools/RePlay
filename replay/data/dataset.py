@@ -1,3 +1,6 @@
+"""
+``Dataset`` universal dataset class for manipulating interactions and feed data to models.
+"""
 from __future__ import annotations
 
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
@@ -31,18 +34,17 @@ class Dataset:
         categorical_encoded: bool = False,
     ):
         """
-        Args:
-            feature_schema (FeatureSchema): mapping of columns names and feature infos.
-            interactions (PandasDataFrame or SparkDataFrame): dataframe with interactions.
-            query_features(PandasDataFrame or SparkDataFrame, optional): dataframe with query features,
-                defaults: ```None```.
-            item_features(PandasDataFrame or SparkDataFrame, optional): dataframe with item features,
-                defaults: ```None```.
-            check_consistency(bool): the parameter responsible for checking the consistency of the data,
-                defaults: ```True```.
-            categorical_encoded(bool): the parameter responsible for checking the categorical features
-                encoded validity,
-                defaults: ```False```.
+        :param feature_schema: mapping of columns names and feature infos.
+        :param interactions: dataframe with interactions.
+        :param query_features: dataframe with query features,
+            defaults: ```None```.
+        :param item_features: dataframe with item features,
+            defaults: ```None```.
+        :param check_consistency: the parameter responsible for checking the consistency of the data,
+            defaults: ```True```.
+        :param categorical_encoded: the parameter responsible for checking the categorical features
+            encoded validity,
+            defaults: ```False```.
         """
         self._interactions = interactions
         self._query_features = query_features
@@ -93,40 +95,35 @@ class Dataset:
     @property
     def is_categorical_encoded(self) -> bool:
         """
-        Returns:
-            bool: Is categorical features are encoded.
+        :returns: is categorical features are encoded.
         """
         return self._categorical_encoded
 
     @property
     def interactions(self) -> DataFrameLike:
         """
-        Returns:
-            DataFrameLike: Interactions dataset.
+        :returns: interactions dataset.
         """
         return self._interactions
 
     @property
     def query_features(self) -> Optional[DataFrameLike]:
         """
-        Returns:
-            Optional[DataFrameLike]: Query features dataset.
+        :returns: query features dataset.
         """
         return self._query_features
 
     @property
     def item_features(self) -> Optional[DataFrameLike]:
         """
-        Returns:
-            Optional[DataFrameLike]: Item features dataset.
+        :returns: item features dataset.
         """
         return self._item_features
 
     @property
     def query_ids(self) -> DataFrameLike:
         """
-        Returns:
-            Optional[DataFrameLike]: Dataset with unique query ids.
+        :returns: dataset with unique query ids.
         """
         query_column_df = self._ids_feature_map[FeatureHint.QUERY_ID]
         if self.is_pandas:
@@ -141,8 +138,7 @@ class Dataset:
     @property
     def item_ids(self) -> DataFrameLike:
         """
-        Returns:
-            Optional[DataFrameLike]: Dataset with unique item ids.
+        :returns: dataset with unique item ids.
         """
         item_column_df = self._ids_feature_map[FeatureHint.ITEM_ID]
         if self.is_pandas:
@@ -158,8 +154,7 @@ class Dataset:
     @property
     def query_count(self) -> int:
         """
-        Returns:
-            int: The number of queries.
+        :returns: the number of queries.
         """
         query_count = self.feature_schema.query_id_feature.cardinality
         assert query_count is not None
@@ -168,8 +163,7 @@ class Dataset:
     @property
     def item_count(self) -> int:
         """
-        Returns:
-            int: The number of items.
+        :returns: The number of items.
         """
         item_count = self.feature_schema.item_id_feature.cardinality
         assert item_count is not None
@@ -178,8 +172,7 @@ class Dataset:
     @property
     def feature_schema(self) -> FeatureSchema:
         """
-        Returns:
-            FeaturesInfoList: List of features.
+        :returns: List of features.
         """
         return self._feature_schema
 
@@ -188,12 +181,8 @@ class Dataset:
         Sets the storage level to persist SparkDataFrame for interactions, item_features
         and user_features.
 
-        Args:
-            storage_level (StorageLevel): Storage level to set for persistance.
-                default: ```MEMORY_AND_DISK_DESER```.
-
-        Returns:
-            None
+        :param storage_level: storage level to set for persistance.
+            default: ```MEMORY_AND_DISK_DESER```.
         """
         if self.is_spark:
             self.interactions.persist(storage_level)
@@ -207,12 +196,8 @@ class Dataset:
         Marks SparkDataFrame as non-persistent, and remove all blocks for it from memory and disk
         for interactions, item_features and user_features.
 
-        Args:
-            blocking (bool): Whether to block until all blocks are deleted.
-                default: ```False```.
-
-        Returns:
-            None
+        :param blocking: whether to block until all blocks are deleted.
+            default: ```False```.
         """
         if self.is_spark:
             self.interactions.unpersist(blocking)
@@ -225,9 +210,6 @@ class Dataset:
         """
         Persists the SparkDataFrame with the default storage level (MEMORY_AND_DISK)
         for interactions, item_features and user_features.
-
-        Returns:
-            None
         """
         if self.is_spark:
             self.interactions.cache()
@@ -241,11 +223,9 @@ class Dataset:
         Returns subset of features. Keeps query and item IDs even if
         the corresponding sources are not explicitly passed to this functions.
 
-        Args:
-            features_to_keep (Iterable[str]): Sequence of features to keep.
+        :param features_to_keep: sequence of features to keep.
 
-        Returns:
-            Dataset: New Dataset with given features.
+        :returns: new Dataset with given features.
         """
         # We always need to have query and item ID features in interactions dataset
         features_to_keep_set = set(features_to_keep)
@@ -469,12 +449,10 @@ def nunique(data: DataFrameLike, column: str) -> int:
     """
     Returns number of unique values of specified column in dataframe.
 
-    Args:
-        data (DataFrameLike): Dataframe.
-        column (str): Column name.
+    :param data: dataframe.
+    :param column: column name.
 
-    Returns:
-        (int): Number of unique values.
+    :returns: number of unique values.
     """
     if isinstance(data, SparkDataFrame):
         return data.select(column).distinct().count()
@@ -483,12 +461,10 @@ def nunique(data: DataFrameLike, column: str) -> int:
 
 def select(data: DataFrameLike, columns: Sequence[str]) -> DataFrameLike:
     """
-    Args:
-        data (DataFrameLike): Dataframe.
-        columns (Sequence[str]): Sequence of column names to select.
+    :param data: dataframe.
+    :param columns: sequence of column names to select.
 
-    Returns:
-        (DataFrameLike): Selected data in the same format as input dataframe.
+    :returns: selected data in the same format as input dataframe.
     """
     if isinstance(data, SparkDataFrame):
         return data.select(*columns)
