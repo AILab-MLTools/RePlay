@@ -83,7 +83,7 @@ test-production-package:
   <<: *install_replay
   stage: test
   script:
-    - pytest --ignore=replay/experimental --ignore-glob=tests/experimental/*
+    - pytest -m "not experimental" --ignore=replay/experimental --ignore-glob=tests/experimental/*
     - mv .coverage .coverage_production
   artifacts:
     paths:
@@ -94,7 +94,7 @@ test-experimental-package:
   <<: *install_experimental_replay
   stage: test
   script:
-    - pytest tests/experimental/
+    - pytest -m experimental
     - mv .coverage .coverage_experimental
   artifacts:
     paths:
@@ -110,7 +110,7 @@ merge-coverage:
     - poetry install --only dev # install testing tools
   script:
     - coverage combine .coverage_production .coverage_experimental
-    - coverage report
+    - coverage report --fail-under=93
     - coverage xml
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
