@@ -74,11 +74,12 @@ If you are installing from the source, you will need Python 3.7.1-3.9.*.
 3. Install RePlay:
 
     ```bash
-    pip install poetry==1.5.1 lightfm==1.17
+    pip install poetry==1.5.1
     ./poetry_wrapper.sh install
     ```
     **If you want to install Replay with the experimental module**:
     ```bash
+    pip install lightfm==1.17
     ./poetry_wrapper.sh --experimental install
     ```
     After that, there is an environment, where you can test and implement your own code.
@@ -89,7 +90,6 @@ If you are installing from the source, you will need Python 3.7.1-3.9.*.
 4. **optional**: Build wheel package:
 
     ```bash
-    pip install poetry==1.5.1 lightfm==1.17
     ./poetry_wrapper.sh build
     ```
     **If you want to build Replay package with the experimental module**:

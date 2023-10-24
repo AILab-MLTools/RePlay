@@ -59,7 +59,6 @@ if [ "${MODE}" = "run" ]; then
   # Remove generated poetry files
   rm -f ${SCRIPT_DIR}/pyproject.toml
   rm -f ${SCRIPT_DIR}/poetry.lock
-  rm -f ${SCRIPT_DIR}/poetry_build.py
 
   # Sometimes poetry does not cleanup temporary files, so delete this explicitly
   rm -f ${SCRIPT_DIR}/build.py
