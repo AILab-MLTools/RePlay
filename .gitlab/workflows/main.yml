@@ -12,18 +12,27 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 .setup_env: &setup_env
-  - pip install -q --upgrade pip wheel poetry==1.5.1 poetry-dynamic-versioning lightfm==1.17
+  - pip install -q --upgrade pip wheel poetry==1.5.1 poetry-dynamic-versioning
+
+.setup_experimental_env: &setup_experimental_env
+  - *setup_env
+  - pip install -q --upgrade lightfm==1.17
 
 .install_replay: &install_replay
   before_script:
     - *setup_env
+    - ./poetry_wrapper.sh install
+
+.install_experimental_replay: &install_experimental_replay
+  before_script:
+    - *setup_experimental_env
     - ./poetry_wrapper.sh --experimental install
 
 cache: &global_cache
   key: ${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHORT_SHA}
   paths:
-    - .cache/pip
-    - .cache/pypoetry
+    - ./.cache/pip
+    - ./.cache/pypoetry
   policy: pull
 
 stages:
@@ -38,7 +47,7 @@ resolve-job:
     <<: *global_cache
     policy: push
   script:
-    - *setup_env
+    - *setup_experimental_env
     - poetry --version
     - pip --version
     - ./poetry_wrapper.sh --experimental install
@@ -52,25 +61,31 @@ resolve-job:
     expire_in: 2 week
 
 pylint-job:
-  <<: *install_replay
+  <<: *install_experimental_replay
   stage: code_quality
   script:
     - pylint replay
 
 pycodestyle-job:
-  <<: *install_replay
+  <<: *install_experimental_replay
   stage: code_quality
   script:
     - pycodestyle replay tests
 
 sphinx-job:
-  <<: *install_replay
+  <<: *install_experimental_replay
   stage: code_quality
   script:
     - make -C docs clean html
 
-test-job:
+test-production-package:
   <<: *install_replay
+  stage: test
+  script:
+    - pytest --ignore=replay/experimental --ignore-glob=tests/experimental/*
+
+test-experimental-package:
+  <<: *install_experimental_replay
   stage: test
   script:
     - pytest
