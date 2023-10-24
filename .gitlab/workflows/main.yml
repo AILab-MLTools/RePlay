@@ -38,9 +38,10 @@ cache: &global_cache
 stages:
   - resolve
   - code_quality
-  - test
-  - build packages
+  - test production
+  - test experimental
   - merge coverage
+  - build packages
 
 resolve-job:
   stage: resolve
@@ -81,7 +82,7 @@ sphinx-job:
 
 test-production-package:
   <<: *install_replay
-  stage: test
+  stage: test production
   script:
     - pytest -m "not experimental"
     - mv .coverage .coverage_production
@@ -92,18 +93,18 @@ test-production-package:
 
 test-experimental-package:
   <<: *install_experimental_replay
-  stage: test
+  stage: test experimental
   script:
     - pytest -m experimental
     - mv .coverage .coverage_experimental
   artifacts:
     paths:
       - .coverage_experimental
+      - .coverage_production
     expire_in: 1 day
 
 merge-coverage:
   stage: merge coverage
-  image: ${image}
   before_script:
     - *setup_env
     - ./poetry_wrapper.sh --generate
