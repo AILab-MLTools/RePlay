@@ -1,4 +1,9 @@
-# pylint: skip-file
+"""
+Contains classes for encoding categorical data
+
+``LabelEncoderTransformWarning`` new category of warning for DatasetLabelEncoder.
+``DatasetLabelEncoder`` to encode categorical features in `Dataset` objects.
+"""
 import warnings
 from typing import Dict, Iterable, Iterator, Optional, Sequence, Set, Union
 
@@ -8,7 +13,7 @@ from replay.preprocessing.label_encoder import HandleUnknownStrategies
 
 
 class LabelEncoderTransformWarning(Warning):
-    pass
+    """Label encoder transform warning."""
 
 
 class DatasetLabelEncoder:
@@ -22,20 +27,19 @@ class DatasetLabelEncoder:
         default_value_rule: Optional[Union[int, str]] = None,
     ) -> None:
         """
-        Args:
-            handle_unknown_rule (``error``, ``use_default_value``):
-                When set to ``error`` an error will be raised in case an unknown label is present during transform.
-                When set to ``use_default_value``, the encoded value of unknown label will be set
-                to the value given for the parameter default_value.
-                Default: ``error``.
-            default_value (int, str, optional): Default value that will fill the unknown labels after transform.
-                When the parameter handle_unknown is set to ``use_default_value``,
-                this parameter is required and will set the encoded value of unknown labels.
-                It has to be distinct from the values used to encode any of the labels in fit.
-                If ``None``, then keep null.
-                If ``int`` value, then fill by that value.
-                If ``str`` value, should be \"last\" only, then fill by ``n_classes`` value.
-                Default: ``None``.
+        :param handle_unknown_rule:
+            When set to ``error`` an error will be raised in case an unknown label is present during transform.
+            When set to ``use_default_value``, the encoded value of unknown label will be set
+            to the value given for the parameter default_value.
+            Default: ``error``.
+        :param default_value: Default value that will fill the unknown labels after transform.
+            When the parameter handle_unknown is set to ``use_default_value``,
+            this parameter is required and will set the encoded value of unknown labels.
+            It has to be distinct from the values used to encode any of the labels in fit.
+            If ``None``, then keep null.
+            If ``int`` value, then fill by that value.
+            If ``str`` value, should be \"last\" only, then fill by ``n_classes`` value.
+            Default: ``None``.
         """
         self._handle_unknown_rule = handle_unknown_rule
         self._default_value_rule = default_value_rule
@@ -44,15 +48,12 @@ class DatasetLabelEncoder:
         self._features_columns: Dict[Union[FeatureHint, FeatureSource], Sequence[str]] = {}
 
     def fit(self, dataset: Dataset) -> "DatasetLabelEncoder":
-        """Fits an encoder by the input Dataset for categorical features.
+        """
+        Fits an encoder by the input Dataset for categorical features.
 
-        Args:
-            dataset (Dataset): The Dataset object.
-
-        Returns:
-            self (DatasetLabelEncoder): fitted encoder.
-
-        Raises:
+        :param dataset: the Dataset object.
+        :returns: fitted DatasetLabelEncoder.
+        :raises:
             AssertionError: if any of `dataset` categorical features contains
                 invalid ``FeatureSource`` type.
         """
@@ -89,13 +90,11 @@ class DatasetLabelEncoder:
         self,
         dataset: Dataset,
     ) -> Dataset:
-        """Transforms the input Dataset categorical features by rules.
+        """
+        Transforms the input Dataset categorical features by rules.
 
-        Args:
-            dataset (Dataset): The Dataset object.
-
-        Returns:
-            Dataset: Transformed dataset.
+        :param dataset: The Dataset object.
+        :returns: transformed dataset.
         """
         self._check_if_initialized()
 
@@ -140,24 +139,20 @@ class DatasetLabelEncoder:
         return dataset_copy
 
     def fit_transform(self, dataset: Dataset) -> Dataset:
-        """Fits an encoder and transforms the input Dataset categorical features.
+        """
+        Fits an encoder and transforms the input Dataset categorical features.
 
-        Args:
-            dataset (Dataset): The Dataset object.
-
-        Returns:
-            Dataset: Transformed dataset.
+        :param dataset: the Dataset object.
+        :returns: transformed dataset.
         """
         return self.fit(dataset).transform(dataset)
 
     def get_encoder(self, columns: Union[str, Iterable[str]]) -> Optional[LabelEncoder]:
-        """Get the encoder of fitted Dataset for columns.
+        """
+        Get the encoder of fitted Dataset for columns.
 
-        Args:
-            columns (Union[str, Iterable[str]]): Columns to filter by.
-
-        Returns:
-            Optional[LabelEncoder]: Label encoder.
+        :param columns: columns to filter by.
+        :returns: LabelEncoder.
         """
         self._check_if_initialized()
 
@@ -181,8 +176,7 @@ class DatasetLabelEncoder:
     @property
     def query_id_encoder(self) -> LabelEncoder:
         """
-        Returns:
-            LabelEncoder: Query id label encoder.
+        :returns: query id LabelEncoder.
         """
         query_id_column = self._features_columns[FeatureHint.QUERY_ID]
         encoder = self.get_encoder(query_id_column)
@@ -192,8 +186,7 @@ class DatasetLabelEncoder:
     @property
     def item_id_encoder(self) -> LabelEncoder:
         """
-        Returns:
-            LabelEncoder: Item id label encoder.
+        :returns: item id LabelEncoder.
         """
         item_id_column = self._features_columns[FeatureHint.ITEM_ID]
         encoder = self.get_encoder(item_id_column)
@@ -203,8 +196,7 @@ class DatasetLabelEncoder:
     @property
     def query_and_item_id_encoder(self) -> LabelEncoder:
         """
-        Returns:
-            LabelEncoder: Query id and Item id label encoder.
+        :returns: query id and item id LabelEncoder.
         """
         query_id_column = self._features_columns[FeatureHint.QUERY_ID]
         item_id_column = self._features_columns[FeatureHint.ITEM_ID]
@@ -215,8 +207,7 @@ class DatasetLabelEncoder:
     @property
     def interactions_encoder(self) -> Optional[LabelEncoder]:
         """
-        Returns:
-            LabelEncoder: Interactions label encoder.
+        :returns: interactions LabelEncoder.
         """
 
         interactions_columns = self._features_columns[FeatureSource.INTERACTIONS]
@@ -225,8 +216,7 @@ class DatasetLabelEncoder:
     @property
     def query_features_encoder(self) -> Optional[LabelEncoder]:
         """
-        Returns:
-            LabelEncoder: Query features label encoder.
+        :returns: query features LabelEncoder.
         """
         query_features_columns = self._features_columns[FeatureSource.QUERY_FEATURES]
         return self.get_encoder(query_features_columns)
@@ -234,8 +224,7 @@ class DatasetLabelEncoder:
     @property
     def item_features_encoder(self) -> Optional[LabelEncoder]:
         """
-        Returns:
-            LabelEncoder: Item features label encoder.
+        :returns: item features LabelEncoder.
         """
         item_features_columns = self._features_columns[FeatureSource.ITEM_FEATURES]
         return self.get_encoder(item_features_columns)

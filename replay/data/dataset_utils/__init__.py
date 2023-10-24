@@ -1,1 +1,1 @@
-from .label_encoder import DatasetLabelEncoder
+from .dataset_label_encoder import DatasetLabelEncoder

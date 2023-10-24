@@ -1,4 +1,10 @@
-# pylint: skip-file
+"""
+Contains classes for encoding categorical data
+
+``LabelEncodingRule`` to encode categorical data with value between 0 and n_classes-1 for single column.
+    Recommended to use together with the LabelEncoder.
+``LabelEncoder`` to apply multiple LabelEncodingRule to dataframe.
+"""
 import abc
 from typing import Dict, List, Literal, Mapping, Optional, Sequence, Union
 
@@ -14,6 +20,7 @@ DataFrameLike = Union[PandasDataFrame, SparkDataFrame]
 HandleUnknownStrategies = Literal["error", "use_default_value"]
 
 
+# pylint: disable=missing-function-docstring
 class BaseLabelEncodingRule(abc.ABC):  # pragma: no cover
     """
     Interface of the label encoding rule
@@ -57,6 +64,7 @@ class BaseLabelEncodingRule(abc.ABC):  # pragma: no cover
         raise NotImplementedError()
 
 
+# pylint: disable=too-many-instance-attributes
 class LabelEncodingRule(BaseLabelEncodingRule):
     """
     Implementation of the encoding rule for categorical variables of PySpark and Pandas Data Frames.
@@ -76,25 +84,24 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         default_value: Optional[Union[int, str]] = None,
     ):
         """
-        Args:
-            column (str): Name of the column to encode.
-            mapping (Mapping, optional): Prepared mapping for the column.
-                If ``None``, then fit is necessary.
-                If not ``None``, then the fit call does not change the already prepared mapping.
-                Default: ``None``.
-            handle_unknown (``error``, ``use_default_value``):
-                When set to ``error`` an error will be raised in case an unknown label is present during transform.
-                When set to ``use_default_value``, the encoded value of unknown label will be set
-                to the value given for the parameter default_value.
-                Default: ``error``.
-            default_value (int, str, optional): Default value that will fill the unknown labels after transform.
-                When the parameter handle_unknown is set to ``use_default_value``,
-                this parameter is required and will set the encoded value of unknown labels.
-                It has to be distinct from the values used to encode any of the labels in fit.
-                If ``None``, then keep null.
-                If ``int`` value, then fill by that value.
-                If ``str`` value, should be \"last\" only, then fill by ``n_classes`` value.
-                Default: ``None``.
+        :param column: Name of the column to encode.
+        :param mapping: Prepared mapping for the column.
+            If ``None``, then fit is necessary.
+            If not ``None``, then the fit call does not change the already prepared mapping.
+            Default: ``None``.
+        :param handle_unknown:
+            When set to ``error`` an error will be raised in case an unknown label is present during transform.
+            When set to ``use_default_value``, the encoded value of unknown label will be set
+            to the value given for the parameter default_value.
+            Default: ``error``.
+        :param default_value: Default value that will fill the unknown labels after transform.
+            When the parameter handle_unknown is set to ``use_default_value``,
+            this parameter is required and will set the encoded value of unknown labels.
+            It has to be distinct from the values used to encode any of the labels in fit.
+            If ``None``, then keep null.
+            If ``int`` value, then fill by that value.
+            If ``str`` value, should be \"last\" only, then fill by ``n_classes`` value.
+            Default: ``None``.
         """
         if handle_unknown not in self._HANDLE_UNKNOWN_STRATEGIES:
             raise ValueError(f"handle_unknown should be either 'error' or 'use_default_value', got {handle_unknown}.")
@@ -111,6 +118,7 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         self._col = column
         self._target_col = column + self._ENCODED_COLUMN_SUFFIX
         self._mapping = mapping
+        self._is_fitted = False
         if self._mapping is not None:
             self._inverse_mapping = self._make_inverse_mapping()
             self._inverse_mapping_list = self._make_inverse_mapping_list()
@@ -134,8 +142,8 @@ class LabelEncodingRule(BaseLabelEncodingRule):
 
     def _make_inverse_mapping_list(self) -> List:
         inverse_mapping_list = [0 for _ in range(len(self.get_mapping()))]
-        for k, v in self.get_mapping().items():
-            inverse_mapping_list[v] = k
+        for k, value in self.get_mapping().items():
+            inverse_mapping_list[value] = k
         return inverse_mapping_list
 
     def _fit_spark(self, df: SparkDataFrame) -> None:
@@ -157,6 +165,12 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         self._mapping = {val: key for key, val in unique_col_values.to_dict().items()}
 
     def fit(self, df: DataFrameLike) -> "LabelEncodingRule":
+        """
+        Fits encoder to input dataframe.
+
+        :param df: input dataframe.
+        :returns: fitted EncodingRule.
+        """
         if self._mapping is not None:
             return self
 
@@ -209,6 +223,12 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         self._inverse_mapping_list.extend(new_data.keys())
 
     def partial_fit(self, df: DataFrameLike) -> "LabelEncodingRule":
+        """
+        Fits new data to already fitted encoder.
+
+        :param df: input dataframe.
+        :returns: fitted EncodingRule.
+        """
         if self._mapping is None:
             return self.fit(df)
 
@@ -273,6 +293,12 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         return result_df
 
     def transform(self, df: DataFrameLike) -> DataFrameLike:
+        """
+        Transforms input dataframe with fitted encoder.
+
+        :param df: input dataframe.
+        :returns: transformed dataframe.
+        """
         if self._mapping is None:
             raise RuntimeError("Label encoder is not fitted")
 
@@ -301,6 +327,12 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         return transformed_df
 
     def inverse_transform(self, df: DataFrameLike) -> DataFrameLike:
+        """
+        Reverse transform of transformed dataframe.
+
+        :param df: transformed dataframe.
+        :returns: initial dataframe.
+        """
         if self._mapping is None:
             raise RuntimeError("Label encoder is not fitted")
 
@@ -311,11 +343,22 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         return transformed_df
 
     def set_default_value(self, default_value: Optional[Union[int, str]]) -> None:
+        """
+        Sets default value to deal with unknown labels.
+        Used when handle_unknown_strategy is 'use_default_value'.
+
+        :param default_value: default value.
+        """
         if default_value is not None and not isinstance(default_value, int) and default_value != "last":
             raise ValueError("Default value should be None, int or 'last'")
         self._default_value = default_value
 
     def set_handle_unknown(self, handle_unknown: HandleUnknownStrategies) -> None:
+        """
+        Sets strategy to handle unknown labels.
+
+        :param handle_unknown: handle unknown strategy.
+        """
         if handle_unknown not in self._HANDLE_UNKNOWN_STRATEGIES:
             raise ValueError(f"handle_unknown should be either 'error' or 'use_default_value', got {handle_unknown}.")
         self._handle_unknown = handle_unknown
@@ -368,8 +411,7 @@ class LabelEncoder:
 
     def __init__(self, rules: Sequence[BaseLabelEncodingRule]):
         """
-        Args:
-            rules (Sequence): Sequence of rules.
+        :param rules: Sequence of rules.
         """
         self.rules = rules
 
@@ -391,8 +433,8 @@ class LabelEncoder:
         """
         Fits an encoder by the input data frame with given rules.
 
-        Args:
-            df (PySpark DataFrame or Pandas DataFrame): Input data frame.
+        :param df: input dataframe.
+        :returns: fitted LabelEncoder.
         """
         for rule in self.rules:
             rule.fit(df)
@@ -403,8 +445,8 @@ class LabelEncoder:
         Fits an already fitted encoder by the new input data frame with given rules.
         If encoder has not been fitted yet - performs default fit.
 
-        Args:
-            df (PySpark DataFrame or Pandas DataFrame): Input data frame.
+        :param df: input dataframe.
+        :returns: fitted LabelEncoder.
         """
         for rule in self.rules:
             rule.partial_fit(df)
@@ -415,8 +457,8 @@ class LabelEncoder:
         Transforms the input data frame.
         If the input data frame contains unknown labels then they will be transformed by handle unknown strategy.
 
-        Args:
-            df (PySpark DataFrame or Pandas DataFrame): Input data frame.
+        :param df: input dataframe.
+        :returns: transformed dataframe.
         """
         for rule in self.rules:
             df = rule.transform(df)
@@ -426,8 +468,8 @@ class LabelEncoder:
         """
         Performs inverse transform of the input data frame.
 
-        Args:
-            df (PySpark DataFrame or Pandas DataFrame): Input data frame.
+        :param df: input dataframe.
+        :returns: initial dataframe.
         """
         for rule in self.rules:
             df = rule.inverse_transform(df)
@@ -437,8 +479,8 @@ class LabelEncoder:
         """
         Fits an encoder by the input data frame with given rules and transforms the input data frame.
 
-        Args:
-            df (PySpark DataFrame or Pandas DataFrame): Input data frame.
+        :param df: input dataframe.
+        :returns: transformed dataframe.
         """
         return self.fit(df).transform(df)
 
@@ -446,8 +488,7 @@ class LabelEncoder:
         """
         Modify handle unknown strategy on already fitted encoder.
 
-        Args:
-        handle_unknown_rules : {col_name : (``error``, ``use_default_value``)}
+        :param handle_unknown_rules: handle unknown rule.
 
         Example: {"item_id" : None, "user_id" : -1, "category_column" : "last"}
 
@@ -470,8 +511,7 @@ class LabelEncoder:
         Default value that will fill the unknown labels
         after transform if handle_unknown is set to ``use_default_value``.
 
-        Args:
-        default_value_rules (Dict[Optional[Union[int, str]]]): {col_name : default_value}
+        :param default_value_rules: Dictionary of default values to set for columns.
 
         Example: {"item_id" : "error", "user_id" : "use_default_value"}
 
