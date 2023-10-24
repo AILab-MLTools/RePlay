@@ -40,6 +40,7 @@ stages:
   - code_quality
   - test
   - build packages
+  - merge coverage
 
 resolve-job:
   stage: resolve
@@ -83,12 +84,41 @@ test-production-package:
   stage: test
   script:
     - pytest --ignore=replay/experimental --ignore-glob=tests/experimental/*
+    - mv .coverage .coverage_production
+  artifacts:
+    paths:
+      - .coverage_production
+    expire_in: 1 day
 
 test-experimental-package:
   <<: *install_experimental_replay
   stage: test
   script:
     - pytest
+    - mv .coverage .coverage_experimental
+  artifacts:
+    paths:
+      - .coverage_experimental
+    expire_in: 1 day
+
+merge-coverage:
+  stage: merge coverage
+  image: ${image}
+  before_script:
+    - *setup_env
+    - ./poetry_wrapper.sh --generate
+    - poetry install --only dev # install testing tools
+  script:
+    - coverage combine .coverage_production .coverage_experimental
+    - coverage report
+    - coverage xml
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
 
 build-production-package:
   rules:
