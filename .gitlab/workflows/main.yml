@@ -47,7 +47,7 @@ resolve-job:
     - pip list > ${dependencies}
   artifacts:
     paths:
-      - poetry.lock
+      - projects/experimental/poetry.lock
       - ${dependencies}
     expire_in: 2 week
 
