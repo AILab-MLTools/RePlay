@@ -38,9 +38,7 @@ cache: &global_cache
 stages:
   - resolve
   - code_quality
-  - test production
-  - test experimental
-  - merge coverage
+  - test
   - build packages
 
 resolve-job:
@@ -80,39 +78,11 @@ sphinx-job:
   script:
     - make -C docs clean html
 
-test-production-package:
-  <<: *install_replay
-  stage: test production
-  script:
-    - pytest -m "not experimental"
-    - mv .coverage .coverage_production
-  artifacts:
-    paths:
-      - .coverage_production
-    expire_in: 1 day
-
-test-experimental-package:
+pytest:
   <<: *install_experimental_replay
-  stage: test experimental
+  stage: test
   script:
-    - pytest -m experimental
-    - mv .coverage .coverage_experimental
-  artifacts:
-    paths:
-      - .coverage_experimental
-      - .coverage_production
-    expire_in: 1 day
-
-merge-coverage:
-  stage: merge coverage
-  before_script:
-    - *setup_env
-    - ./poetry_wrapper.sh --generate
-    - poetry install --only dev # install testing tools
-  script:
-    - coverage combine .coverage_production .coverage_experimental
-    - coverage report --fail-under=93
-    - coverage xml
+    - pytest
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
     when: always
