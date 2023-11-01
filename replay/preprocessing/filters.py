@@ -4,6 +4,7 @@ Select or remove data by some criteria
 from datetime import datetime, timedelta
 from typing import Union, Optional, Tuple
 from abc import ABC, abstractmethod
+from replay.data import AnyDataFrame
 
 from pyspark.sql import DataFrame as SparkDataFrame, Window, functions as sf
 from pyspark.sql.functions import col
@@ -72,23 +73,22 @@ class MinMaxInteractionsFilter(BaseFilter):
         max_inter_per_item: Optional[int] = None,
     ):
         r"""
-        Args:
-            query_column (str): Name of user interaction column,
-                default: ``query_id``.
-            item_column (str): Name of item interaction column,
-                default: ``item_id``.
-            min_inter_per_user (int, optional): Minimum positive value of
-                interactions per user. If None, filter doesn't apply,
-                default: ``None``.
-            max_inter_per_user (int, optional): Maximum positive value of
-                interactions per user. If None, filter doesn't apply. Must be
-                less than `min_inter_per_user`, default: ``None``.
-            min_inter_per_item (int, optional): Minimum positive value of
-                interactions per item. If None, filter doesn't apply,
-                default: ``None``.
-            max_inter_per_item (int, optional): Maximum positive value of
-                interactions per item. If None, filter doesn't apply. Must be
-                less than `min_inter_per_item`, default: ``None``.
+        :param query_column: Name of user interaction column,
+            default: ``query_id``.
+        :param item_column: Name of item interaction column,
+            default: ``item_id``.
+        :param min_inter_per_user: Minimum positive value of
+            interactions per user. If None, filter doesn't apply,
+            default: ``None``.
+        :param max_inter_per_user: Maximum positive value of
+            interactions per user. If None, filter doesn't apply. Must be
+            less than `min_inter_per_user`, default: ``None``.
+        :param min_inter_per_item: Minimum positive value of
+            interactions per item. If None, filter doesn't apply,
+            default: ``None``.
+        :param max_inter_per_item: Maximum positive value of
+            interactions per item. If None, filter doesn't apply. Must be
+            less than `min_inter_per_item`, default: ``None``.
         """
         self.query_column = query_column
         self.item_column = item_column
@@ -193,12 +193,10 @@ class MinMaxInteractionsFilter(BaseFilter):
     def transform(self, interactions: AnyDataFrame) -> AnyDataFrame:
         r"""Filter interactions.
 
-        Args:
-            interactions (Union[SparkDataFrame, PandasDataFrame]): DataFrame containing columns
-                ``query_column``, ``item_column``.
+        :param interactions: DataFrame containing columns
+            ``query_column``, ``item_column``.
 
-        Returns:
-            Union[SparkDataFrame, PandasDataFrame]: filtered DataFrame.
+        :returns: filtered DataFrame.
         """
         is_no_dropped_user_item = [False, False]
         current_index = 0
@@ -215,58 +213,12 @@ class MinMaxInteractionsFilter(BaseFilter):
         return interactions
 
 
-def filter_by_min_count(
-    data_frame: AnyDataFrame, num_entries: int, group_by: str = "user_idx"
-) -> SparkDataFrame:
+class MinMaxValuesFilter(BaseFilter):
     """
-    Remove entries with entities (e.g. users, items) which are presented in `data_frame`
-    less than `num_entries` times. The `data_frame` is grouped by `group_by` column,
-    which is entry column name, to calculate counts.
-
+    Remove records with records less or greater than ``value`` in ``column``.
     >>> import pandas as pd
-    >>> data_frame = pd.DataFrame({"user_idx": [1, 1, 2]})
-    >>> filter_by_min_count(data_frame, 2).toPandas()
-       user_idx
-    0         1
-    1         1
-
-    :param data_frame: spark or pandas dataframe to apply filter
-    :param num_entries: minimal number of times the entry should appear in dataset
-        in order to remain
-    :param group_by: entity column, which is used to calculate entity occurrence couns
-    :return: filteder `data_frame`
-    """
-    data_frame = convert2spark(data_frame)
-    input_count = data_frame.count()
-    count_by_group = data_frame.groupBy(group_by).agg(
-        sf.count(group_by).alias(f"{group_by}_temp_count")
-    )
-    remaining_entities = count_by_group.filter(
-        count_by_group[f"{group_by}_temp_count"] >= num_entries
-    ).select(group_by)
-    data_frame = data_frame.join(remaining_entities, on=group_by, how="inner")
-    output_count = data_frame.count()
-    diff = (input_count - output_count) / input_count
-    if diff > 0.5:
-        logger_level = State().logger.warning
-    else:
-        logger_level = State().logger.info
-    logger_level(
-        "current threshold removes %s%% of data",
-        diff,
-    )
-    return data_frame
-
-
-def filter_out_low_ratings(
-    data_frame: AnyDataFrame, value: float, rating_column="relevance"
-) -> SparkDataFrame:
-    """
-    Remove records with records less than ``value`` in ``column``.
-
-    >>> import pandas as pd
-    >>> data_frame = pd.DataFrame({"relevance": [1, 5, 3.5, 4]})
-    >>> filter_out_low_ratings(data_frame, 3.5).show()
+    >>> data_frame = convert2spark(pd.DataFrame({"relevance": [1, 5, 3.5, 4]}))
+    >>> MinMaxValuesFilter(3.5, "relevance").transform(data_frame).show()
     +---------+
     |relevance|
     +---------+
@@ -274,17 +226,41 @@ def filter_out_low_ratings(
     |      3.5|
     |      4.0|
     +---------+
+    >>> MinMaxValuesFilter(3.5, "relevance", True).transform(data_frame).show()
+    +---------+
+    |relevance|
+    +---------+
+    |      1.0|
+    |      3.5|
+    +---------+
     <BLANKLINE>
-
-    :param data_frame: spark or pandas dataframe to apply filter
-    :param value: minimal value the entry should appear in dataset
-        in order to remain
-    :param rating_column: the column in which filtering is performed.
-    :return: filtered DataFrame
     """
-    data_frame = convert2spark(data_frame)
-    data_frame = data_frame.filter(data_frame[rating_column] >= value)
-    return data_frame
+
+    def __init__(
+        self,
+        value: Union[int, float],
+        column: str = "rating",
+        filter_greater: bool = False,
+    ):
+        """
+        :param value: threshold value.
+        :param column: the column in which filtering is performed.
+            default: ``rating``.
+        :param filter_greater: if `True` removes all records that are greater then passed value,
+            if `False` - removes all records that are less then passed value.
+            default: ``False``.
+        """
+        self.value = value
+        self.column = column
+        self.filter_greater = filter_greater
+
+    def transform(self, interactions: SparkDataFrame) -> SparkDataFrame:
+        if self.filter_greater is True:
+            mask = interactions[self.column] <= self.value
+        else:
+            mask = interactions[self.column] >= self.value
+
+        return interactions.filter(mask)
 
 
 # pylint: disable=too-many-arguments,
