@@ -16,5 +16,4 @@ from replay.preprocessing.history_based_fp import (
     HistoryBasedFeaturesProcessor,
     LogStatFeaturesProcessor,
 )
-from .min_max_interactions_filter import MinMaxInteractionsFilter
 from .label_encoder import LabelEncoder, LabelEncodingRule

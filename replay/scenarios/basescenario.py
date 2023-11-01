@@ -6,7 +6,7 @@ from typing import Optional, Union, Iterable, Dict, List, Any, Tuple
 from pyspark.sql import DataFrame
 
 from replay.data import AnyDataFrame
-from replay.preprocessing.filters import filter_by_min_count
+from replay.preprocessing import MinMaxInteractionsFilter
 from replay.metrics import Metric, NDCG
 from replay.models.base_rec import BaseRecommender
 from replay.utils.spark_utils import convert2spark, get_unique_entities
@@ -39,7 +39,7 @@ class BaseScenario(BaseRecommender):
         :param item_features: item features ``[item_id, timestamp]`` + feature columns
         :return:
         """
-        hot_data = filter_by_min_count(log, self.threshold, "user_idx")
+        hot_data = MinMaxInteractionsFilter(log, self.threshold, "user_idx")
         self.hot_users = hot_data.select("user_idx").distinct()
         self._fit_wrap(hot_data, user_features, item_features)
         self.cold_model._fit_wrap(log, user_features, item_features)
