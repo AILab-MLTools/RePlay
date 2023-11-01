@@ -3,6 +3,7 @@ Select or remove data by some criteria
 """
 from datetime import datetime, timedelta
 from typing import Union, Optional, Tuple
+from abc import ABC, abstractmethod
 
 from pyspark.sql import DataFrame, Window, functions as sf
 from pyspark.sql.functions import col
@@ -15,7 +16,14 @@ from replay.utils.spark_utils import convert2spark
 from replay.utils.session_handler import State
 
 
-class MinMaxInteractionsFilter:
+class BaseFilter(ABC):
+    """Base filter class"""
+
+    @abstractmethod
+    def transform(self, interactions: AnyDataFrame) -> AnyDataFrame:    # pragma: no cover
+        pass
+
+class MinMaxInteractionsFilter(BaseFilter):
     """
     Filter interactions with minimal and maximum constraints
 

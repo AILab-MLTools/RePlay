@@ -4,7 +4,7 @@ from typing import Optional, Dict, List, Any, Tuple, Union, Iterable
 from pyspark.sql import DataFrame
 
 from replay.data import AnyDataFrame
-from replay.preprocessing.filters import filter_by_min_count
+from replay.preprocessing.filters import MinMaxInteractionsFilter
 from replay.metrics import Metric, NDCG
 from replay.models import PopRec
 from replay.models.base_rec import BaseRecommender
@@ -56,7 +56,10 @@ class Fallback(BaseRecommender):
         :param item_features: item features ``[item_id, timestamp]`` + feature columns
         :return:
         """
-        hot_data = filter_by_min_count(log, self.threshold, "user_idx")
+        hot_data = MinMaxInteractionsFilter(
+            query_column="user_idx",
+            min_inter_per_user=self.threshold
+        ).transform(log)
         self.hot_users = hot_data.select("user_idx").distinct()
         self._fit_wrap(hot_data, user_features, item_features)
         self.fb_model._fit_wrap(log, user_features, item_features)
@@ -95,7 +98,10 @@ class Fallback(BaseRecommender):
         """
         users = users or log or user_features or self.fit_users
         users = get_unique_entities(users, "user_idx")
-        hot_data = filter_by_min_count(log, self.threshold, "user_idx")
+        hot_data = MinMaxInteractionsFilter(
+            query_column="user_idx",
+            min_inter_per_user=self.threshold
+        ).transform(log)
         hot_users = hot_data.select("user_idx").distinct()
         hot_users = hot_users.join(self.hot_users, on="user_idx")
         hot_users = hot_users.join(users, on="user_idx", how="inner")
