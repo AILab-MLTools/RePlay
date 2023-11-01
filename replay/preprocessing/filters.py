@@ -5,23 +5,29 @@ from datetime import datetime, timedelta
 from typing import Union, Optional, Tuple
 from abc import ABC, abstractmethod
 
-from pyspark.sql import DataFrame, Window, functions as sf
+from pyspark.sql import DataFrame as SparkDataFrame, Window, functions as sf
 from pyspark.sql.functions import col
 from pyspark.sql.types import TimestampType
 from pandas import DataFrame as PandasDataFrame
-from pyspark.sql import DataFrame as SparkDataFrame, Window
 
 from replay.data import AnyDataFrame
 from replay.utils.spark_utils import convert2spark
 from replay.utils.session_handler import State
 
 
+# pylint: disable=too-few-public-methods
 class BaseFilter(ABC):
     """Base filter class"""
 
     @abstractmethod
     def transform(self, interactions: AnyDataFrame) -> AnyDataFrame:    # pragma: no cover
-        pass
+        """
+        Performs filter transformation
+
+        :param interactions: input dataframe to filter
+        :returns: filtered dataframe
+        """
+
 
 class MinMaxInteractionsFilter(BaseFilter):
     """
@@ -132,6 +138,7 @@ class MinMaxInteractionsFilter(BaseFilter):
             interactions, interaction_count, min_inter, max_inter, agg_column, non_agg_column
         )
 
+    # pylint: disable=no-self-use
     def _filter_column_pandas(
         self,
         interactions: PandasDataFrame,
@@ -157,6 +164,7 @@ class MinMaxInteractionsFilter(BaseFilter):
 
         return filtered_interactions, different_len, end_len_dataframe
 
+    # pylint: disable=no-self-use
     def _filter_column_spark(
         self,
         interactions: SparkDataFrame,
@@ -209,7 +217,7 @@ class MinMaxInteractionsFilter(BaseFilter):
 
 def filter_by_min_count(
     data_frame: AnyDataFrame, num_entries: int, group_by: str = "user_idx"
-) -> DataFrame:
+) -> SparkDataFrame:
     """
     Remove entries with entities (e.g. users, items) which are presented in `data_frame`
     less than `num_entries` times. The `data_frame` is grouped by `group_by` column,
@@ -252,7 +260,7 @@ def filter_by_min_count(
 
 def filter_out_low_ratings(
     data_frame: AnyDataFrame, value: float, rating_column="relevance"
-) -> DataFrame:
+) -> SparkDataFrame:
     """
     Remove records with records less than ``value`` in ``column``.
 
@@ -281,13 +289,13 @@ def filter_out_low_ratings(
 
 # pylint: disable=too-many-arguments,
 def take_num_user_interactions(
-    log: DataFrame,
+    log: SparkDataFrame,
     num_interactions: int = 10,
     first: bool = True,
     date_col: str = "timestamp",
     user_col: str = "user_idx",
     item_col: Optional[str] = "item_idx",
-) -> DataFrame:
+) -> SparkDataFrame:
     """
     Get first/last ``num_interactions`` interactions for each user.
 
@@ -375,12 +383,12 @@ def take_num_user_interactions(
 
 
 def take_num_days_of_user_hist(
-    log: DataFrame,
+    log: SparkDataFrame,
     days: int = 10,
     first: bool = True,
     date_col: str = "timestamp",
     user_col: str = "user_idx",
-) -> DataFrame:
+) -> SparkDataFrame:
     """
     Get first/last ``days`` of users' interactions.
 
@@ -463,11 +471,11 @@ def take_num_days_of_user_hist(
 
 
 def take_time_period(
-    log: DataFrame,
+    log: SparkDataFrame,
     start_date: Optional[Union[str, datetime]] = None,
     end_date: Optional[Union[str, datetime]] = None,
     date_column: str = "timestamp",
-) -> DataFrame:
+) -> SparkDataFrame:
     """
     Select a part of data between ``[start_date, end_date)``.
 
@@ -523,11 +531,11 @@ def take_time_period(
 
 
 def take_num_days_of_global_hist(
-    log: DataFrame,
+    log: SparkDataFrame,
     duration_days: int,
     first: bool = True,
     date_column: str = "timestamp",
-) -> DataFrame:
+) -> SparkDataFrame:
     """
     Select first/last days from ``log``.
 

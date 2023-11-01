@@ -58,6 +58,7 @@ class Fallback(BaseRecommender):
         """
         hot_data = MinMaxInteractionsFilter(
             query_column="user_idx",
+            item_column="item_idx",
             min_inter_per_user=self.threshold
         ).transform(log)
         self.hot_users = hot_data.select("user_idx").distinct()
@@ -100,6 +101,7 @@ class Fallback(BaseRecommender):
         users = get_unique_entities(users, "user_idx")
         hot_data = MinMaxInteractionsFilter(
             query_column="user_idx",
+            item_column="item_idx",
             min_inter_per_user=self.threshold
         ).transform(log)
         hot_users = hot_data.select("user_idx").distinct()
