@@ -11,10 +11,6 @@ from pyspark.sql.functions import col
 from pyspark.sql.types import TimestampType
 from pandas import DataFrame as PandasDataFrame
 
-from replay.data import AnyDataFrame
-from replay.utils.spark_utils import convert2spark
-from replay.utils.session_handler import State
-
 
 # pylint: disable=too-few-public-methods
 class BaseFilter(ABC):
@@ -217,8 +213,9 @@ class MinMaxValuesFilter(BaseFilter):
     """
     Remove records with records less or greater than ``value`` in ``column``.
     >>> import pandas as pd
+    >>> from replay.utils.spark_utils import convert2spark
     >>> data_frame = convert2spark(pd.DataFrame({"relevance": [1, 5, 3.5, 4]}))
-    >>> MinMaxValuesFilter(3.5, "relevance").transform(data_frame).show()
+    >>> MinMaxValuesFilter("relevance", min_column_value=3.5).transform(data_frame).show()
     +---------+
     |relevance|
     +---------+
@@ -226,41 +223,46 @@ class MinMaxValuesFilter(BaseFilter):
     |      3.5|
     |      4.0|
     +---------+
-    >>> MinMaxValuesFilter(3.5, "relevance", True).transform(data_frame).show()
+    >>> MinMaxValuesFilter("relevance", max_column_value=3.5).transform(data_frame).show()
     +---------+
     |relevance|
     +---------+
     |      1.0|
     |      3.5|
     +---------+
+    >>> MinMaxValuesFilter("relevance", min_column_value=3.5, max_column_value=4).transform(data_frame).show()
+    +---------+
+    |relevance|
+    +---------+
+    |      3.5|
+    |      4.0|
+    +---------+
     <BLANKLINE>
     """
 
     def __init__(
         self,
-        value: Union[int, float],
-        column: str = "rating",
-        filter_greater: bool = False,
+        column: str,
+        min_column_value: Optional[Union[int, float]] = None,
+        max_column_value: Optional[Union[int, float]] = None,
     ):
         """
-        :param value: threshold value.
         :param column: the column in which filtering is performed.
-            default: ``rating``.
-        :param filter_greater: if `True` removes all records that are greater then passed value,
-            if `False` - removes all records that are less then passed value.
-            default: ``False``.
+        :param min_column_value: minimum threshold value of column
+        :param max_column_value: maximum threshold value of column
+        
         """
-        self.value = value
         self.column = column
-        self.filter_greater = filter_greater
+        self.min_column_value = min_column_value
+        self.max_column_value = max_column_value
 
     def transform(self, interactions: SparkDataFrame) -> SparkDataFrame:
-        if self.filter_greater is True:
-            mask = interactions[self.column] <= self.value
-        else:
-            mask = interactions[self.column] >= self.value
+        if self.min_column_value:
+            interactions = interactions.filter(interactions[self.column] >= self.min_column_value)
+        if self.max_column_value:
+            interactions = interactions.filter(interactions[self.column] <= self.max_column_value)
 
-        return interactions.filter(mask)
+        return interactions
 
 
 # pylint: disable=too-many-arguments,
