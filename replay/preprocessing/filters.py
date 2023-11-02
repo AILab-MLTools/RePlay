@@ -250,7 +250,6 @@ class MinMaxValuesFilter(BaseFilter):
         :param column: the column in which filtering is performed.
         :param min_column_value: minimum threshold value of column
         :param max_column_value: maximum threshold value of column
-        
         """
         self.column = column
         self.min_column_value = min_column_value
