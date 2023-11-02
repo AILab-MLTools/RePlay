@@ -212,6 +212,7 @@ class MinMaxInteractionsFilter(BaseFilter):
 class MinMaxValuesFilter(BaseFilter):
     """
     Remove records with records less or greater than ``value`` in ``column``.
+
     >>> import pandas as pd
     >>> from replay.utils.spark_utils import convert2spark
     >>> data_frame = convert2spark(pd.DataFrame({"relevance": [1, 5, 3.5, 4]}))
@@ -264,22 +265,14 @@ class MinMaxValuesFilter(BaseFilter):
         return interactions
 
 
-# pylint: disable=too-many-arguments,
-def take_num_user_interactions(
-    log: SparkDataFrame,
-    num_interactions: int = 10,
-    first: bool = True,
-    date_col: str = "timestamp",
-    user_col: str = "user_idx",
-    item_col: Optional[str] = "item_idx",
-) -> SparkDataFrame:
+class FirstLastInteractionsUserFilter(BaseFilter):
     """
     Get first/last ``num_interactions`` interactions for each user.
 
     >>> import pandas as pd
     >>> from replay.utils.spark_utils import convert2spark
-    >>> log_pd = pd.DataFrame({"user_idx": ["u1", "u2", "u2", "u3", "u3", "u3"],
-    ...                     "item_idx": ["i1", "i2","i3", "i1", "i2","i3"],
+    >>> log_pd = pd.DataFrame({"query_id": ["u1", "u2", "u2", "u3", "u3", "u3"],
+    ...                     "item_id": ["i1", "i2","i3", "i1", "i2","i3"],
     ...                     "rel": [1., 0.5, 3, 1, 0, 1],
     ...                     "timestamp": ["2020-01-01 23:59:59", "2020-02-01",
     ...                                   "2020-02-01", "2020-01-01 00:04:15",
@@ -288,91 +281,101 @@ def take_num_user_interactions(
     >>> log_pd["timestamp"] = pd.to_datetime(log_pd["timestamp"])
     >>> log_sp = convert2spark(log_pd)
     >>> log_sp.show()
-    +--------+--------+---+-------------------+
-    |user_idx|item_idx|rel|          timestamp|
-    +--------+--------+---+-------------------+
-    |      u1|      i1|1.0|2020-01-01 23:59:59|
-    |      u2|      i2|0.5|2020-02-01 00:00:00|
-    |      u2|      i3|3.0|2020-02-01 00:00:00|
-    |      u3|      i1|1.0|2020-01-01 00:04:15|
-    |      u3|      i2|0.0|2020-01-02 00:04:14|
-    |      u3|      i3|1.0|2020-01-05 23:59:59|
-    +--------+--------+---+-------------------+
+    +--------+-------+---+-------------------+
+    |query_id|item_id|rel|          timestamp|
+    +--------+-------+---+-------------------+
+    |      u1|     i1|1.0|2020-01-01 23:59:59|
+    |      u2|     i2|0.5|2020-02-01 00:00:00|
+    |      u2|     i3|3.0|2020-02-01 00:00:00|
+    |      u3|     i1|1.0|2020-01-01 00:04:15|
+    |      u3|     i2|0.0|2020-01-02 00:04:14|
+    |      u3|     i3|1.0|2020-01-05 23:59:59|
+    +--------+-------+---+-------------------+
     <BLANKLINE>
 
     Only first interaction:
 
-    >>> take_num_user_interactions(log_sp, 1, True).orderBy('user_idx').show()
-    +--------+--------+---+-------------------+
-    |user_idx|item_idx|rel|          timestamp|
-    +--------+--------+---+-------------------+
-    |      u1|      i1|1.0|2020-01-01 23:59:59|
-    |      u2|      i2|0.5|2020-02-01 00:00:00|
-    |      u3|      i1|1.0|2020-01-01 00:04:15|
-    +--------+--------+---+-------------------+
+    >>> FirstLastInteractionsUserFilter(1, True).transform(log_sp).orderBy('query_id').show()
+    +--------+-------+---+-------------------+
+    |query_id|item_id|rel|          timestamp|
+    +--------+-------+---+-------------------+
+    |      u1|     i1|1.0|2020-01-01 23:59:59|
+    |      u2|     i2|0.5|2020-02-01 00:00:00|
+    |      u3|     i1|1.0|2020-01-01 00:04:15|
+    +--------+-------+---+-------------------+
     <BLANKLINE>
 
     Only last interaction:
 
-    >>> take_num_user_interactions(log_sp, 1, False, item_col=None).orderBy('user_idx').show()
-    +--------+--------+---+-------------------+
-    |user_idx|item_idx|rel|          timestamp|
-    +--------+--------+---+-------------------+
-    |      u1|      i1|1.0|2020-01-01 23:59:59|
-    |      u2|      i2|0.5|2020-02-01 00:00:00|
-    |      u3|      i3|1.0|2020-01-05 23:59:59|
-    +--------+--------+---+-------------------+
+    >>> FirstLastInteractionsUserFilter(1, False, item_column=None).transform(log_sp).orderBy('query_id').show()
+    +--------+-------+---+-------------------+
+    |query_id|item_id|rel|          timestamp|
+    +--------+-------+---+-------------------+
+    |      u1|     i1|1.0|2020-01-01 23:59:59|
+    |      u2|     i2|0.5|2020-02-01 00:00:00|
+    |      u3|     i3|1.0|2020-01-05 23:59:59|
+    +--------+-------+---+-------------------+
     <BLANKLINE>
 
-    >>> take_num_user_interactions(log_sp, 1, False).orderBy('user_idx').show()
-    +--------+--------+---+-------------------+
-    |user_idx|item_idx|rel|          timestamp|
-    +--------+--------+---+-------------------+
-    |      u1|      i1|1.0|2020-01-01 23:59:59|
-    |      u2|      i3|3.0|2020-02-01 00:00:00|
-    |      u3|      i3|1.0|2020-01-05 23:59:59|
-    +--------+--------+---+-------------------+
+    >>> FirstLastInteractionsUserFilter(1, False).transform(log_sp).orderBy('query_id').show()
+    +--------+-------+---+-------------------+
+    |query_id|item_id|rel|          timestamp|
+    +--------+-------+---+-------------------+
+    |      u1|     i1|1.0|2020-01-01 23:59:59|
+    |      u2|     i3|3.0|2020-02-01 00:00:00|
+    |      u3|     i3|1.0|2020-01-05 23:59:59|
+    +--------+-------+---+-------------------+
     <BLANKLINE>
-
-    :param log: historical interactions DataFrame
-    :param num_interactions: number of interactions to leave per user
-    :param first: take either first ``num_interactions`` or last.
-    :param date_col: date column
-    :param user_col: user column
-    :param item_col: item column to help sort simultaneous interactions.
-        If None, it is ignored.
-    :return: filtered DataFrame
     """
-    sorting_order = [col(date_col)]
-    if item_col is not None:
-        sorting_order.append(col(item_col))
 
-    if not first:
-        sorting_order = [col_.desc() for col_ in sorting_order]
+    def __init__(
+        self,
+        num_interactions: int = 10,
+        first: bool = True,
+        timestamp_column: str = "timestamp",
+        query_column: str = "query_id",
+        item_column: Optional[str] = "item_id",
+    ):
+        """
+        :param num_interactions: number of interactions to leave per user
+        :param first: take either first ``num_interactions`` or last.
+        :param timestamp_column: timestamp column
+        :param query_column: query column
+        :param item_column: item column to help sort simultaneous interactions.
+            If None, it is ignored.
+        :return: filtered DataFrame
+        """
+        self.num_interactions = num_interactions
+        self.first = first
+        self.timestamp_column = timestamp_column
+        self.query_column = query_column
+        self.item_column = item_column
 
-    window = Window().orderBy(*sorting_order).partitionBy(col(user_col))
+    def transform(self, interactions: SparkDataFrame) -> SparkDataFrame:
+        sorting_order = [col(self.timestamp_column)]
+        if self.item_column is not None:
+            sorting_order.append(col(self.item_column))
 
-    return (
-        log.withColumn("temp_rank", sf.row_number().over(window))
-        .filter(col("temp_rank") <= num_interactions)
-        .drop("temp_rank")
-    )
+        if not self.first:
+            sorting_order = [col_.desc() for col_ in sorting_order]
+
+        window = Window().orderBy(*sorting_order).partitionBy(col(self.query_column))
+
+        return (
+            interactions.withColumn("temp_rank", sf.row_number().over(window))
+            .filter(col("temp_rank") <= self.num_interactions)
+            .drop("temp_rank")
+        )
 
 
-def take_num_days_of_user_hist(
-    log: SparkDataFrame,
-    days: int = 10,
-    first: bool = True,
-    date_col: str = "timestamp",
-    user_col: str = "user_idx",
-) -> SparkDataFrame:
+class FirstLastDaysUserFilter(BaseFilter):
     """
     Get first/last ``days`` of users' interactions.
 
     >>> import pandas as pd
     >>> from replay.utils.spark_utils import convert2spark
-    >>> log_pd = pd.DataFrame({"user_idx": ["u1", "u2", "u2", "u3", "u3", "u3"],
-    ...                     "item_idx": ["i1", "i2","i3", "i1", "i2","i3"],
+    >>> log_pd = pd.DataFrame({"query_id": ["u1", "u2", "u2", "u3", "u3", "u3"],
+    ...                     "item_id": ["i1", "i2","i3", "i1", "i2","i3"],
     ...                     "rel": [1., 0.5, 3, 1, 0, 1],
     ...                     "timestamp": ["2020-01-01 23:59:59", "2020-02-01",
     ...                                   "2020-02-01", "2020-01-01 00:04:15",
@@ -380,71 +383,86 @@ def take_num_days_of_user_hist(
     ...             )
     >>> log_pd["timestamp"] = pd.to_datetime(log_pd["timestamp"])
     >>> log_sp = convert2spark(log_pd)
-    >>> log_sp.orderBy('user_idx', 'item_idx').show()
-    +--------+--------+---+-------------------+
-    |user_idx|item_idx|rel|          timestamp|
-    +--------+--------+---+-------------------+
-    |      u1|      i1|1.0|2020-01-01 23:59:59|
-    |      u2|      i2|0.5|2020-02-01 00:00:00|
-    |      u2|      i3|3.0|2020-02-01 00:00:00|
-    |      u3|      i1|1.0|2020-01-01 00:04:15|
-    |      u3|      i2|0.0|2020-01-02 00:04:14|
-    |      u3|      i3|1.0|2020-01-05 23:59:59|
-    +--------+--------+---+-------------------+
+    >>> log_sp.show()
+    +--------+-------+---+-------------------+
+    |query_id|item_id|rel|          timestamp|
+    +--------+-------+---+-------------------+
+    |      u1|     i1|1.0|2020-01-01 23:59:59|
+    |      u2|     i2|0.5|2020-02-01 00:00:00|
+    |      u2|     i3|3.0|2020-02-01 00:00:00|
+    |      u3|     i1|1.0|2020-01-01 00:04:15|
+    |      u3|     i2|0.0|2020-01-02 00:04:14|
+    |      u3|     i3|1.0|2020-01-05 23:59:59|
+    +--------+-------+---+-------------------+
     <BLANKLINE>
 
     Get first day:
 
-    >>> take_num_days_of_user_hist(log_sp, 1, True).orderBy('user_idx', 'item_idx').show()
-    +--------+--------+---+-------------------+
-    |user_idx|item_idx|rel|          timestamp|
-    +--------+--------+---+-------------------+
-    |      u1|      i1|1.0|2020-01-01 23:59:59|
-    |      u2|      i2|0.5|2020-02-01 00:00:00|
-    |      u2|      i3|3.0|2020-02-01 00:00:00|
-    |      u3|      i1|1.0|2020-01-01 00:04:15|
-    |      u3|      i2|0.0|2020-01-02 00:04:14|
-    +--------+--------+---+-------------------+
+    >>> FirstLastDaysUserFilter(1, True).transform(log_sp).orderBy('query_id', 'item_id').show()
+    +--------+-------+---+-------------------+
+    |query_id|item_id|rel|          timestamp|
+    +--------+-------+---+-------------------+
+    |      u1|     i1|1.0|2020-01-01 23:59:59|
+    |      u2|     i2|0.5|2020-02-01 00:00:00|
+    |      u2|     i3|3.0|2020-02-01 00:00:00|
+    |      u3|     i1|1.0|2020-01-01 00:04:15|
+    |      u3|     i2|0.0|2020-01-02 00:04:14|
+    +--------+-------+---+-------------------+
     <BLANKLINE>
 
     Get last day:
 
-    >>> take_num_days_of_user_hist(log_sp, 1, False).orderBy('user_idx', 'item_idx').show()
-    +--------+--------+---+-------------------+
-    |user_idx|item_idx|rel|          timestamp|
-    +--------+--------+---+-------------------+
-    |      u1|      i1|1.0|2020-01-01 23:59:59|
-    |      u2|      i2|0.5|2020-02-01 00:00:00|
-    |      u2|      i3|3.0|2020-02-01 00:00:00|
-    |      u3|      i3|1.0|2020-01-05 23:59:59|
-    +--------+--------+---+-------------------+
+    >>> FirstLastDaysUserFilter(1, False).transform(log_sp).orderBy('query_id', 'item_id').show()
+    +--------+-------+---+-------------------+
+    |query_id|item_id|rel|          timestamp|
+    +--------+-------+---+-------------------+
+    |      u1|     i1|1.0|2020-01-01 23:59:59|
+    |      u2|     i2|0.5|2020-02-01 00:00:00|
+    |      u2|     i3|3.0|2020-02-01 00:00:00|
+    |      u3|     i3|1.0|2020-01-05 23:59:59|
+    +--------+-------+---+-------------------+
     <BLANKLINE>
-
-    :param log: historical DataFrame
-    :param days: how many days to return per user
-    :param first: take either first ``days`` or last
-    :param date_col: date column
-    :param user_col: user column
+    
     """
 
-    window = Window.partitionBy(user_col)
-    if first:
-        return (
-            log.withColumn("min_date", sf.min(col(date_col)).over(window))
-            .filter(
-                col(date_col)
-                < col("min_date") + sf.expr(f"INTERVAL {days} days")
-            )
-            .drop("min_date")
-        )
+    def __init__(
+        self,
+        days: int = 10,
+        first: bool = True,
+        timestamp_column: str = "timestamp",
+        query_column: str = "query_id",
+    ):
+        """
+        :param days: how many days to return per user
+        :param first: take either first ``days`` or last
+        :param timestamp_column: timestamp column
+        :param query_column: query column
+        :return: filtered DataFrame
+        """
+        self.days = days
+        self.first = first
+        self.timestamp_column = timestamp_column
+        self.query_column = query_column
 
-    return (
-        log.withColumn("max_date", sf.max(col(date_col)).over(window))
-        .filter(
-            col(date_col) > col("max_date") - sf.expr(f"INTERVAL {days} days")
+    def transform(self, interactions: SparkDataFrame) -> SparkDataFrame:
+        window = Window.partitionBy(self.query_column)
+        if self.first:
+            return (
+                interactions.withColumn("min_date", sf.min(col(self.timestamp_column)).over(window))
+                .filter(
+                    col(self.timestamp_column)
+                    < col("min_date") + sf.expr(f"INTERVAL {self.days} days")
+                )
+                .drop("min_date")
+            )
+
+        return (
+            interactions.withColumn("max_date", sf.max(col(self.timestamp_column)).over(window))
+            .filter(
+                col(self.timestamp_column) > col("max_date") - sf.expr(f"INTERVAL {self.days} days")
+            )
+            .drop("max_date")
         )
-        .drop("max_date")
-    )
 
 
 def take_time_period(
