@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from typing import Dict, List, Optional, Union
+=======
+from typing import Dict, Optional
+>>>>>>> updated models tests
 
 import pandas as pd
 
@@ -6,6 +10,7 @@ from .base_metric import Metric, MetricsDataFrameLike
 from .offline_metrics import OfflineMetrics
 
 
+# pylint: disable=too-many-instance-attributes
 # pylint: disable=too-few-public-methods
 class Experiment:
     """
@@ -157,6 +162,17 @@ class Experiment:
         self._train = train
         self._base_recommendations = base_recommendations
         self.results = pd.DataFrame()
+<<<<<<< HEAD
+=======
+        self.metrics = metrics
+        self.calc_median = calc_median
+        self.calc_conf_interval = calc_conf_interval
+
+        self.query_column = test_dataset.feature_schema.query_id_column
+        self.item_column = test_dataset.feature_schema.item_id_column
+        self.rating_column = test_dataset.feature_schema.interactions_rating_column
+        self.timestamp_col = test_dataset.feature_schema.interactions_timestamp_column
+>>>>>>> updated models tests
 
     def add_result(
         self,
@@ -167,9 +183,97 @@ class Experiment:
         Calculate metrics for predictions
 
         :param name: name of the run to store in the resulting DataFrame
+<<<<<<< HEAD
         :param recommendations: (PySpark DataFrame or Pandas DataFrame or dict): model predictions.
             If DataFrame then it must contains user, item and score columns.
             If dict then key represents user_ids, value represents list of tuple(item_id, score).
+=======
+        :param pred: model recommendations
+        :param ground_truth_users: list of users to consider in metric calculation.
+            if None, only the users from ground_truth are considered.
+        """
+        max_k = 0
+        for current_k in self.metrics.values():
+            max_k = max(
+                (*current_k, max_k)
+                if isinstance(current_k, list)
+                else (current_k, max_k)
+            )
+
+        recs = get_enriched_recommendations(
+            recommendations=pred,
+            ground_truth=self.test,
+            max_k=max_k,
+            query_column=self.query_column,
+            item_column=self.item_column,
+            rating_column=self.rating_column,
+            ground_truth_users=ground_truth_users,
+        ).cache()
+        for metric, k_list in sorted(
+            self.metrics.items(), key=lambda x: str(x[0])
+        ):
+            enriched = None
+            if isinstance(metric, (RecOnlyMetric, NCISMetric)):
+                enriched = metric._get_enriched_recommendations(
+                    pred, self.test, max_k, ground_truth_users
+                )
+            values, median, conf_interval = self._calculate(
+                metric, enriched or recs, k_list
+            )
+
+            if isinstance(k_list, int):
+                self._add_metric(  # type: ignore
+                    name,
+                    metric,
+                    k_list,
+                    values,  # type: ignore
+                    median,  # type: ignore
+                    conf_interval,  # type: ignore
+                )
+            else:
+                for k, val in sorted(values.items(), key=lambda x: x[0]):
+                    self._add_metric(
+                        name,
+                        metric,
+                        k,
+                        val,
+                        None if median is None else median[k],
+                        None if conf_interval is None else conf_interval[k],
+                    )
+        recs.unpersist()
+
+    def _calculate(self, metric, enriched, k_list):
+        median = None
+        conf_interval = None
+        values = metric._mean(enriched, k_list)
+        if self.calc_median:
+            median = metric._median(enriched, k_list)
+        if self.calc_conf_interval is not None:
+            conf_interval = metric._conf_interval(
+                enriched, k_list, self.calc_conf_interval
+            )
+        return values, median, conf_interval
+
+    # pylint: disable=too-many-arguments
+    def _add_metric(
+        self,
+        name: str,
+        metric: Metric,
+        k: int,
+        value: NumType,
+        median: Optional[NumType],
+        conf_interval: Optional[NumType],
+    ):
+        """
+        Add metric for a specific k
+
+        :param name: name to save results
+        :param metric: metric object
+        :param k: length of the recommendation list
+        :param value: metric value
+        :param median: median value
+        :param conf_interval: confidence interval value
+>>>>>>> updated models tests
         """
         cur_metrics = self._offline_metrics(
             recommendations, self._ground_truth, self._train, self._base_recommendations
