@@ -12,7 +12,6 @@ from numpy.random import default_rng
 from pyspark.ml.linalg import DenseVector, Vectors, VectorUDT
 from pyspark.sql import SparkSession, Column, DataFrame, Window, functions as sf
 from pyspark.sql.column import _to_java_column, _to_seq
-from scipy.sparse import csr_matrix
 
 from replay.data import AnyDataFrame, NumType, REC_SCHEMA
 from replay.utils.session_handler import State
@@ -394,57 +393,6 @@ def check_numeric(feature_table: DataFrame) -> None:
                 f"""Column {column} has type {feature_table.schema[
             column].dataType}, that is not numeric."""
             )
-
-
-def to_csr(
-    log: DataFrame,
-    user_count: Optional[int] = None,
-    item_count: Optional[int] = None,
-) -> csr_matrix:
-    """
-    Convert DataFrame to csr matrix
-
-    >>> import pandas as pd
-    >>> from replay.utils.spark_utils import convert2spark
-    >>> data_frame = pd.DataFrame({"user_idx": [0, 1], "item_idx": [0, 2], "relevance": [1, 2]})
-    >>> data_frame = convert2spark(data_frame)
-    >>> m = to_csr(data_frame)
-    >>> m.toarray()
-    array([[1, 0, 0],
-           [0, 0, 2]])
-
-    :param log: interaction log with ``user_idx``, ``item_idx`` and
-    ``relevance`` columns
-    :param user_count: number of rows in resulting matrix
-    :param item_count: number of columns in resulting matrix
-    """
-    pandas_df = log.select("user_idx", "item_idx", "relevance").toPandas()
-    if pandas_df.empty:
-        return csr_matrix(
-            (
-                [],
-                ([], []),
-            ),
-            shape=(0, 0),
-        )
-
-    row_count = int(
-        user_count
-        if user_count is not None
-        else pandas_df["user_idx"].max() + 1
-    )
-    col_count = int(
-        item_count
-        if item_count is not None
-        else pandas_df["item_idx"].max() + 1
-    )
-    return csr_matrix(
-        (
-            pandas_df["relevance"],
-            (pandas_df["user_idx"], pandas_df["item_idx"]),
-        ),
-        shape=(row_count, col_count),
-    )
 
 
 def horizontal_explode(
