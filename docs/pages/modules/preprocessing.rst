@@ -32,7 +32,7 @@ ___________________
 
 
 CSRConverter
-------------
+___________________
 Convert input data to csr sparse matrix.
 
 .. autoclass:: replay.preprocessing.converter.CSRConverter
@@ -40,7 +40,7 @@ Convert input data to csr sparse matrix.
 
 
 Padder
-------
+___________________
 Pad array columns in dataframe.
 
 .. autoclass:: replay.preprocessing.padder.Padder
@@ -48,7 +48,7 @@ Pad array columns in dataframe.
 
 
 SequenceGenerator
------------------
+___________________
 Creating sequences for sequential models.
 
 .. autoclass:: replay.preprocessing.sequence_generator.SequenceGenerator
@@ -56,7 +56,7 @@ Creating sequences for sequential models.
 
 
 Sessionizer
------------------
+___________________
 Create and filter sessions from given interactions.
 
 .. autoclass:: replay.preprocessing.sessionizer.Sessionizer
