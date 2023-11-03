@@ -19,7 +19,9 @@ from replay.utils.session_handler import State
 
 
 class SparkCollectToMasterWarning(Warning):  # pragma: no cover
-    pass
+    """
+    Collect to master warning for Spark DataFrames.
+    """
 
 
 def spark_to_pandas(data: DataFrame, allow_collect_to_master: bool = False) -> pd.DataFrame:  # pragma: no cover
