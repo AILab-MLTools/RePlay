@@ -1,5 +1,6 @@
 import collections
 import pickle
+import warnings
 import logging
 import os
 from typing import Any, Iterable, List, Optional, Set, Tuple, Union
@@ -15,6 +16,28 @@ from scipy.sparse import csr_matrix
 
 from replay.data import AnyDataFrame, NumType, REC_SCHEMA
 from replay.utils.session_handler import State
+
+
+class SparkCollectToMasterWarning(Warning):  # pragma: no cover
+    pass
+
+
+def spark_to_pandas(data: DataFrame, allow_collect_to_master: bool = False) -> pd.DataFrame:  # pragma: no cover
+    """
+    Convert Spark DataFrame to Pandas DataFrame.
+
+    :param data: Spark DataFrame.
+    :param allow_collect_to_master: Flag allowing spark to make a collection to the master node, default: ``False``.
+
+    :returns: Converted Pandas DataFrame.
+    """
+    if not allow_collect_to_master:
+        warnings.warn(
+            "Spark Data Frame is collected to master node, this may lead to OOM exception for larger dataset. "
+            "To remove this warning set allow_collect_to_master=True in the recommender constructor.",
+            SparkCollectToMasterWarning,
+        )
+    return data.toPandas()
 
 
 # pylint: disable=invalid-name
