@@ -26,6 +26,7 @@ class Experiment:
 
     Example:
 
+<<<<<<< HEAD
     >>> recommendations
        query_id  item_id  rating
     0         1        3    0.6
@@ -88,17 +89,48 @@ class Experiment:
     >>> ex = Experiment([NDCG([2, 3]), Surprisal(3)], groundtruth, train)
     >>> ex.add_result("baseline", base_rec)
     >>> ex.add_result("model", recommendations)
+=======
+    >>> import pandas as pd
+    >>> from replay.data.dataset_utils import create_dataset
+    >>> from replay.metrics import Coverage, NDCG, Precision, Surprisal
+    >>> log = pd.DataFrame({"user_idx": [2, 2, 2, 1], "item_idx": [1, 2, 3, 3], "relevance": [5, 5, 5, 5]})
+    >>> test = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [1, 2, 3], "relevance": [5, 3, 4]})
+    >>> pred = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [4, 1, 3], "relevance": [5, 4, 5]})
+    >>> recs = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [1, 4, 5], "relevance": [5, 4, 5]})
+    >>> test_dataset = create_dataset(test, query_column="user_idx", item_column="item_idx", rating_column="relevance")
+    >>> ex = Experiment(test_dataset, {NDCG(): [2, 3], Surprisal(log): 3})
+    >>> ex.add_result("baseline", recs)
+    >>> ex.add_result("baseline_gt_users", recs, ground_truth_users=pd.DataFrame({"user_idx": [1, 3]}))
+    >>> ex.add_result("model", pred)
+>>>>>>> updated tests for models
     >>> ex.results
                 NDCG@2    NDCG@3  Surprisal@3
     baseline  0.204382  0.234639     0.608476
     model     0.333333  0.489760     0.719587
     >>> ex.compare("baseline")
+<<<<<<< HEAD
               NDCG@2   NDCG@3 Surprisal@3
     baseline       –        –           –
     model     63.09%  108.73%      18.26%
     >>> ex = Experiment([Precision(3, mode=Median()), Precision(3, mode=ConfidenceInterval(0.95))], groundtruth)
     >>> ex.add_result("baseline", base_rec)
     >>> ex.add_result("model", recommendations)
+=======
+                       NDCG@2  NDCG@3 Surprisal@3
+    baseline                –       –           –
+    baseline_gt_users  -50.0%  -50.0%      -50.0%
+    model                0.0%  79.25%     -33.33%
+    >>> ex = Experiment(test_dataset, {Precision(): [3]}, calc_median=True, calc_conf_interval=0.95)
+    >>> ex.add_result("baseline", recs)
+    >>> ex.add_result("model", pred)
+    >>> ex.results
+              Precision@3  Precision@3_median  Precision@3_0.95_conf_interval
+    baseline     0.333333            0.333333                             0.0
+    model        0.666667            0.666667                             0.0
+    >>> ex = Experiment(test_dataset, {Coverage(log): 3}, calc_median=True, calc_conf_interval=0.95)
+    >>> ex.add_result("baseline", recs)
+    >>> ex.add_result("model", pred)
+>>>>>>> updated tests for models
     >>> ex.results
               Precision-Median@3  Precision-ConfidenceInterval@3
     baseline            0.333333                        0.217774
