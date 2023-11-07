@@ -81,12 +81,10 @@ class CSRConverter:
         """
         Transform Spark or Pandas Data Frame to csr.
 
-        Args:
-            interactions (PySpark DataFrame): Spark or Pandas Data Frame containing columns
-                ``first_dim_column``, ``second_dim_column``, and optional ``data_column``.
+        :param data: Spark or Pandas Data Frame containing columns
+            ``first_dim_column``, ``second_dim_column``, and optional ``data_column``.
 
-        Returns:
-            csr_matrix: Sparse interactions.
+        :returns: Sparse interactions.
         """
 
         if isinstance(data, SparkDataFrame):

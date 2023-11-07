@@ -66,17 +66,16 @@ class Padder:
         cut_side: Optional[str] = "right",
     ):
         """
-        Args:
-            pad_columns (list or str): Name of columns to pad.
-            padding_side (str, optional): side of array to which add padding values. Can be "right" or "left",
-                default: ``right``.
-            padding_value (str or int or float or list or None): value to fill missing spacec,
-                default: ``0``.
-            array_size (int, optional): needed array size,
-                default: ``None``
-            cut_array (bool, optional): is cutting arrays with shape more than array_size needed,
-                default: ``True``.
-            cut_side (str, optional): side of array on which to cut to needed length. Can be "right" or "left",
+        :param pad_columns: Name of columns to pad.
+        :param padding_side: side of array to which add padding values. Can be "right" or "left",
+            default: ``right``.
+        :param padding_value: value to fill missing spacec,
+            default: ``0``.
+        :param array_size: needed array size,
+            default: ``None``
+        :param cut_array: is cutting arrays with shape more than array_size needed,
+            default: ``True``.
+        :param cut_side: side of array on which to cut to needed length. Can be "right" or "left",
                 default: ``right``.
         """
         self.pad_columns = (
@@ -112,11 +111,9 @@ class Padder:
     def transform(self, dataset: AnyDataFrame) -> AnyDataFrame:
         """Pad dataframe.
 
-        Args:
-            dataset (Union[SparkDataFrame, PandasDataFrame]): DataFrame with array columns with names pad_columns.
+        :param dataset: DataFrame with array columns with names pad_columns.
 
-        Returns:
-            Union[SparkDataFrame, PandasDataFrame]: DataFrame with padded array columns.
+        :returns: DataFrame with padded array columns.
 
         """
         df_transformed = dataset
