@@ -43,7 +43,7 @@ Padder (Experimental part)
 __________________________
 Pad array columns in dataframe.
 
-.. autoclass:: replay.preprocessing.padder.Padder
+.. autoclass:: replay.experimental.preprocessing.padder.Padder
     :members:
 
 
@@ -51,7 +51,7 @@ SequenceGenerator (Experimental part)
 _____________________________________
 Creating sequences for sequential models.
 
-.. autoclass:: replay.preprocessing.sequence_generator.SequenceGenerator
+.. autoclass:: replay.experimental.preprocessing.sequence_generator.SequenceGenerator
     :members:
 
 
