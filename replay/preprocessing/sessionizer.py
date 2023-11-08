@@ -176,7 +176,9 @@ class Sessionizer:
             - sf.lag(self.time_column, 1).over(Window.partitionBy(self.user_column).orderBy(self.time_column))
             >= self.session_gap,
         )
-        data_with_diff = data_with_diff.na.fill(True).withColumn("timestamp_diff", sf.col("timestamp_diff").cast("long"))
+        data_with_diff = data_with_diff.na.fill(True).withColumn(
+            "timestamp_diff", sf.col("timestamp_diff").cast("long")
+        )
         data_with_sum_timediff = data_with_diff.withColumn(
             "cumsum_timestamp_diff",
             sf.sum("timestamp_diff").over(

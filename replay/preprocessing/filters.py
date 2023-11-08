@@ -13,7 +13,7 @@ from replay.utils.spark_utils import convert2spark
 from replay.utils.session_handler import State
 
 
-# pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods, too-many-instance-attributes
 class InteractionEntriesFilter:
     """
     Remove interactions less than minimum constraint value and greater
