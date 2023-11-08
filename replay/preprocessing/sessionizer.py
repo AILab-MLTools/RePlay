@@ -78,18 +78,21 @@ class Sessionizer:
             If `time_column` has already transformed into unix_timestamp type,
             then you can omit this parameter.
             default: ``yyyy-MM-dd HH:mm:ss``
-        :param min_inter_per_session: Minimum positive value of
-            interactions per session. If None, filter doesn't apply,
-            default: ``None``.
-        :param max_inter_per_session: Maximum positive value of
-            interactions per session.
-            If None, filter doesn't apply. Must be less
-            than `min_inter_per_session`. Default: ``None``.
-        :param min_sessions_per_user: Minimum positive value of
-            sessions per user. If None, filter doesn't apply.
+        :param min_inter_per_session: Minimum number of interactions per session.
+            Sessions with less number of interactions are ignored.
+            If None, filter doesn't apply,
             Default: ``None``.
-        :param max_sessions_per_user: Maximum positive value of
-            sessions per user. If None, filter doesn't apply. Must be less
+        :param max_inter_per_session: Maximum number of interactions per session.
+            Sessions with greater number of interactions are ignored.
+            If None, filter doesn't apply. Must be less than `min_inter_per_session`.
+            Default: ``None``.
+        :param min_sessions_per_user: Minimum number of sessions per user.
+            Users with less number of sessions are ignored.
+            If None, filter doesn't apply.
+            Default: ``None``.
+        :param max_sessions_per_user: Maximum number of sessions per user.
+            Users with greater number of sessions are ignored.
+            If None, filter doesn't apply. Must be less
             than `min_sessions_per_user`. Default: ``None``.
         """
         self.user_column = user_column
