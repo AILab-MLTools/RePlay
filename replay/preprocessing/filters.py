@@ -166,8 +166,8 @@ class InteractionEntriesFilter:
 
         if self.allow_caching is True:
             filtered_interactions.cache()
+            interactions.unpersist()
         end_len_dataframe = filtered_interactions.count()
-        interactions.unpersist()
         different_len = interaction_count - end_len_dataframe
 
         return filtered_interactions, different_len, end_len_dataframe
@@ -184,8 +184,7 @@ class InteractionEntriesFilter:
         current_index = 0
         interaction_count = interactions.count() if isinstance(interactions, SparkDataFrame) else len(interactions)
         while is_no_dropped_user_item[0] is False or is_no_dropped_user_item[1] is False:
-            column = "user" if current_index == 0 else "item"
-            if column == "user":
+            if current_index == 0:
                 min_inter = self.min_inter_per_user
                 max_inter = self.max_inter_per_user
                 agg_column = self.user_column
@@ -200,7 +199,7 @@ class InteractionEntriesFilter:
                 interactions, interaction_count, min_inter, max_inter, agg_column, non_agg_column
             )
             is_no_dropped_user_item[current_index] = not dropped_interact
-            current_index ^= 1
+            current_index = (current_index + 1) % 2     # current_index only in (0, 1)
 
         return interactions
 
