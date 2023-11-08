@@ -39,16 +39,16 @@ Convert input data to csr sparse matrix.
     :members:
 
 
-Padder
-___________________
+Padder (Experimental part)
+__________________________
 Pad array columns in dataframe.
 
 .. autoclass:: replay.preprocessing.padder.Padder
     :members:
 
 
-SequenceGenerator
-___________________
+SequenceGenerator (Experimental part)
+_____________________________________
 Creating sequences for sequential models.
 
 .. autoclass:: replay.preprocessing.sequence_generator.SequenceGenerator
