@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from pandas import DataFrame as PandasDataFrame
-from pyspark.sql import functions as F, DataFrame as SparkDataFrame
+from pyspark.sql import functions as sf, DataFrame as SparkDataFrame
 
 from replay.preprocessing import SequenceGenerator
 
@@ -216,8 +216,8 @@ def test_window_parameters(user_column, item_column, time_column, len_window, da
     sequences = generator.transform(simple_dataframe)
 
     if isinstance(simple_dataframe, SparkDataFrame):
-        agg_sequences = sequences.withColumn("LEN", F.size(f"{item_column}_list"))
-        max_len = agg_sequences.agg(F.max("LEN")).first()[0]
+        agg_sequences = sequences.withColumn("LEN", sf.size(f"{item_column}_list"))
+        max_len = agg_sequences.agg(sf.max("LEN")).first()[0]
     else:
         max_len = sequences[f"{item_column}_list"].str.len().max()
 
@@ -332,7 +332,7 @@ def test_groupby_multiple_columns(dataset, request):
     sequences = generator.transform(simple_dataframe_additional)
     columns = sequences.columns
     if isinstance(sequences, SparkDataFrame):
-        assert sequences.select(F.countDistinct(*["user_id", "other_column"])).first()[0] == 4
+        assert sequences.select(sf.countDistinct(*["user_id", "other_column"])).first()[0] == 4
     else:
         assert len(pd.unique(sequences[["user_id", "other_column"]].values.ravel("K"))) == 4
     assert "item_id_list" in columns

@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from pandas import DataFrame as PandasDataFrame
-import pyspark.sql.functions as F
+import pyspark.sql.functions as sf
 from pyspark.sql.window import Window
 from pyspark.sql import DataFrame as SparkDataFrame
 
@@ -133,7 +133,7 @@ class Sessionizer:
         time_column_type = dict(interactions.dtypes)[self.time_column]
         if time_column_type == "date":
             interactions = interactions.withColumn(
-                self.time_column, F.unix_timestamp(self.time_column, self.time_column_format)
+                self.time_column, sf.unix_timestamp(self.time_column, self.time_column_format)
             )
 
         return interactions
@@ -172,15 +172,15 @@ class Sessionizer:
     def _create_sessions_spark(self, data: SparkDataFrame) -> SparkDataFrame:
         data_with_diff = data.withColumn(
             "timestamp_diff",
-            F.col(self.time_column)
-            - F.lag(self.time_column, 1).over(Window.partitionBy(self.user_column).orderBy(self.time_column))
+            sf.col(self.time_column)
+            - sf.lag(self.time_column, 1).over(Window.partitionBy(self.user_column).orderBy(self.time_column))
             >= self.session_gap,
         )
-        data_with_diff = data_with_diff.na.fill(True).withColumn("timestamp_diff", F.col("timestamp_diff").cast("long"))
+        data_with_diff = data_with_diff.na.fill(True).withColumn("timestamp_diff", sf.col("timestamp_diff").cast("long"))
         data_with_sum_timediff = data_with_diff.withColumn(
             "cumsum_timestamp_diff",
-            F.sum("timestamp_diff").over(
-                Window.partitionBy(self.user_column).orderBy(F.col(self.time_column), F.col("timestamp_diff").desc())
+            sf.sum("timestamp_diff").over(
+                Window.partitionBy(self.user_column).orderBy(sf.col(self.time_column), sf.col("timestamp_diff").desc())
             ),
         )
         # data_with_sum_timediff.cache()
@@ -188,14 +188,14 @@ class Sessionizer:
         grouped_users = data_with_sum_timediff.groupBy(self.user_column).count()
         grouped_users_with_cumsum = grouped_users.withColumn(
             "cumsum_user_count",
-            F.sum("count").over(Window.partitionBy(F.lit(0)).orderBy(self.user_column)),
+            sf.sum("count").over(Window.partitionBy(sf.lit(0)).orderBy(self.user_column)),
         ).drop("count")
 
         result = (
             data_with_sum_timediff.join(grouped_users_with_cumsum, self.user_column, "left")
             .withColumn(
                 self.session_column,
-                F.col("cumsum_user_count") - F.col("cumsum_timestamp_diff"),
+                sf.col("cumsum_user_count") - sf.col("cumsum_timestamp_diff"),
             )
             .drop(
                 "timestamp_diff",
@@ -238,9 +238,9 @@ class Sessionizer:
     def _filter_sessions_spark(self, interactions: SparkDataFrame) -> SparkDataFrame:
         entries_counter = interactions.groupby(self.session_column).count()
         if self.min_inter_per_session:
-            entries_counter = entries_counter.filter(F.col("count") >= self.min_inter_per_session)
+            entries_counter = entries_counter.filter(sf.col("count") >= self.min_inter_per_session)
         if self.max_inter_per_session:
-            entries_counter = entries_counter.filter(F.col("count") <= self.max_inter_per_session)
+            entries_counter = entries_counter.filter(sf.col("count") <= self.max_inter_per_session)
 
         filtered_interactions = interactions.join(
             entries_counter.select(self.session_column), self.session_column, how="right"
@@ -249,12 +249,12 @@ class Sessionizer:
         # filtered_interactions.cache()
 
         nunique = filtered_interactions.groupby(self.user_column).agg(
-            F.expr("count(distinct session_id)").alias("nunique")
+            sf.expr("count(distinct session_id)").alias("nunique")
         )
         if self.min_sessions_per_user:
-            nunique = nunique.filter(F.col("nunique") >= self.min_sessions_per_user)
+            nunique = nunique.filter(sf.col("nunique") >= self.min_sessions_per_user)
         if self.max_sessions_per_user:
-            nunique = nunique.filter(F.col("nunique") <= self.max_sessions_per_user)
+            nunique = nunique.filter(sf.col("nunique") <= self.max_sessions_per_user)
 
         result = filtered_interactions.join(
             nunique.select(self.user_column),

@@ -16,7 +16,8 @@ from replay.utils.session_handler import State
 # pylint: disable=too-few-public-methods
 class InteractionEntriesFilter:
     """
-    Filter interactions with minimal and maximum constraints
+    Remove interactions less than minimum constraint value and greater
+    than maximum constraint value for each column.
 
     >>> import pandas as pd
     >>> interactions = pd.DataFrame({
@@ -55,6 +56,7 @@ class InteractionEntriesFilter:
         max_inter_per_user: Optional[int] = None,
         min_inter_per_item: Optional[int] = None,
         max_inter_per_item: Optional[int] = None,
+        allow_caching: bool = True,
     ):
         r"""
         :param user_column: Name of user interaction column,
@@ -73,6 +75,8 @@ class InteractionEntriesFilter:
         :param max_inter_per_item: Maximum positive value of
             interactions per item. If None, filter doesn't apply. Must be
             less than `min_inter_per_item`, default: ``None``.
+        :param allow_caching: The flag for using caching to optimize calculations.
+            Default: `True`.
         """
         self.user_column = user_column
         self.item_column = item_column
@@ -81,6 +85,7 @@ class InteractionEntriesFilter:
         self.min_inter_per_item = min_inter_per_item
         self.max_inter_per_item = max_inter_per_item
         self.total_dropped_interactions = 0
+        self.allow_caching = allow_caching
         self._sanity_check()
 
     def _sanity_check(self) -> None:
@@ -96,20 +101,12 @@ class InteractionEntriesFilter:
     def _filter_column(
         self,
         interactions: AnyDataFrame,
-        column: str,
         interaction_count: int,
+        min_inter: Optional[int],
+        max_inter: Optional[int],
+        agg_column: str,
+        non_agg_column: str,
     ) -> Tuple[AnyDataFrame, int, int]:
-        if column == "user":
-            min_inter = self.min_inter_per_user
-            max_inter = self.max_inter_per_user
-            agg_column = self.user_column
-            non_agg_column = self.item_column
-        else:
-            min_inter = self.min_inter_per_item
-            max_inter = self.max_inter_per_item
-            agg_column = self.item_column
-            non_agg_column = self.user_column
-
         if not min_inter and not max_inter:
             return interactions, 0, interaction_count
 
@@ -167,13 +164,15 @@ class InteractionEntriesFilter:
             filtered_interactions = filtered_interactions.filter(sf.col("count") <= max_inter)
         filtered_interactions = filtered_interactions.drop("count")
 
-        filtered_interactions.cache()
+        if self.allow_caching is True:
+            filtered_interactions.cache()
         end_len_dataframe = filtered_interactions.count()
         interactions.unpersist()
         different_len = interaction_count - end_len_dataframe
 
         return filtered_interactions, different_len, end_len_dataframe
 
+    # pylint: disable=too-many-function-args
     def transform(self, interactions: AnyDataFrame) -> AnyDataFrame:
         r"""Filter interactions.
 
@@ -184,15 +183,25 @@ class InteractionEntriesFilter:
         is_no_dropped_user_item = [False, False]
         current_index = 0
         interaction_count = interactions.count() if isinstance(interactions, SparkDataFrame) else len(interactions)
-        while True:
+        while is_no_dropped_user_item[0] is False or is_no_dropped_user_item[1] is False:
             column = "user" if current_index == 0 else "item"
+            if column == "user":
+                min_inter = self.min_inter_per_user
+                max_inter = self.max_inter_per_user
+                agg_column = self.user_column
+                non_agg_column = self.item_column
+            else:
+                min_inter = self.min_inter_per_item
+                max_inter = self.max_inter_per_item
+                agg_column = self.item_column
+                non_agg_column = self.user_column
+
             interactions, dropped_interact, interaction_count = self._filter_column(
-                interactions, column, interaction_count
+                interactions, interaction_count, min_inter, max_inter, agg_column, non_agg_column
             )
             is_no_dropped_user_item[current_index] = not dropped_interact
             current_index ^= 1
-            if is_no_dropped_user_item[0] and is_no_dropped_user_item[1]:
-                break
+
         return interactions
 
 

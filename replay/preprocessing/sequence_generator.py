@@ -2,7 +2,7 @@ from typing import List, Optional, Union
 
 import pandas as pd
 from pandas import DataFrame as PandasDataFrame
-from pyspark.sql import Column, functions as F, Window, DataFrame as SparkDataFrame
+from pyspark.sql import Column, functions as sf, Window, DataFrame as SparkDataFrame
 
 from replay.data import AnyDataFrame
 
@@ -183,7 +183,7 @@ class SequenceGenerator:
         processed_interactions = interactions
         orderby_column: Union[Column, List]
         if self.orderby_column is None:
-            orderby_column = F.lit(1)
+            orderby_column = sf.lit(1)
         else:
             orderby_column = self.orderby_column
 
@@ -195,11 +195,11 @@ class SequenceGenerator:
         for transform_col in self.transform_columns:
             processed_interactions = processed_interactions.withColumn(
                 self.sequence_prefix + transform_col + self.sequence_suffix,
-                F.collect_list(transform_col).over(window),
-            ).withColumn(self.label_prefix + transform_col + self.label_suffix, F.col(transform_col))
+                sf.collect_list(transform_col).over(window),
+            ).withColumn(self.label_prefix + transform_col + self.label_suffix, sf.col(transform_col))
 
         first_tranformed_col = self.sequence_prefix + self.transform_columns[0] + self.sequence_suffix
-        processed_interactions = processed_interactions.filter(F.size(first_tranformed_col) > 0)
+        processed_interactions = processed_interactions.filter(sf.size(first_tranformed_col) > 0)
 
         transformed_columns = list(
             map(lambda x: self.sequence_prefix + x + self.sequence_suffix, self.transform_columns)
@@ -209,7 +209,7 @@ class SequenceGenerator:
 
         if self.get_list_len:
             processed_interactions = processed_interactions.withColumn(
-                self.list_len_column, F.size(first_tranformed_col)
+                self.list_len_column, sf.size(first_tranformed_col)
             )
             select_columns += [self.list_len_column]
 

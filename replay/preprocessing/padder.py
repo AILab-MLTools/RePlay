@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 
 from pandas.api.types import is_object_dtype
 from pandas import DataFrame as PandasDataFrame
-from pyspark.sql import functions as F, DataFrame as SparkDataFrame
+from pyspark.sql import functions as sf, DataFrame as SparkDataFrame
 
 from replay.data import AnyDataFrame
 
@@ -108,16 +108,16 @@ class Padder:
         self.cut_array = cut_array
         self.cut_side = cut_side
 
-    def transform(self, dataset: AnyDataFrame) -> AnyDataFrame:
+    def transform(self, interactions: AnyDataFrame) -> AnyDataFrame:
         """Pad dataframe.
 
-        :param dataset: DataFrame with array columns with names pad_columns.
+        :param interactions: DataFrame with array columns with names pad_columns.
 
         :returns: DataFrame with padded array columns.
 
         """
-        df_transformed = dataset
-        is_spark = isinstance(dataset, SparkDataFrame)
+        df_transformed = interactions
+        is_spark = isinstance(interactions, SparkDataFrame)
         column_dtypes = dict(df_transformed.dtypes)
 
         for col, pad_value in zip(self.pad_columns, self.padding_value):
@@ -166,13 +166,13 @@ class Padder:
         else:
             res[cut_col_name] = res[col]
 
-        res["zeros"] = res[cut_col_name].apply(lambda x: [pad_value for _ in range(max_array_size - len(x))])
+        paddings = res[cut_col_name].apply(lambda x: [pad_value for _ in range(max_array_size - len(x))])
         if self.padding_side == "right":
-            res[col] = res[cut_col_name] + res["zeros"]
+            res[col] = res[cut_col_name] + paddings
         else:
-            res[col] = res["zeros"] + res[cut_col_name]
+            res[col] = paddings + res[cut_col_name]
 
-        res.drop(columns=["zeros", cut_col_name], inplace=True)
+        res.drop(columns=[cut_col_name], inplace=True)
 
         return res
 
@@ -180,11 +180,11 @@ class Padder:
         self, df_transformed: SparkDataFrame, col: str, pad_value: Union[str, float, int, List, None]
     ) -> SparkDataFrame:
         if self.array_size == -1:
-            max_array_size = df_transformed.agg(F.max(F.size(col)).alias("max_array_len")).collect()[0][0]
+            max_array_size = df_transformed.agg(sf.max(sf.size(col)).alias("max_array_len")).collect()[0][0]
         else:
             max_array_size = self.array_size
 
-        df_transformed = df_transformed.withColumn(col, F.coalesce(col, F.array()))
+        df_transformed = df_transformed.withColumn(col, sf.coalesce(col, sf.array()))
         insert_value = pad_value if not isinstance(pad_value, str) else "'" + pad_value + "'"
 
         cut_col_name = f"{col}_cut"
@@ -195,31 +195,33 @@ class Padder:
             drop_cols += [slice_col_name]
 
             if self.cut_side == "right":
-                slice_func = (-1) * F.least(F.size(col), F.lit(max_array_size))
-                cut_func = F.when(
-                    F.size(col) > 0, F.expr(f"slice({col}, {slice_col_name}, {max_array_size})")
-                ).otherwise(F.array())
+                slice_func = (-1) * sf.least(sf.size(col), sf.lit(max_array_size))
+                cut_func = sf.when(
+                    sf.size(col) > 0, sf.expr(f"slice({col}, {slice_col_name}, {max_array_size})")
+                ).otherwise(sf.array())
             else:
-                slice_func = F.least(F.size(col), F.lit(max_array_size))
-                cut_func = F.when(F.size(col) > 0, F.expr(f"slice({col}, 1, {slice_col_name})")).otherwise(F.array())
+                slice_func = sf.least(sf.size(col), sf.lit(max_array_size))
+                cut_func = sf.when(
+                    sf.size(col) > 0, sf.expr(f"slice({col}, 1, {slice_col_name})")
+                ).otherwise(sf.array())
 
             df_transformed = df_transformed.withColumn(slice_col_name, slice_func).withColumn(cut_col_name, cut_func)
 
         else:
-            df_transformed = df_transformed.withColumn(cut_col_name, F.col(col))
+            df_transformed = df_transformed.withColumn(cut_col_name, sf.col(col))
 
         if self.padding_side == "right":
-            concat_func = F.concat(F.col(cut_col_name), F.col("zeros"))
+            concat_func = sf.concat(sf.col(cut_col_name), sf.col("zeros"))
         else:
-            concat_func = F.concat(F.col("zeros"), F.col(cut_col_name))
+            concat_func = sf.concat(sf.col("zeros"), sf.col(cut_col_name))
 
         df_transformed = (
             df_transformed.withColumn(
                 "pre_zeros",
-                F.sequence(F.lit(0), F.greatest(F.lit(max_array_size) - F.size(F.col(cut_col_name)), F.lit(0))),
+                sf.sequence(sf.lit(0), sf.greatest(sf.lit(max_array_size) - sf.size(sf.col(cut_col_name)), sf.lit(0))),
             )
             .withColumn(
-                "zeros", F.expr(f"transform(slice(pre_zeros, 1, size(pre_zeros) - 1), element -> {insert_value})")
+                "zeros", sf.expr(f"transform(slice(pre_zeros, 1, size(pre_zeros) - 1), element -> {insert_value})")
             )
             .withColumn(col, concat_func)
             .drop(*drop_cols)
