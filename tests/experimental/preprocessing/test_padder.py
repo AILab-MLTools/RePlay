@@ -1,7 +1,8 @@
 import pytest
-
-from replay.preprocessing import Padder
 from pyspark.sql import DataFrame as SparkDataFrame
+
+from replay.experimental.preprocessing import Padder
+from tests.preprocessing.conftest import *
 
 
 @pytest.mark.parametrize("pad_columns, padding_value, array_size", [("item_id", 0, 5)])

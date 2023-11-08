@@ -3,7 +3,8 @@ import pytest
 from pandas import DataFrame as PandasDataFrame
 from pyspark.sql import functions as sf, DataFrame as SparkDataFrame
 
-from replay.preprocessing import SequenceGenerator
+from replay.experimental.preprocessing import SequenceGenerator
+from tests.preprocessing.conftest import *
 
 
 @pytest.mark.parametrize(
