@@ -92,8 +92,6 @@ pytest:
         path: coverage.xml
 
 build-production-package:
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   stage: build packages
   script:
     - *setup_env
