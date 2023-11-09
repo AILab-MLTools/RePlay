@@ -14,6 +14,9 @@ from replay.data import AnyDataFrame
 class Sessionizer:
     """
     Create and filter sessions from given interactions.
+    Session ids are formed as subtraction between unique
+    users cumulative sum and number of entries inside each
+    user history that are greater than session gap.
 
     >>> import pandas as pd
     >>> time_interactions = pd.DataFrame({
