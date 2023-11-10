@@ -494,7 +494,6 @@ class NCISMetric(Metric):
     Weight calculation is implemented in ``_get_enriched_recommendations`` method.
     """
 
-
     def __init__(
         self,
         prev_policy_weights: AnyDataFrame,
