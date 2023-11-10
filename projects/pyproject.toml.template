@@ -25,7 +25,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 exclude = [
+    {% if project == "default" %}
     "replay/experimental",
+    {% endif %}
 ]
 version = "0.0.0"
 
@@ -47,7 +49,16 @@ nmslib = "2.1.1"
 hnswlib = "0.7.0"
 cached-property = "1.5.2"
 
- 
+{% if project == "experimental" %}
+lightfm = "1.17"
+lightautoml = "~0.3.1"
+numba = ">=0.50"
+llvmlite = ">=0.32.1"
+d3rlpy = "1.1.1"
+implicit = "~0.7.0"
+gym = "0.17.2"
+{% endif %}
+
 [tool.poetry.group.dev.dependencies]
 # visualization
 jupyter = "~1.0.0"
