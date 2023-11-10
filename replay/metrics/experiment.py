@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 from typing import Dict, List, Optional, Union
-=======
-from typing import Dict, Optional
->>>>>>> updated models tests
 
 import pandas as pd
 
@@ -26,7 +22,6 @@ class Experiment:
 
     Example:
 
-<<<<<<< HEAD
     >>> recommendations
        query_id  item_id  rating
     0         1        3    0.6
@@ -89,69 +84,17 @@ class Experiment:
     >>> ex = Experiment([NDCG([2, 3]), Surprisal(3)], groundtruth, train)
     >>> ex.add_result("baseline", base_rec)
     >>> ex.add_result("model", recommendations)
-=======
-    >>> import pandas as pd
-    >>> from replay.data.dataset import Dataset, FeatureSchema, FeatureInfo, FeatureHint, FeatureType
-    >>> from replay.utils import convert2spark
-    >>> from replay.metrics import Coverage, NDCG, Precision, Surprisal
-    >>> log = pd.DataFrame({"user_idx": [2, 2, 2, 1], "item_idx": [1, 2, 3, 3], "relevance": [5, 5, 5, 5]})
-    >>> test = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [1, 2, 3], "relevance": [5, 3, 4]})
-    >>> pred = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [4, 1, 3], "relevance": [5, 4, 5]})
-    >>> recs = pd.DataFrame({"user_idx": [1, 1, 1], "item_idx": [1, 4, 5], "relevance": [5, 4, 5]})
-    >>> test_interactions = convert2spark(test)
-    >>> feature_schema = FeatureSchema(
-    ...     [
-    ...         FeatureInfo(
-    ...             column="user_idx",
-    ...             feature_type=FeatureType.CATEGORICAL,
-    ...             feature_hint=FeatureHint.QUERY_ID,
-    ...         ),
-    ...         FeatureInfo(
-    ...             column="item_idx",
-    ...             feature_type=FeatureType.CATEGORICAL,
-    ...             feature_hint=FeatureHint.ITEM_ID,
-    ...         ),
-    ...         FeatureInfo(
-    ...             column="relevance",
-    ...             feature_type=FeatureType.NUMERICAL,
-    ...             feature_hint=FeatureHint.RATING,
-    ...         ),
-    ...     ]
-    ... )
-    >>> test_dataset = Dataset(feature_schema, test_interactions)
-    >>> ex = Experiment(test_dataset, {NDCG(): [2, 3], Surprisal(log): 3})
-    >>> ex.add_result("baseline", recs)
-    >>> ex.add_result("baseline_gt_users", recs, ground_truth_users=pd.DataFrame({"user_idx": [1, 3]}))
-    >>> ex.add_result("model", pred)
->>>>>>> updated tests for models
     >>> ex.results
                 NDCG@2    NDCG@3  Surprisal@3
     baseline  0.204382  0.234639     0.608476
     model     0.333333  0.489760     0.719587
     >>> ex.compare("baseline")
-<<<<<<< HEAD
               NDCG@2   NDCG@3 Surprisal@3
     baseline       –        –           –
     model     63.09%  108.73%      18.26%
     >>> ex = Experiment([Precision(3, mode=Median()), Precision(3, mode=ConfidenceInterval(0.95))], groundtruth)
     >>> ex.add_result("baseline", base_rec)
     >>> ex.add_result("model", recommendations)
-=======
-                       NDCG@2  NDCG@3 Surprisal@3
-    baseline                –       –           –
-    baseline_gt_users  -50.0%  -50.0%      -50.0%
-    model                0.0%  79.25%     -33.33%
-    >>> ex = Experiment(test_dataset, {Precision(): [3]}, calc_median=True, calc_conf_interval=0.95)
-    >>> ex.add_result("baseline", recs)
-    >>> ex.add_result("model", pred)
-    >>> ex.results
-              Precision@3  Precision@3_median  Precision@3_0.95_conf_interval
-    baseline     0.333333            0.333333                             0.0
-    model        0.666667            0.666667                             0.0
-    >>> ex = Experiment(test_dataset, {Coverage(log): 3}, calc_median=True, calc_conf_interval=0.95)
-    >>> ex.add_result("baseline", recs)
-    >>> ex.add_result("model", pred)
->>>>>>> updated tests for models
     >>> ex.results
               Precision-Median@3  Precision-ConfidenceInterval@3
     baseline            0.333333                        0.217774
@@ -215,17 +158,6 @@ class Experiment:
         self._train = train
         self._base_recommendations = base_recommendations
         self.results = pd.DataFrame()
-<<<<<<< HEAD
-=======
-        self.metrics = metrics
-        self.calc_median = calc_median
-        self.calc_conf_interval = calc_conf_interval
-
-        self.query_column = test_dataset.feature_schema.query_id_column
-        self.item_column = test_dataset.feature_schema.item_id_column
-        self.rating_column = test_dataset.feature_schema.interactions_rating_column
-        self.timestamp_col = test_dataset.feature_schema.interactions_timestamp_column
->>>>>>> updated models tests
 
     def add_result(
         self,
@@ -236,97 +168,9 @@ class Experiment:
         Calculate metrics for predictions
 
         :param name: name of the run to store in the resulting DataFrame
-<<<<<<< HEAD
         :param recommendations: (PySpark DataFrame or Pandas DataFrame or dict): model predictions.
             If DataFrame then it must contains user, item and score columns.
             If dict then key represents user_ids, value represents list of tuple(item_id, score).
-=======
-        :param pred: model recommendations
-        :param ground_truth_users: list of users to consider in metric calculation.
-            if None, only the users from ground_truth are considered.
-        """
-        max_k = 0
-        for current_k in self.metrics.values():
-            max_k = max(
-                (*current_k, max_k)
-                if isinstance(current_k, list)
-                else (current_k, max_k)
-            )
-
-        recs = get_enriched_recommendations(
-            recommendations=pred,
-            ground_truth=self.test,
-            max_k=max_k,
-            query_column=self.query_column,
-            item_column=self.item_column,
-            rating_column=self.rating_column,
-            ground_truth_users=ground_truth_users,
-        ).cache()
-        for metric, k_list in sorted(
-            self.metrics.items(), key=lambda x: str(x[0])
-        ):
-            enriched = None
-            if isinstance(metric, (RecOnlyMetric, NCISMetric)):
-                enriched = metric._get_enriched_recommendations(
-                    pred, self.test, max_k, ground_truth_users
-                )
-            values, median, conf_interval = self._calculate(
-                metric, enriched or recs, k_list
-            )
-
-            if isinstance(k_list, int):
-                self._add_metric(  # type: ignore
-                    name,
-                    metric,
-                    k_list,
-                    values,  # type: ignore
-                    median,  # type: ignore
-                    conf_interval,  # type: ignore
-                )
-            else:
-                for k, val in sorted(values.items(), key=lambda x: x[0]):
-                    self._add_metric(
-                        name,
-                        metric,
-                        k,
-                        val,
-                        None if median is None else median[k],
-                        None if conf_interval is None else conf_interval[k],
-                    )
-        recs.unpersist()
-
-    def _calculate(self, metric, enriched, k_list):
-        median = None
-        conf_interval = None
-        values = metric._mean(enriched, k_list)
-        if self.calc_median:
-            median = metric._median(enriched, k_list)
-        if self.calc_conf_interval is not None:
-            conf_interval = metric._conf_interval(
-                enriched, k_list, self.calc_conf_interval
-            )
-        return values, median, conf_interval
-
-    # pylint: disable=too-many-arguments
-    def _add_metric(
-        self,
-        name: str,
-        metric: Metric,
-        k: int,
-        value: NumType,
-        median: Optional[NumType],
-        conf_interval: Optional[NumType],
-    ):
-        """
-        Add metric for a specific k
-
-        :param name: name to save results
-        :param metric: metric object
-        :param k: length of the recommendation list
-        :param value: metric value
-        :param median: median value
-        :param conf_interval: confidence interval value
->>>>>>> updated models tests
         """
         cur_metrics = self._offline_metrics(
             recommendations, self._ground_truth, self._train, self._base_recommendations

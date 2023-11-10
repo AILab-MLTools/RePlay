@@ -203,6 +203,7 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         self.timestamp_column = train_dataset.feature_schema.interactions_timestamp_column
 
         self.criterion = criterion(
+            topk=k,
             query_column=self.query_column,
             item_column=self.item_column,
             rating_column=self.rating_column,

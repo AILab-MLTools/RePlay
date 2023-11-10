@@ -12,6 +12,7 @@ from pyspark.sql import DataFrame as SparkDataFrame
 
 from replay.metrics.base_metric import Metric
 
+
 SplitData = collections.namedtuple(
     "SplitData",
     "train_dataset test_dataset queries items",
@@ -79,24 +80,17 @@ def suggest_params(
 
 def calculate_criterion_value(
     criterion: Metric,
-    k: int,
     recommendations: SparkDataFrame,
     ground_truth: SparkDataFrame
 ) -> float:
     """
     Calculate criterion value for given parameters
     :param criterion: optimization metric
-    :param k: length of a recommendation list
     :param recommendations: calculated recommendations
     :param ground_truth: test data
     :return: criterion value
     """
-    result_dict = criterion(
-        k,
-        query_column="user_idx",
-        item_column="item_idx",
-        rating_column="relevance",
-    )(recommendations, ground_truth)
+    result_dict = criterion(recommendations, ground_truth)
     return list(result_dict.values())[0]
 
 
@@ -125,7 +119,7 @@ def eval_quality(
         items=split_data.items,
     )
     logger.debug("Calculating criterion")
-    criterion_value = calculate_criterion_value(criterion, k, recs, split_data.test_dataset.interactions)
+    criterion_value = calculate_criterion_value(criterion, recs, split_data.test_dataset.interactions)
     logger.debug("%s=%.6f", criterion, criterion_value)
     return criterion_value
 
@@ -228,7 +222,7 @@ class ItemKNNObjective:
         )
         logger = logging.getLogger("replay")
         logger.debug("Calculating criterion")
-        criterion_value = calculate_criterion_value(criterion, k, recs, split_data.test_dataset.interactions)
+        criterion_value = calculate_criterion_value(criterion, recs, split_data.test_dataset.interactions)
         logger.debug("%s=%.6f", criterion, criterion_value)
         return criterion_value
 
