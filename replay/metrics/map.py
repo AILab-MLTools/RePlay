@@ -10,11 +10,13 @@ class MAP(Metric):
         for each user, and then calculate the mean across all users.
 
     .. math::
-        &AP@K(i) = \\frac 1K \sum_{j=1}^{K}\mathbb{1}_{r_{ij}}Precision@j(i)
+        &AP@K(i) = \\frac {1}{\min(K, |Rel_i|)} \sum_{j=1}^{K}\mathbb{1}_{r_{ij}}Precision@j(i)
 
         &MAP@K = \\frac {\sum_{i=1}^{N}AP@K(i)}{N}
 
     :math:`\\mathbb{1}_{r_{ij}}` -- indicator function showing if user :math:`i` interacted with item :math:`j`
+
+    :math:`|Rel_i|` -- the number of relevant items for user :math:`i`
 
     >>> recommendations
        query_id  item_id  rating
