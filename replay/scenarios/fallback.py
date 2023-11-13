@@ -98,7 +98,6 @@ class Fallback(BaseRecommender):
         queries = get_unique_entities(queries, self.query_column)
         hot_data = filter_by_min_count(dataset.interactions, self.threshold, self.query_column)
         hot_queries = hot_data.select(self.query_column).distinct()
-        hot_queries = hot_queries.join(self.hot_queries, on=self.query_column)
         hot_queries = hot_queries.join(queries, on=self.query_column, how="inner")
 
         hot_dataset = Dataset(
