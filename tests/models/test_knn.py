@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 import pytest
 
-from replay.data import Dataset, get_interactions_schema
+from replay.data import Dataset, get_schema
 from replay.models import ItemKNN
 from replay.models.extensions.ann.entities.nmslib_hnsw_param import NmslibHnswParam
 from replay.models.extensions.ann.index_builders.driver_nmslib_index_builder import DriverNmslibIndexBuilder
@@ -14,7 +14,7 @@ from tests.utils import create_dataset, spark
 if PYSPARK_AVAILABLE:
     from replay.models.extensions.ann.index_stores.spark_files_index_store import SparkFilesIndexStore
     from replay.utils.spark_utils import convert2spark
-    INTERACTIONS_SCHEMA = get_interactions_schema("user_idx", "item_idx", "timestamp", "relevance")
+    INTERACTIONS_SCHEMA = get_schema("user_idx", "item_idx", "timestamp", "relevance")
 
 
 @pytest.fixture

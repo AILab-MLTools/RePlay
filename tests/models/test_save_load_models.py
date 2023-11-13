@@ -16,8 +16,8 @@ from replay.models.extensions.ann.index_stores.hdfs_index_store import HdfsIndex
 from replay.models.extensions.ann.index_stores.shared_disk_index_store import SharedDiskIndexStore
 from replay.preprocessing.label_encoder import LabelEncoder, LabelEncodingRule
 from replay.utils import PYSPARK_AVAILABLE
+from tests.models.test_cat_pop_rec import cat_log, cat_tree, requested_cats
 from tests.utils import create_dataset, long_log_with_features, spark, sparkDataFrameEqual
-from tests.models.test_cat_pop_rec import cat_tree, cat_log, requested_cats
 
 if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from replay.data import get_interactions_schema, get_rec_schema
+from replay.data import get_schema
 from tests.utils import assert_allclose, assertDictAlmostEqual, log, spark, sparkDataFrameEqual
 
 pyspark = pytest.importorskip("pyspark")

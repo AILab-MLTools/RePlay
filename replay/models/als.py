@@ -10,8 +10,7 @@ if PYSPARK_AVAILABLE:
     from pyspark.ml.recommendation import ALS, ALSModel
     from pyspark.sql.types import DoubleType
 
-from replay.models.base_rec import Recommender, ItemVectorModel
-from replay.utils.spark_utils import list_to_vector_udf
+    from replay.utils.spark_utils import list_to_vector_udf
 
 
 # pylint: disable=too-many-instance-attributes

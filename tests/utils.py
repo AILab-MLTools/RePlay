@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from numpy.testing import assert_allclose
 
-from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureType, get_interactions_schema
+from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureType, get_schema
 from replay.utils import PYSPARK_AVAILABLE, SparkDataFrame
 
 if PYSPARK_AVAILABLE:
@@ -17,7 +17,7 @@ if PYSPARK_AVAILABLE:
 
     from replay.utils.session_handler import get_spark_session
     from replay.utils.spark_utils import convert2spark
-    INTERACTIONS_SCHEMA = get_interactions_schema("user_idx", "item_idx", "timestamp", "relevance")
+    INTERACTIONS_SCHEMA = get_schema("user_idx", "item_idx", "timestamp", "relevance")
 
 
 def assertDictAlmostEqual(d1: Dict, d2: Dict) -> None:

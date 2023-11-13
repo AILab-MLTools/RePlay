@@ -4,13 +4,14 @@ from datetime import datetime
 import numpy as np
 import pytest
 
-from replay.data import get_interactions_schema
+from replay.data import get_schema
 from replay.models import Word2VecRec
 from replay.models.extensions.ann.entities.hnswlib_param import HnswlibParam
 from replay.models.extensions.ann.index_builders.driver_hnswlib_index_builder import DriverHnswlibIndexBuilder
 from replay.models.extensions.ann.index_stores.shared_disk_index_store import SharedDiskIndexStore
-from tests.utils import create_dataset, spark
+from tests.utils import create_dataset
 from tests.utils import log as log2
+from tests.utils import spark
 
 pyspark = pytest.importorskip("pyspark")
 from pyspark.sql import functions as sf

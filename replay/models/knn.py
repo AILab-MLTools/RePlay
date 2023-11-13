@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from replay.data import Dataset
 from replay.models.base_neighbour_rec import NeighbourRec
@@ -9,8 +9,6 @@ from replay.utils import PYSPARK_AVAILABLE, SparkDataFrame
 if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
     from pyspark.sql.window import Window
-
-    from replay.utils.spark_utils import load_pickled_from_parquet, save_picklable_to_parquet
 
 
 # pylint: disable=too-many-ancestors, too-many-instance-attributes

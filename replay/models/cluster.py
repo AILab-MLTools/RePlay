@@ -10,8 +10,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.ml.feature import VectorAssembler
     from pyspark.sql import functions as sf
 
-    from replay.utils.spark_utils import load_pickled_from_parquet, save_picklable_to_parquet
-
 
 class ClusterRec(QueryRecommender):
     """
