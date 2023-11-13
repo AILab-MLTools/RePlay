@@ -19,13 +19,13 @@ from replay.data import (
     FeatureInfo,
     FeatureHint,
     FeatureType,
-    get_interactions_schema,
+    get_schema,
 )
 from replay.utils.session_handler import get_spark_session
 from replay.utils.spark_utils import convert2spark
 
 
-INTERACTIONS_SCHEMA = get_interactions_schema("user_idx", "item_idx", "timestamp", "relevance")
+INTERACTIONS_SCHEMA = get_schema("user_idx", "item_idx", "timestamp", "relevance")
 
 
 def assertDictAlmostEqual(d1: Dict, d2: Dict) -> None:

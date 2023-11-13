@@ -5,7 +5,6 @@ import numpy as np
 from pyspark.sql import functions as sf
 
 from replay.models import ALSWrap, AssociationRulesItemRec
-from replay.models.base_rec import HybridRecommender, QueryRecommender
 from replay.utils.spark_utils import join_or_return, array_mult, horizontal_explode
 from replay.utils.model_handler import save, load
 from tests.utils import (
@@ -25,8 +24,6 @@ SEED = 123
 def fit_predict_selected(model, train_log, inf_log, user_features, users):
     train_dataset = create_dataset(train_log, user_features)
     pred_dataset = create_dataset(inf_log, user_features)
-    # if isinstance(model, (HybridRecommender, QueryRecommender)):
-    #     kwargs = {"user_features": user_features}
     model.fit(train_dataset)
     return model.predict(pred_dataset)
 

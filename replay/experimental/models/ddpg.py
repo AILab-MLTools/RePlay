@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import tqdm
 from collections import defaultdict
 from pathlib import Path
@@ -13,7 +14,7 @@ from pytorch_ranger import Ranger
 from torch import nn
 from torch.distributions.gamma import Gamma
 
-from replay.data import get_rec_schema
+from replay.data import get_schema
 from replay.experimental.models.base_torch_rec import Recommender
 from replay.utils import convert2spark
 
@@ -720,7 +721,12 @@ class DDPG(Recommender):
             )[["user_idx", "item_idx", "relevance"]]
 
         self.logger.debug("Predict started")
-        rec_schema = get_rec_schema("user_idx", "item_idx", "relevance")
+        rec_schema = get_schema(
+            query_column="user_idx",
+            item_column="item_idx",
+            rating_column="relevance",
+            has_timestamp=False,
+        )
         recs = (
             users.join(log, how="left", on="user_idx")
             .select("user_idx", "item_idx")
@@ -747,7 +753,12 @@ class DDPG(Recommender):
 
         self.logger.debug("Calculate relevance for user-item pairs")
 
-        rec_schema = get_rec_schema("user_idx", "item_idx", "relevance")
+        rec_schema = get_schema(
+            query_column="user_idx",
+            item_column="item_idx",
+            rating_column="relevance",
+            has_timestamp=False,
+        )
         recs = (
             pairs.groupBy("user_idx")
             .agg(sf.collect_list("item_idx").alias("item_idx_to_pred"))

@@ -13,7 +13,7 @@ from pyspark.ml.linalg import DenseVector, Vectors, VectorUDT
 from pyspark.sql import SparkSession, Column, DataFrame, Window, functions as sf
 from pyspark.sql.column import _to_java_column, _to_seq
 
-from replay.data import AnyDataFrame, NumType, get_rec_schema
+from replay.data import AnyDataFrame, NumType, get_schema
 from replay.utils.session_handler import State
 
 
@@ -769,7 +769,12 @@ def sample_top_k_recs(pairs: DataFrame, k: int, seed: int = None):
                 "relevance": pandas_df["relevance"].values[items_positions],
             }
         )
-    rec_schema = get_rec_schema("user_idx", "item_idx", "relevance")
+    rec_schema = get_schema(
+        query_column="user_idx",
+        item_column="item_idx",
+        rating_column="relevance",
+        has_timestamp=False,
+    )
     recs = pairs.groupby("user_idx").applyInPandas(grouped_map, rec_schema)
 
     return recs

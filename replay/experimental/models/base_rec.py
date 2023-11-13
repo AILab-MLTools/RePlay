@@ -29,7 +29,7 @@ from numpy.random import default_rng
 from pyspark.sql import DataFrame, Window
 from pyspark.sql import functions as sf
 
-from replay.data import get_rec_schema
+from replay.data import get_schema
 from replay.models.base_rec import IsSavable, RecommenderCommons
 from replay.utils.session_handler import State
 from replay.utils.spark_utils import (
@@ -1264,7 +1264,12 @@ class NonPersonalizedRecommender(Recommender, ABC):
             / selected_item_popularity.select(sf.sum("relevance")).first()[0],
         ).toPandas()
 
-        rec_schema = get_rec_schema("user_idx", "item_idx", "relevance")
+        rec_schema = get_schema(
+            query_column="user_idx",
+            item_column="item_idx",
+            rating_column="relevance",
+            has_timestamp=False,
+        )
         if items_pd.shape[0] == 0:
             return State().session.createDataFrame([], rec_schema)
 

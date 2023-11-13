@@ -39,7 +39,7 @@ class RandomSplitter(Splitter):
         :param drop_cold_items: flag to drop cold items from test
         :param drop_cold_users: flag to drop cold users from test
         :param seed: random seed
-        :param query_column: Name of user interaction column
+        :param query_column: Name of query interaction column
         :param item_column: Name of item interaction column
         """
         super().__init__(

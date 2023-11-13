@@ -15,7 +15,7 @@ from pyspark.sql.types import (
     StructType, ArrayType, DoubleType
 )
 
-from replay.data import get_interactions_schema, get_rec_schema
+from replay.data import get_schema
 from replay.experimental.metrics import *
 from replay.utils.distributions import item_distribution
 from replay.experimental.metrics.base_metric import get_enriched_recommendations, drop_duplicates, filter_sort
@@ -29,8 +29,18 @@ from tests.utils import (
 )
 
 
-INTERACTIONS_SCHEMA = get_interactions_schema("user_idx", "item_idx", "timestamp", "relevance")
-REC_SCHEMA = get_rec_schema("user_idx", "item_idx", "relevance")
+INTERACTIONS_SCHEMA = get_schema(
+    query_column="user_idx",
+    item_column="item_idx",
+    timestamp_column="timestamp",
+    rating_column="relevance",
+)
+REC_SCHEMA = get_schema(
+    query_column="user_idx",
+    item_column="item_idx",
+    rating_column="relevance",
+    has_timestamp=False,
+)
 
 
 @pytest.fixture

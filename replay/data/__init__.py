@@ -1,7 +1,5 @@
 from replay.data.spark_schema import (
-    get_interactions_schema,
-    get_rec_schema,
-    get_base_schema,
+    get_schema,
 )
 from replay.data.typehints import (
     IntOrList,
@@ -21,7 +19,5 @@ __all__ = [
     "IntOrList",
     "NumType",
     "AnyDataFrame",
-    "get_interactions_schema",
-    "get_rec_schema",
-    "get_base_schema",
+    "get_schema",
 ]

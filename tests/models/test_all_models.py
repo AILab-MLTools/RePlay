@@ -163,7 +163,6 @@ def test_predict_pairs_k(log, model):
 )
 def test_predict_empty_log(log, model):
     dataset = create_dataset(log)
-    print(log.limit(0).show())
     pred_dataset = create_dataset(log.limit(0))
 
     model.fit(dataset)

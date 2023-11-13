@@ -6,7 +6,7 @@ import torch
 import numpy as np
 from pyspark.sql import functions as sf
 
-from replay.data import get_interactions_schema
+from replay.data import get_schema
 from replay.experimental.models import NeuroMF
 from replay.experimental.models.neuromf import NMF
 from replay.experimental.models.base_rec import HybridRecommender, UserRecommender
@@ -25,7 +25,7 @@ from replay.utils.model_handler import load
 
 
 SEED = 123
-INTERACTIONS_SCHEMA = get_interactions_schema("user_idx", "item_idx", "timestamp", "relevance")
+INTERACTIONS_SCHEMA = get_schema("user_idx", "item_idx", "timestamp", "relevance")
 
 
 def fit_predict_selected(model, train_log, inf_log, user_features, users):

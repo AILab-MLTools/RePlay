@@ -7,7 +7,7 @@ from pyspark.sql import DataFrame
 from replay.preprocessing import CSRConverter
 from replay.experimental.models.base_rec import Recommender
 from replay.utils.spark_utils import save_picklable_to_parquet, load_pickled_from_parquet
-from replay.data import get_rec_schema
+from replay.data import get_schema
 
 
 class ImplicitWrap(Recommender):
@@ -104,7 +104,12 @@ class ImplicitWrap(Recommender):
             data_column="relevance"
         ).transform(log)
         model = self.model
-        rec_schema = get_rec_schema("user_idx", "item_idx", "relevance")
+        rec_schema = get_schema(
+            query_column="user_idx",
+            item_column="item_idx",
+            rating_column="relevance",
+            has_timestamp=False,
+        )
         return (
             users.select("user_idx")
             .groupby("user_idx")
@@ -124,7 +129,12 @@ class ImplicitWrap(Recommender):
     ) -> DataFrame:
 
         model = self.model
-        rec_schema = get_rec_schema("user_idx", "item_idx", "relevance")
+        rec_schema = get_schema(
+            query_column="user_idx",
+            item_column="item_idx",
+            rating_column="relevance",
+            has_timestamp=False,
+        )
         return pairs.groupby("user_idx").applyInPandas(
             self._pd_func(model=model, filter_seen_items=False),
             rec_schema)

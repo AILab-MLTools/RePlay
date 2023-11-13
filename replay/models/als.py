@@ -9,7 +9,7 @@ from pyspark.sql.types import DoubleType
 from replay.data import Dataset
 
 from replay.models.base_rec import Recommender, ItemVectorModel
-from replay.utils.spark_utils import list_to_vector_udf, save_picklable_to_parquet, load_pickled_from_parquet
+from replay.utils.spark_utils import list_to_vector_udf
 
 
 # pylint: disable=too-many-instance-attributes
@@ -57,27 +57,15 @@ class ALSWrap(Recommender, ItemVectorModel):
             "seed": self._seed,
         }
 
-    def _save_model(self, path: str):
-        self.model.write().overwrite().save(path)
-        save_picklable_to_parquet(
-            {
-                "query_column": self.query_column,
-                "item_column": self.item_column,
-                "rating_column": self.rating_column,
-                "timestamp_column": self.timestamp_column,
-            },
-            join(path, "params.dump")
-        )
+    def _save_model(self, path: str, additional_params: Optional[dict] = None):
+        super()._save_model(path, additional_params)
+        self.model.write().overwrite().save(join(path, "model"))
 
     def _load_model(self, path: str):
-        self.model = ALSModel.load(path)
+        super()._load_model(path)
+        self.model = ALSModel.load(join(path, "model"))
         self.model.itemFactors.cache()
         self.model.userFactors.cache()
-        loaded_params = load_pickled_from_parquet(join(path, "params.dump"))
-        self.query_column = loaded_params.get("query_column")
-        self.item_column = loaded_params.get("item_column")
-        self.rating_column = loaded_params.get("rating_column")
-        self.timestamp_column = loaded_params.get("timestamp_column")
 
     def _fit(
         self,

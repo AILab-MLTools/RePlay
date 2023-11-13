@@ -5,7 +5,7 @@ import pytest
 import numpy as np
 from pyspark.sql import functions as sf
 
-from replay.data import get_interactions_schema
+from replay.data import get_schema
 from replay.experimental.models import ADMMSLIM
 from replay.experimental.models.base_rec import HybridRecommender, UserRecommender
 from replay.experimental.utils.model_handler import save
@@ -21,7 +21,7 @@ from tests.utils import (
 
 
 SEED = 123
-INTERACTIONS_SCHEMA = get_interactions_schema("user_idx", "item_idx", "timestamp", "relevance")
+INTERACTIONS_SCHEMA = get_schema("user_idx", "item_idx", "timestamp", "relevance")
 
 
 @pytest.mark.experimental

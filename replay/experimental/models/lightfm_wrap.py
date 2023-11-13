@@ -12,7 +12,7 @@ from scipy.sparse import csr_matrix, hstack, diags
 from sklearn.preprocessing import MinMaxScaler
 
 from replay.preprocessing import CSRConverter
-from replay.data import get_rec_schema
+from replay.data import get_schema
 from replay.experimental.models.base_rec import HybridRecommender
 from replay.utils.spark_utils import (
     check_numeric,
@@ -244,7 +244,12 @@ class LightFMWrap(HybridRecommender):
         csr_user_features = self._feature_table_to_csr(
             pairs.select("user_idx").distinct(), user_features
         )
-        rec_schema = get_rec_schema("user_idx", "item_idx", "relevance")
+        rec_schema = get_schema(
+            query_column="user_idx",
+            item_column="item_idx",
+            rating_column="relevance",
+            has_timestamp=False,
+        )
         return pairs.groupby("user_idx").applyInPandas(
             predict_by_user, rec_schema
         )

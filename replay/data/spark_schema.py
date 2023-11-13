@@ -7,11 +7,14 @@ from pyspark.sql.types import (
 )
 
 
-def get_interactions_schema(
+# pylint: disable=too-many-arguments
+def get_schema(
     query_column: str = "query_id",
     item_column: str = "item_id",
     timestamp_column: str = "timestamp",
     rating_column: str = "rating",
+    has_timestamp: bool = True,
+    has_rating: bool = True,
 ):
     """
     Get Spark Schema with query_id, item_id, rating, timestamp columns
@@ -20,51 +23,15 @@ def get_interactions_schema(
     :param item_column: column name with item ids
     :param timestamp_column: column name with timestamps
     :param rating_column: column name with ratings
+    :param has_rating: flag to add rating to schema
+    :param has_timestamp: flag to add tomestamp to schema
     """
-    return StructType(
-        [
-            StructField(query_column, IntegerType()),
-            StructField(item_column, IntegerType()),
-            StructField(timestamp_column, TimestampType()),
-            StructField(rating_column, DoubleType()),
-        ]
-    )
-
-
-def get_rec_schema(
-    query_column: str = "query_id",
-    item_column: str = "item_id",
-    rating_column: str = "rating",
-):
-    """
-    Get Spark Schema with query_id, item_id, rating columns
-
-    :param query_column: column name with query ids
-    :param item_column: column name with item ids
-    :param rating_column: column name with ratings
-    """
-    return StructType(
-        [
-            StructField(query_column, IntegerType()),
-            StructField(item_column, IntegerType()),
-            StructField(rating_column, DoubleType()),
-        ]
-    )
-
-
-def get_base_schema(
-    query_column: str = "query_id",
-    item_column: str = "item_id",
-):
-    """
-    Get Spark Schema with query_id, item_id columns
-
-    :param query_column: column name with query ids
-    :param item_column: column name with item ids
-    """
-    return StructType(
-        [
-            StructField(query_column, IntegerType()),
-            StructField(item_column, IntegerType()),
-        ]
-    )
+    base = [
+        StructField(query_column, IntegerType()),
+        StructField(item_column, IntegerType()),
+    ]
+    if has_timestamp:
+        base += [StructField(timestamp_column, TimestampType())]
+    if has_rating:
+        base += [StructField(rating_column, DoubleType())]
+    return StructType(base)

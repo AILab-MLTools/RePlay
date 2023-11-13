@@ -36,7 +36,7 @@ from optuna.samplers import TPESampler
 from pyspark.sql import DataFrame, Window
 from pyspark.sql import functions as sf
 
-from replay.data import get_rec_schema
+from replay.data import get_schema
 from replay.metrics import Metric, NDCG
 from replay.optimization.optuna_objective import SplitData, MainObjective
 from replay.utils.session_handler import State
@@ -622,13 +622,13 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         Warn if cold entities are present in the `main_df`.
         """
         can_predict_cold = self.can_predict_cold_queries if entity == "query" else self.can_predict_cold_items
-        fit = self.fit_queries if entity == "query" else self.fit_items
+        fit_entities = self.fit_queries if entity == "query" else self.fit_items
         column = self.query_column if entity == "query" else self.item_column
         if can_predict_cold:
             return main_df, interactions_df
 
         num_new, main_df = filter_cold(
-            main_df, fit, col_name=column
+            main_df, fit_entities, col_name=column
         )
         if num_new > 0:
             self.logger.info(
@@ -637,7 +637,7 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
                 entity,
             )
         _, interactions_df = filter_cold(
-            interactions_df, fit, col_name=column
+            interactions_df, fit_entities, col_name=column
         )
         return main_df, interactions_df
 
@@ -670,15 +670,15 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         """
 
     def _get_fit_counts(self, entity: str) -> int:
-        num = "_num_queries" if entity == "query" else "_num_items"
-        fit = self.fit_queries if entity == "query" else self.fit_items
-        if not hasattr(self, num):
+        num_entities = "_num_queries" if entity == "query" else "_num_items"
+        fit_entities = self.fit_queries if entity == "query" else self.fit_items
+        if not hasattr(self, num_entities):
             setattr(
                 self,
-                num,
-                fit.count(),
+                num_entities,
+                fit_entities.count(),
             )
-        return getattr(self, num)
+        return getattr(self, num_entities)
 
     @property
     def queries_count(self) -> int:
@@ -692,17 +692,17 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         """
         :returns: number of items the model was trained on
         """
-        return self._get_fit_counts("items")
+        return self._get_fit_counts("item")
 
     def _get_fit_dims(self, entity: str) -> int:
         dim_size = f"_{entity}_dim_size"
-        fit = self.fit_queries if entity == "query" else self.fit_items
+        fit_entities = self.fit_queries if entity == "query" else self.fit_items
         column = self.query_column if entity == "query" else self.item_column
         if not hasattr(self, dim_size):
             setattr(
                 self,
                 dim_size,
-                fit
+                fit_entities
                 .agg({column: "max"})
                 .collect()[0][0]
                 + 1,
@@ -933,23 +933,24 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
 
         return False
 
-    def _save_model(self, path: str):
+    def _save_model(self, path: str, additional_params: Optional[dict] = None):
+        saved_params = {
+            "query_column": self.query_column,
+            "item_column": self.item_column,
+            "rating_column": self.rating_column,
+            "timestamp_column": self.timestamp_column,
+        }
+        if additional_params is not None:
+            saved_params.update(additional_params)
         save_picklable_to_parquet(
-            {
-                "query_column": self.query_column,
-                "item_column": self.item_column,
-                "rating_column": self.rating_column,
-                "timestamp_column": self.timestamp_column,
-            },
+            saved_params,
             join(path, "params.dump")
         )
 
     def _load_model(self, path: str):
         loaded_params = load_pickled_from_parquet(join(path, "params.dump"))
-        self.query_column = loaded_params.get("query_column")
-        self.item_column = loaded_params.get("item_column")
-        self.rating_column = loaded_params.get("rating_column")
-        self.timestamp_column = loaded_params.get("timestamp_column")
+        for param, value in loaded_params.items():
+            setattr(self, param, value)
 
 
 class ItemVectorModel(BaseRecommender):
@@ -1435,25 +1436,8 @@ class NonPersonalizedRecommender(Recommender, ABC):
     def _dataframes(self):
         return {"item_popularity": self.item_popularity}
 
-    def _save_model(self, path: str):
-        save_picklable_to_parquet(
-            {
-                "query_column": self.query_column,
-                "item_column": self.item_column,
-                "rating_column": self.rating_column,
-                "timestamp_column": self.timestamp_column,
-                "fill": self.fill,
-            },
-            join(path, "params.dump")
-        )
-
-    def _load_model(self, path: str):
-        loaded_params = load_pickled_from_parquet(join(path, "params.dump"))
-        self.query_column = loaded_params.get("query_column")
-        self.item_column = loaded_params.get("item_column")
-        self.rating_column = loaded_params.get("rating_column")
-        self.timestamp_column = loaded_params.get("timestamp_column")
-        self.fill = loaded_params.get("fill")
+    def _save_model(self, path: str, additional_params: Optional[dict] = None):
+        super()._save_model(path, additional_params={"fill": self.fill})
 
     def _clear_cache(self):
         if hasattr(self, "item_popularity"):
@@ -1579,8 +1563,12 @@ class NonPersonalizedRecommender(Recommender, ABC):
             sf.col(self.rating_column)
             / selected_item_popularity.select(sf.sum(self.rating_column)).first()[0],
         ).toPandas()
-
-        rec_schema = get_rec_schema(self.query_column, self.item_column, self.rating_column)
+        rec_schema = get_schema(
+            query_column=self.query_column,
+            item_column=self.item_column,
+            rating_column=self.rating_column,
+            has_timestamp=False,
+        )
         if items_pd.shape[0] == 0:
             return State().session.createDataFrame([], rec_schema)
 

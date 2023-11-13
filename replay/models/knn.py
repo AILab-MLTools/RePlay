@@ -1,4 +1,3 @@
-from os.path import join
 from typing import Optional, Dict, Any
 
 from pyspark.sql import DataFrame
@@ -10,7 +9,6 @@ from replay.models.base_neighbour_rec import NeighbourRec
 from replay.optimization.optuna_objective import ItemKNNObjective
 
 from replay.data import Dataset
-from replay.utils.spark_utils import save_picklable_to_parquet, load_pickled_from_parquet
 
 
 # pylint: disable=too-many-ancestors
@@ -73,28 +71,6 @@ class ItemKNN(NeighbourRec):
             "weighting": self.weighting,
             "index_builder": self.index_builder.init_meta_as_dict() if self.index_builder else None,
         }
-
-    def _save_model(self, path: str):
-        save_picklable_to_parquet(
-            {
-                "query_column": self.query_column,
-                "item_column": self.item_column,
-                "rating_column": self.rating_column,
-                "timestamp_column": self.timestamp_column,
-            },
-            join(path, "params.dump")
-        )
-        if self._use_ann:
-            self._save_index(path)
-
-    def _load_model(self, path: str):
-        loaded_params = load_pickled_from_parquet(join(path, "params.dump"))
-        self.query_column = loaded_params.get("query_column")
-        self.item_column = loaded_params.get("item_column")
-        self.rating_column = loaded_params.get("rating_column")
-        self.timestamp_column = loaded_params.get("timestamp_column")
-        if self._use_ann:
-            self._load_index(path)
 
     @staticmethod
     def _shrink(dot_products: DataFrame, shrink: float) -> DataFrame:

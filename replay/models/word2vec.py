@@ -121,7 +121,7 @@ class Word2VecRec(Recommender, ItemVectorModel, ANNMixin):
             "index_builder": self.index_builder.init_meta_as_dict() if self.index_builder else None,
         }
 
-    def _save_model(self, path: str):
+    def _save_model(self, path: str, additional_params: Optional[dict] = None):
         # # create directory on shared disk or in HDFS
         # path_info = get_filesystem(path)
         # destination_filesystem, target_dir_path = fs.FileSystem.from_uri(
@@ -130,7 +130,7 @@ class Word2VecRec(Recommender, ItemVectorModel, ANNMixin):
         #     else path_info.path
         # )
         # destination_filesystem.create_dir(target_dir_path)
-        super()._save_model(path)
+        super()._save_model(path, additional_params)
         if self.index_builder:
             self._save_index(path)
 

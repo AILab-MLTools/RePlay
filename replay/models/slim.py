@@ -62,16 +62,6 @@ class SLIM(NeighbourRec):
             "index_builder": self.index_builder.init_meta_as_dict() if self.index_builder else None,
         }
 
-    def _save_model(self, path: str):
-        super()._save_model(path)
-        if self._use_ann:
-            self._save_index(path)
-
-    def _load_model(self, path: str):
-        super()._load_model(path)
-        if self._use_ann:
-            self._load_index(path)
-
     def _fit(
         self,
         dataset: Dataset,

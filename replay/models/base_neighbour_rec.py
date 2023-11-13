@@ -222,3 +222,13 @@ class NeighbourRec(Recommender, ANNMixin, ABC):
                 sf.collect_list(self.rating_column).alias("vector_ratings"))
         )
         return user_vectors
+
+    def _save_model(self, path: str, additional_params: Optional[dict] = None):
+        super()._save_model(path, additional_params)
+        if self._use_ann:
+            self._save_index(path)
+
+    def _load_model(self, path: str):
+        super()._load_model(path)
+        if self._use_ann:
+            self._load_index(path)

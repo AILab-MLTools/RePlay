@@ -299,6 +299,5 @@ class CatPopRec(IsSavable, RecommenderCommons):
 
     def _load_model(self, path: str):
         loaded_params = load_pickled_from_parquet(join(path, "params.dump"))
-        self.query_column = loaded_params.get("query_column")
-        self.item_column = loaded_params.get("item_column")
-        self.rating_column = loaded_params.get("rating_column")
+        for param, value in loaded_params.items():
+            setattr(self, param, value)
