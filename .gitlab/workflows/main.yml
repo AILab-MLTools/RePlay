@@ -107,8 +107,10 @@ pytest_spark:
     expire_in: 1 day
 
 merge-coverage:
-  <<: *install_replay
   stage: merge coverage
+  before_script:
+    - *setup_env
+    - ./poetry_wrapper.sh install --only dev
   script:
     - coverage combine .coverage_core .coverage_spark
     - coverage report --fail-under=93
