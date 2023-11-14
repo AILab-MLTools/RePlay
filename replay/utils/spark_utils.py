@@ -11,7 +11,7 @@ from numpy.random import default_rng
 
 from replay.utils.session_handler import State
 
-from .types import PYSPARK_AVAILABLE, DataFrameLike, NumType, SparkDataFrame
+from .types import PYSPARK_AVAILABLE, DataFrameLike, NumType, SparkDataFrame, MissingImportType
 
 if PYSPARK_AVAILABLE:
     import pyspark.sql.types as st
@@ -20,6 +20,8 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
     from pyspark.sql.column import _to_java_column, _to_seq
     from pyspark.sql.types import DoubleType, IntegerType, StructField, StructType
+else:
+    Column = MissingImportType
 
 
 class SparkCollectToMasterWarning(Warning):  # pragma: no cover
@@ -47,8 +49,6 @@ def spark_to_pandas(data: SparkDataFrame, allow_collect_to_master: bool = False)
 
 
 # pylint: disable=invalid-name
-
-
 def convert2spark(data_frame: Optional[DataFrameLike]) -> Optional[SparkDataFrame]:
     """
     Converts Pandas DataFrame to Spark DataFrame
@@ -90,58 +90,57 @@ def func_get(vector: np.ndarray, i: int) -> float:
     return float(vector[i])
 
 
-if PYSPARK_AVAILABLE:
-    def get_top_k(
-        dataframe: SparkDataFrame,
-        partition_by_col: Column,
-        order_by_col: List[Column],
-        k: int,
-    ) -> SparkDataFrame:
-        """
-        Return top ``k`` rows for each entity in ``partition_by_col`` ordered by
-        ``order_by_col``.
+def get_top_k(
+    dataframe: SparkDataFrame,
+    partition_by_col: Column,
+    order_by_col: List[Column],
+    k: int,
+) -> SparkDataFrame:
+    """
+    Return top ``k`` rows for each entity in ``partition_by_col`` ordered by
+    ``order_by_col``.
 
-        >>> from replay.utils.session_handler import State
-        >>> spark = State().session
-        >>> log = spark.createDataFrame([(1, 2, 1.), (1, 3, 1.), (1, 4, 0.5), (2, 1, 1.)]).toDF("user_id", "item_id", "relevance")
-        >>> log.show()
-        +-------+-------+---------+
-        |user_id|item_id|relevance|
-        +-------+-------+---------+
-        |      1|      2|      1.0|
-        |      1|      3|      1.0|
-        |      1|      4|      0.5|
-        |      2|      1|      1.0|
-        +-------+-------+---------+
-        <BLANKLINE>
-        >>> get_top_k(dataframe=log,
-        ...    partition_by_col=sf.col('user_id'),
-        ...    order_by_col=[sf.col('relevance').desc(), sf.col('item_id').desc()],
-        ...    k=1).orderBy('user_id').show()
-        +-------+-------+---------+
-        |user_id|item_id|relevance|
-        +-------+-------+---------+
-        |      1|      3|      1.0|
-        |      2|      1|      1.0|
-        +-------+-------+---------+
-        <BLANKLINE>
+    >>> from replay.utils.session_handler import State
+    >>> spark = State().session
+    >>> log = spark.createDataFrame([(1, 2, 1.), (1, 3, 1.), (1, 4, 0.5), (2, 1, 1.)]).toDF("user_id", "item_id", "relevance")
+    >>> log.show()
+    +-------+-------+---------+
+    |user_id|item_id|relevance|
+    +-------+-------+---------+
+    |      1|      2|      1.0|
+    |      1|      3|      1.0|
+    |      1|      4|      0.5|
+    |      2|      1|      1.0|
+    +-------+-------+---------+
+    <BLANKLINE>
+    >>> get_top_k(dataframe=log,
+    ...    partition_by_col=sf.col('user_id'),
+    ...    order_by_col=[sf.col('relevance').desc(), sf.col('item_id').desc()],
+    ...    k=1).orderBy('user_id').show()
+    +-------+-------+---------+
+    |user_id|item_id|relevance|
+    +-------+-------+---------+
+    |      1|      3|      1.0|
+    |      2|      1|      1.0|
+    +-------+-------+---------+
+    <BLANKLINE>
 
-        :param dataframe: spark dataframe to filter
-        :param partition_by_col: spark column to partition by
-        :param order_by_col: list of spark columns to orted by
-        :param k: number of first rows for each entity in ``partition_by_col`` to return
-        :return: filtered spark dataframe
-        """
-        return (
-            dataframe.withColumn(
-                "temp_rank",
-                sf.row_number().over(
-                    Window.partitionBy(partition_by_col).orderBy(*order_by_col)
-                ),
-            )
-            .filter(sf.col("temp_rank") <= k)
-            .drop("temp_rank")
+    :param dataframe: spark dataframe to filter
+    :param partition_by_col: spark column to partition by
+    :param order_by_col: list of spark columns to orted by
+    :param k: number of first rows for each entity in ``partition_by_col`` to return
+    :return: filtered spark dataframe
+    """
+    return (
+        dataframe.withColumn(
+            "temp_rank",
+            sf.row_number().over(
+                Window.partitionBy(partition_by_col).orderBy(*order_by_col)
+            ),
         )
+        .filter(sf.col("temp_rank") <= k)
+        .drop("temp_rank")
+    )
 
 
 def get_top_k_recs(
@@ -246,21 +245,6 @@ if PYSPARK_AVAILABLE:
         """
         return one * two
 
-
-def multiply_scala_udf(scalar, vector):
-    """
-    Multiplies a scalar by a vector
-
-    :param scalar: column with scalars
-    :param vector: column with vectors
-    :return: column expression
-    """
-    sc = SparkSession.getActiveSession().sparkContext
-    _f = sc._jvm.org.apache.spark.replay.utils.ScalaPySparkUDFs.multiplyUDF()
-    return Column(_f.apply(_to_seq(sc, [scalar, vector], _to_java_column)))
-
-
-if PYSPARK_AVAILABLE:
     @sf.udf(returnType=st.ArrayType(st.DoubleType()))
     def array_mult(first: st.ArrayType, second: st.ArrayType):
         """
@@ -298,6 +282,19 @@ if PYSPARK_AVAILABLE:
         """
 
         return [first[i] * second[i] for i in range(len(first))]
+
+
+def multiply_scala_udf(scalar, vector):
+    """
+    Multiplies a scalar by a vector
+
+    :param scalar: column with scalars
+    :param vector: column with vectors
+    :return: column expression
+    """
+    sc = SparkSession.getActiveSession().sparkContext
+    _f = sc._jvm.org.apache.spark.replay.utils.ScalaPySparkUDFs.multiplyUDF()
+    return Column(_f.apply(_to_seq(sc, [scalar, vector], _to_java_column)))
 
 
 def get_log_info(
@@ -407,54 +404,53 @@ def check_numeric(feature_table: SparkDataFrame) -> None:
             )
 
 
-if PYSPARK_AVAILABLE:
-    def horizontal_explode(
-        data_frame: SparkDataFrame,
-        column_to_explode: str,
-        prefix: str,
-        other_columns: List[Column],
-    ) -> SparkDataFrame:
-        """
-        Transform a column with an array of values into separate columns.
-        Each array must contain the same amount of values.
+def horizontal_explode(
+    data_frame: SparkDataFrame,
+    column_to_explode: str,
+    prefix: str,
+    other_columns: List[Column],
+) -> SparkDataFrame:
+    """
+    Transform a column with an array of values into separate columns.
+    Each array must contain the same amount of values.
 
-        >>> from replay.utils.session_handler import State
-        >>> spark = State().session
-        >>> input_data = (
-        ...     spark.createDataFrame([(5, [1.0, 2.0]), (6, [3.0, 4.0])])
-        ...     .toDF("id_col", "array_col")
-        ... )
-        >>> input_data.show()
-        +------+----------+
-        |id_col| array_col|
-        +------+----------+
-        |     5|[1.0, 2.0]|
-        |     6|[3.0, 4.0]|
-        +------+----------+
-        <BLANKLINE>
-        >>> horizontal_explode(input_data, "array_col", "element", [sf.col("id_col")]).show()
-        +------+---------+---------+
-        |id_col|element_0|element_1|
-        +------+---------+---------+
-        |     5|      1.0|      2.0|
-        |     6|      3.0|      4.0|
-        +------+---------+---------+
-        <BLANKLINE>
+    >>> from replay.utils.session_handler import State
+    >>> spark = State().session
+    >>> input_data = (
+    ...     spark.createDataFrame([(5, [1.0, 2.0]), (6, [3.0, 4.0])])
+    ...     .toDF("id_col", "array_col")
+    ... )
+    >>> input_data.show()
+    +------+----------+
+    |id_col| array_col|
+    +------+----------+
+    |     5|[1.0, 2.0]|
+    |     6|[3.0, 4.0]|
+    +------+----------+
+    <BLANKLINE>
+    >>> horizontal_explode(input_data, "array_col", "element", [sf.col("id_col")]).show()
+    +------+---------+---------+
+    |id_col|element_0|element_1|
+    +------+---------+---------+
+    |     5|      1.0|      2.0|
+    |     6|      3.0|      4.0|
+    +------+---------+---------+
+    <BLANKLINE>
 
-        :param data_frame: input DataFrame
-        :param column_to_explode: column with type ``array``
-        :param prefix: prefix used for new columns, suffix is an integer
-        :param other_columns: columns to select beside newly created
-        :returns: DataFrame with elements from ``column_to_explode``
-        """
-        num_columns = len(data_frame.select(column_to_explode).head()[0])
-        return data_frame.select(
-            *other_columns,
-            *[
-                sf.element_at(column_to_explode, i + 1).alias(f"{prefix}_{i}")
-                for i in range(num_columns)
-            ],
-        )
+    :param data_frame: input DataFrame
+    :param column_to_explode: column with type ``array``
+    :param prefix: prefix used for new columns, suffix is an integer
+    :param other_columns: columns to select beside newly created
+    :returns: DataFrame with elements from ``column_to_explode``
+    """
+    num_columns = len(data_frame.select(column_to_explode).head()[0])
+    return data_frame.select(
+        *other_columns,
+        *[
+            sf.element_at(column_to_explode, i + 1).alias(f"{prefix}_{i}")
+            for i in range(num_columns)
+        ],
+    )
 
 
 def join_or_return(first, second, on, how):
