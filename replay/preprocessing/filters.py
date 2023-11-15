@@ -22,11 +22,11 @@ class _BaseFilter(ABC):
         return self._filter_pandas(interactions)
 
     @abstractmethod
-    def _filter_spark(self, interactions: SparkDataFrame):
+    def _filter_spark(self, interactions: SparkDataFrame):  # pragma: no cover
         pass
 
     @abstractmethod
-    def _filter_pandas(self, interactions: PandasDataFrame):
+    def _filter_pandas(self, interactions: PandasDataFrame):  # pragma: no cover
         pass
 
 if PYSPARK_AVAILABLE:
