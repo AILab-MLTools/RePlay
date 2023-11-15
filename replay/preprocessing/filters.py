@@ -8,6 +8,13 @@ from typing import Callable, Optional, Union, Tuple
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame
 
 
+if PYSPARK_AVAILABLE:
+    from pyspark.sql import Window
+    from pyspark.sql import functions as sf
+    from pyspark.sql.functions import col
+    from pyspark.sql.types import TimestampType
+
+
 # pylint: disable=too-few-public-methods
 class _BaseFilter(ABC):
     def transform(self, interactions: DataFrameLike) -> DataFrameLike:
@@ -28,14 +35,6 @@ class _BaseFilter(ABC):
     @abstractmethod
     def _filter_pandas(self, interactions: PandasDataFrame):  # pragma: no cover
         pass
-
-if PYSPARK_AVAILABLE:
-    from pyspark.sql import Window
-    from pyspark.sql import functions as sf
-    from pyspark.sql.functions import col
-    from pyspark.sql.types import TimestampType
-
-    from replay.utils.spark_utils import convert2spark
 
 
 # pylint: disable=too-few-public-methods, too-many-instance-attributes
