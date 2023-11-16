@@ -35,6 +35,7 @@ def interactions_spark(interactions_pandas):
     return get_spark_session().createDataFrame(interactions_pandas)
 
 
+@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
@@ -57,6 +58,7 @@ def test_mincount_filter(dataset_type, request):
         assert sorted(ids)[0] == "u3"
 
 
+@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
@@ -79,6 +81,7 @@ def test_lowrating_filter(dataset_type, request):
         assert sorted(ids)[0] == "u2"
 
 
+@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
@@ -107,6 +110,7 @@ def test_numinteractions_filter(dataset_type, first, item_column, request):
         assert len(ids) == 3
 
 
+@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
@@ -129,6 +133,7 @@ def test_entitydays_filter(dataset_type, first, answer, request):
         assert filtered_dataframe.count() == answer
 
 
+@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
@@ -156,6 +161,7 @@ def test_globaldays_filter(dataset_type, first, answer, request):
         assert len(ids) == 2
 
 
+@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
