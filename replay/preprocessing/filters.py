@@ -131,9 +131,9 @@ class InteractionEntriesFilter(_BaseFilter):
         return self._iterative_filter(interactions, interaction_count, self._filter_column_pandas)
 
     def _iterative_filter(self, interactions: DataFrameLike, interaction_count: int, filter_func: Callable):
-        is_no_dropped_user_item = [True, True]
+        is_dropped_user_item = [True, True]
         current_index = 0
-        while is_no_dropped_user_item[0] or is_no_dropped_user_item[1]:
+        while is_dropped_user_item[0] or is_dropped_user_item[1]:
             if current_index == 0:
                 min_inter = self.min_inter_per_user
                 max_inter = self.max_inter_per_user
@@ -151,7 +151,7 @@ class InteractionEntriesFilter(_BaseFilter):
                 interactions, dropped_interact, interaction_count = filter_func(
                     interactions, interaction_count, agg_column, non_agg_column, min_inter, max_inter
                 )
-            is_no_dropped_user_item[current_index] = bool(dropped_interact)
+            is_dropped_user_item[current_index] = bool(dropped_interact)
             current_index = (current_index + 1) % 2     # current_index only in (0, 1)
 
         return interactions
