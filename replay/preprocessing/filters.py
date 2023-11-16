@@ -131,9 +131,9 @@ class InteractionEntriesFilter(_BaseFilter):
         return self._iterative_filter(interactions, interaction_count, self._filter_column_pandas)
 
     def _iterative_filter(self, interactions: DataFrameLike, interaction_count: int, filter_func: Callable):
-        is_no_dropped_user_item = [False, False]
+        is_no_dropped_user_item = [True, True]
         current_index = 0
-        while is_no_dropped_user_item[0] is False or is_no_dropped_user_item[1] is False:
+        while is_no_dropped_user_item[0] or is_no_dropped_user_item[1]:
             if current_index == 0:
                 min_inter = self.min_inter_per_user
                 max_inter = self.max_inter_per_user
@@ -145,10 +145,13 @@ class InteractionEntriesFilter(_BaseFilter):
                 agg_column = self.item_column
                 non_agg_column = self.query_column
 
-            interactions, dropped_interact, interaction_count = filter_func(
-                interactions, interaction_count, min_inter, max_inter, agg_column, non_agg_column
-            )
-            is_no_dropped_user_item[current_index] = not dropped_interact
+            if min_inter is None and max_inter is None:
+                dropped_interact = 0
+            else:
+                interactions, dropped_interact, interaction_count = filter_func(
+                    interactions, interaction_count, agg_column, non_agg_column, min_inter, max_inter
+                )
+            is_no_dropped_user_item[current_index] = bool(dropped_interact)
             current_index = (current_index + 1) % 2     # current_index only in (0, 1)
 
         return interactions
@@ -158,14 +161,11 @@ class InteractionEntriesFilter(_BaseFilter):
         self,
         interactions: PandasDataFrame,
         interaction_count: int,
-        min_inter: Optional[int],
-        max_inter: Optional[int],
         agg_column: str,
         non_agg_column: str,
+        min_inter: Optional[int] = None,
+        max_inter: Optional[int] = None,
     ) -> Tuple[PandasDataFrame, int, int]:
-        if not min_inter and not max_inter:
-            return interactions, 0, interaction_count
-
         filtered_interactions = interactions.copy(deep=True)
 
         filtered_interactions["count"] = filtered_interactions.groupby(agg_column, sort=False)[
@@ -187,14 +187,11 @@ class InteractionEntriesFilter(_BaseFilter):
         self,
         interactions: SparkDataFrame,
         interaction_count: int,
-        min_inter: Optional[int],
-        max_inter: Optional[int],
         agg_column: str,
         non_agg_column: str,
+        min_inter: Optional[int] = None,
+        max_inter: Optional[int] = None,
     ) -> Tuple[SparkDataFrame, int, int]:
-        if not min_inter and not max_inter:
-            return interactions, 0, interaction_count
-
         filtered_interactions = interactions.withColumn(
             "count", sf.count(non_agg_column).over(Window.partitionBy(agg_column))
         )
