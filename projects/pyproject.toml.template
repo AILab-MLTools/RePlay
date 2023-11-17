@@ -90,6 +90,7 @@ data-science-types = "0.2.23"
 [tool.poetry.extras]
 spark = ["pyspark"]
 torch = ["torch", "pytorch-ranger"]
+all = ["pyspark", "torch", "pytorch-ranger"]
 
 [build-system]
 requires = [
