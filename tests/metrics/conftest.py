@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 import replay
-from replay.models import RandomRec
+from replay.models import PopRec
 from replay.preprocessing import LabelEncoder, LabelEncodingRule
 from replay.splitters import RatioSplitter
 from replay.utils import PandasDataFrame, SparkDataFrame
@@ -174,7 +174,7 @@ def random_train_test_recs() -> Tuple[PandasDataFrame, PandasDataFrame, PandasDa
     encoded_data = encode_data(ml_1m)
     train, test = split_data(encoded_data)
 
-    model = RandomRec(distribution="popular_based", alpha=1.0, seed=777)
+    model = PopRec()
     model.fit(create_dataset(train))
     recs = model.predict(create_dataset(test), 20)
 

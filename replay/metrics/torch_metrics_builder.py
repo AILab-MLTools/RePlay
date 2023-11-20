@@ -298,7 +298,7 @@ class TorchMetricsBuilder(_MetricBuilder):
         return mrr.sum().item()
 
     def _compute_novelty(self, train_hits: torch.Tensor, k: int) -> float:
-        novelty = (~train_hits).sum(1) / min(train_hits.shape[1], k)
+        novelty = (~train_hits).sum(1) / k
         return novelty.sum().item()
 
     def _compute_metrics_sum(
