@@ -103,10 +103,13 @@ class _CoverageHelper:
     """
 
     def __init__(self, top_k: List[int], item_count: Optional[int]) -> None:
+        """
+        :param top_k: (list): Consider the highest k scores in the ranking.
+        :param item_count: (optional, int): the total number of items in the dataset.
+        """
         self._top_k = top_k
         self._item_count = item_count
-        self._train_hist = torch.zeros(self.item_count)
-        self._pred_hist: Dict[int, torch.Tensor] = {k: torch.zeros(self.item_count) for k in self._top_k}
+        self.reset()
 
     def reset(self) -> None:
         """
@@ -126,16 +129,14 @@ class _CoverageHelper:
         """
         self._ensure_hists_on_device(predictions.device)
         for k in self._top_k:
-            self._pred_hist[k] += torch.histc(
-                predictions[:, :k].float(), bins=self.item_count, min=0, max=self.item_count - 1
-            )
+            self._pred_hist[k] += torch.bincount(predictions[:, :k], minlength=self.item_count)
 
     def add_train(self, train: torch.LongTensor) -> None:
         """
         Add a training set batch
         """
         self._ensure_hists_on_device(train.device)
-        self._train_hist += torch.histc(train.float(), bins=self.item_count, min=0, max=self.item_count - 1)
+        self._train_hist += torch.bincount(train, minlength=self.item_count)
 
     def get_metrics(self) -> Mapping[str, float]:
         """
@@ -194,13 +195,21 @@ class TorchMetricsBuilder(_MetricBuilder):
 
     def __init__(
         self,
-        metrics: Optional[List[MetricName]] = None,
-        top_k: Optional[List[int]] = None,
+        metrics: List[MetricName] = DEFAULT_METRICS,
+        top_k: Optional[List[int]] = DEFAULT_KS,
         item_count: Optional[int] = None,
     ) -> None:
+        """
+        :param metrics: (list[MetricName]): Names of metrics to calculate.
+            Default: `["map", "ndcg", "recall"]`.
+        :param top_k: (list): Consider the highest k scores in the ranking.
+            Default: `[1, 5, 10, 20]`.
+        :param item_count: (optional, int): the total number of items in the dataset.
+            You can omit this parameter if you don't need to calculate the unseen metrics.
+        """
         self._mr = _MetricRequirements.from_metrics(
-            set(metrics or DEFAULT_METRICS),
-            sorted(set(top_k or DEFAULT_KS)),
+            set(metrics),
+            sorted(set(top_k)),
         )
         if self._mr.need_ndcg:
             self._ndcg_weights: torch.Tensor
@@ -210,21 +219,20 @@ class TorchMetricsBuilder(_MetricBuilder):
             self._map_weights: torch.Tensor
             self._reserve_map_constants()
         self._item_count = item_count
-        self._metric_sum = np.zeros(len(self._mr.metric_names), dtype=np.float64)
-        self._prediction_counter = 0
         self._coverage_helper = _CoverageHelper(top_k=self._mr.top_k, item_count=item_count)
+        self.reset()
 
     @property
     def max_k(self) -> int:
         """
-        Maximum K for calculating metrics
+        Maximum K for calculating metrics.
         """
         return max(self._mr.top_k)
 
     @property
     def item_count(self) -> int:
         """
-        The number of items in the training dataset
+        The number of items in the training dataset.
         """
         assert self._item_count
         return self._item_count
@@ -234,6 +242,9 @@ class TorchMetricsBuilder(_MetricBuilder):
         self._item_count = value
 
     def reset(self) -> None:
+        """
+        Reload the metric counter
+        """
         self._metric_sum = np.zeros(len(self._mr.metric_names), dtype=np.float64)
         self._prediction_counter = 0
         if self._mr.need_coverage:
@@ -253,6 +264,16 @@ class TorchMetricsBuilder(_MetricBuilder):
         ground_truth: torch.LongTensor,
         train: Optional[torch.LongTensor] = None,
     ) -> None:
+        """
+        Add a batch with predictions, ground truth and train set to calculate the metrics.
+
+        :param predictions: (torch.LongTensor): A batch with the same number of recommendations for each user.
+        :param ground_truth: (torch.LongTensor): A batch corresponding to the test set for each user.
+            If users have a test set of different sizes then you need to do the padding using -1.
+        :param train: (optional, int): A batch corresponding to the train set for each user.
+            If users have a train set of different sizes then you need to do the padding using -2.
+            You can omit this parameter if you don't need to calculate the unseen metrics.
+        """
         self._ensure_constants_on_device(predictions.device)
         metrics_sum = np.array(self._compute_metrics_sum(predictions, ground_truth, train), dtype=np.float64)
         if self._mr.need_coverage:
@@ -263,6 +284,9 @@ class TorchMetricsBuilder(_MetricBuilder):
         self._metric_sum += metrics_sum
 
     def get_metrics(self) -> Mapping[str, float]:
+        """
+        Getting calculated metrics.
+        """
         assert self._prediction_counter > 0
         metrics = self._metric_sum / self._prediction_counter
         result = dict(zip(self._mr.metric_names, metrics))
@@ -306,6 +330,8 @@ class TorchMetricsBuilder(_MetricBuilder):
     ) -> List[float]:
         result: List[float] = []
 
+        # Getting a tensor of the same size as predictions
+        # The tensor contains information about whether the item from the prediction is present in the test set
         item_hits = (predictions.unsqueeze(1) == ground_truth.unsqueeze(-1)).any(dim=1)
         if self._mr.need_novelty:
             assert train is not None
