@@ -127,7 +127,7 @@ class _CoverageHelper:
     def add_prediction(self, predictions: torch.LongTensor) -> None:
         """
         Add a batch with predictions.
-        
+
         :param predictions: (torch.LongTensor): A batch with the same number of recommendations for each user.
         """
         self._ensure_hists_on_device(predictions.device)
@@ -137,7 +137,7 @@ class _CoverageHelper:
     def add_train(self, train: torch.LongTensor) -> None:
         """
         Add a training set batch.
-        
+
         :param train: (optional, int): A batch corresponding to the train set for each user.
             If users have a train set of different sizes then you need to do the padding using -2.
         """
