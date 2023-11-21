@@ -142,7 +142,9 @@ class _CoverageHelper:
             If users have a train set of different sizes then you need to do the padding using -2.
         """
         self._ensure_hists_on_device(train.device)
-        self._train_hist += torch.bincount(train.flatten(), minlength=self.item_count)
+        flatten_train = train.flatten()
+        filtered_train = torch.masked_select(flatten_train, flatten_train != -2)
+        self._train_hist += torch.bincount(filtered_train, minlength=self.item_count)
 
     def get_metrics(self) -> Mapping[str, float]:
         """
@@ -212,7 +214,7 @@ class TorchMetricsBuilder(_MetricBuilder):
         :param top_k: (list): Consider the highest k scores in the ranking.
             Default: `[1, 5, 10, 20]`.
         :param item_count: (optional, int): the total number of items in the dataset.
-            You can omit this parameter if you don't need to calculate the unseen metrics.
+            You can omit this parameter if you don't need to calculate the Coverage metric.
         """
         self._mr = _MetricRequirements.from_metrics(
             set(metrics),
