@@ -6214,4 +6214,12 @@ torch = ["lightning", "pytorch-ranger", "torch"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <3.11"
+<<<<<<< HEAD
 content-hash = "7a83de5822e640f1e5f522a92b04b8c6d00bd67f0b6b29ceb72bbd53f892e889"
+=======
+<<<<<<< HEAD
+content-hash = "c10e07102edcade96db5007b9cc3d30961cebb2a8a470add5724147eb0eedd7c"
+=======
+content-hash = "7812e530c7be28c4ad81976294f6dcdc9e38cf9659871b863140de987f9f529d"
+>>>>>>> Add Bert4Rec
+>>>>>>> Add Bert4Rec
