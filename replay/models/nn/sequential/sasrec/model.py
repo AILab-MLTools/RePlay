@@ -207,7 +207,7 @@ class SASRecModel(torch.nn.Module):
 # pylint: disable=too-few-public-methods
 class SASRecMasks:
     """
-    GPT Masks
+    SASRec Masks
         1. AttentionMask
         2. PaddingMask
     """
@@ -312,7 +312,7 @@ class EmbeddingTyingHead(torch.nn.Module):
 
 class SASRecEmbeddings(torch.nn.Module, BaseSASRecEmbeddings):
     """
-    GPT Embedding:
+    SASRec Embedding:
         1. ItemEmbedding : normal embedding matrix
         2. PositionalEmbedding : adding positional information
 
@@ -378,7 +378,7 @@ class SASRecEmbeddings(torch.nn.Module, BaseSASRecEmbeddings):
 
 class SASRecLayers(torch.nn.Module):
     """
-    GPT vanilla layers:
+    SASRec vanilla layers:
         1. SelfAttention layers
         2. FeedForward layers
 
@@ -524,10 +524,10 @@ class SASRecPositionalEmbedding(torch.nn.Module):
 
 class TiSASRecEmbeddings(torch.nn.Module, BaseSASRecEmbeddings):
     """
-    TiGPT Embedding:
+    TiSASRec Embedding:
         1. ItemEmbedding : normal embedding matrix
-        2. TimeRelativeEmbedding: based on TiGPT4Rec architecture
-        3. TimeRelativePositionalEmbedding: based on TiGPT4Rec architecture
+        2. TimeRelativeEmbedding: based on TiSASRec architecture
+        3. TimeRelativePositionalEmbedding: based on TiSASRec architecture
 
     Link: https://cseweb.ucsd.edu/~jmcauley/pdfs/wsdm20b.pdf
     """
@@ -630,7 +630,7 @@ class TiSASRecEmbeddings(torch.nn.Module, BaseSASRecEmbeddings):
 
 class TiSASRecLayers(torch.nn.Module):
     """
-    TiGPT layers:
+    TiSASRec layers:
         1. Time-relative SelfAttention layers
         2. FeedForward layers
 
