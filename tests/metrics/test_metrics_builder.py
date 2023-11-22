@@ -151,7 +151,7 @@ def test_unseen_metrics(random_train_test_recs):
             "mrr",
         ],
         train,
-        test,
+        test_without_train,
         recs,
         True,
     )
