@@ -5,12 +5,14 @@ import lightning as L
 import torch
 
 from replay.models.nn.sequential.postprocessors import BasePostProcessor
-from replay.utils import PYSPARK_AVAILABLE, PandasDataFrame, SparkDataFrame
+from replay.utils import PYSPARK_AVAILABLE, PandasDataFrame, SparkDataFrame, MissingImportType
 
 if PYSPARK_AVAILABLE:  # pragma: no cover
     from pyspark.sql import SparkSession
     import pyspark.sql.functions as F
     from pyspark.sql.types import ArrayType, DoubleType, IntegerType, StructType
+else:
+    SparkSession = MissingImportType
 
 
 # pylint: disable=too-few-public-methods
