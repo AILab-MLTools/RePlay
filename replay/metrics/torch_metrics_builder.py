@@ -141,7 +141,7 @@ class _CoverageHelper:
         self._ensure_hists_on_device(train.device)
         flatten_train = train.flatten()
         filtered_train = torch.masked_select(flatten_train, flatten_train != -2)
-        self._train_hist += torch.histc(train.float(), bins=self.item_count, min=0, max=self.item_count - 1)
+        self._train_hist += torch.histc(filtered_train.float(), bins=self.item_count, min=0, max=self.item_count - 1)
 
     def get_metrics(self) -> Mapping[str, float]:
         """
