@@ -25,6 +25,22 @@ class SequenceTokenizer:
         default_value_rule: Optional[Union[int, str]] = None,
         allow_collect_to_master: bool = False,
     ) -> None:
+        """
+        :param tensor_schema: tensor schema of tensor features
+        :param handle_unknown_rule: handle unknown labels rule for LabelEncoder,
+            values are in ('error', 'use_default_value').
+            Default: `error`
+        :param default_value: Default value that will fill the unknown labels after transform.
+            When the parameter handle_unknown is set to ``use_default_value``,
+            this parameter is required and will set the encoded value of unknown labels.
+            It has to be distinct from the values used to encode any of the labels in fit.
+            If ``None``, then keep null.
+            If ``int`` value, then fill by that value.
+            If ``str`` value, should be \"last\" only, then fill by ``n_classes`` value.
+            Default: ``None``.
+        :param allow_collect_to_master: Flag allowing spark to make a collection to the master node,
+            Default: ``False``.
+        """
         self._tensor_schema = tensor_schema
         self._allow_collect_to_master = allow_collect_to_master
         self._encoder = DatasetLabelEncoder(
@@ -362,7 +378,7 @@ class SequenceTokenizer:
 
 class _SequenceProcessor:
     """
-    Dataset for sequential recommender models
+    Class to process sequences of different categorical and numerical features.
     """
 
     # pylint: disable=too-many-arguments

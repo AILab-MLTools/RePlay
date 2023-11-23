@@ -31,6 +31,15 @@ class TorchSequentialDataset(TorchDataset):
         sliding_window_step: Optional[int] = None,
         padding_value: int = 0,
     ) -> None:
+        """
+        :param sequential: sequential dataset
+        :param max_sequence_length: the maximum length of sequence
+        :param sliding_window_step: value of offset from each sequence start during iteration,
+            `None` means the offset will be equals to difference between actual sequence
+            length and `max_sequence_length`.
+            Default: `None`
+        :param padding_value: value to pad sequences to desired length
+        """
         super().__init__()
         self._sequential = sequential
         self._max_sequence_length = max_sequence_length

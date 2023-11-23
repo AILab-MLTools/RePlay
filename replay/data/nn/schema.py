@@ -34,6 +34,12 @@ class TensorFeatureSource:
         column: str,
         index: Optional[int] = None,
     ) -> None:
+        """
+        :param source: feature source
+        :param column: column name
+        :param index: index of column in dataframe to get tensor
+            directly, without mappings
+        """
         self._column = column
         self._index = index
         self._source = source
