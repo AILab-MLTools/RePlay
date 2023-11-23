@@ -11,15 +11,10 @@ if TORCH_AVAILABLE:
 
 MetricName = Literal[
     "recall",
-    "unseen-recall",
     "precision",
-    "unseen-precision",
     "ndcg",
-    "unseen-ndcg",
     "map",
-    "unseen-map",
     "mrr",
-    "unseen-mrr",
     "novelty",
     "coverage",
 ]
