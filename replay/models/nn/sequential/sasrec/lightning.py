@@ -154,7 +154,7 @@ class SASRec(L.LightningModule):
             model = cast(SASRecModel, self._model.module)  # multigpu
         else:
             model = self._model
-        scores = model.predict_all(feature_tensors, padding_mask)
+        scores = model.predict(feature_tensors, padding_mask)
         return scores
 
     def _compute_loss(self, batch: SASRecTrainingBatch) -> torch.Tensor:
