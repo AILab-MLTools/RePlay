@@ -4,7 +4,7 @@ import lightning as L
 import torch
 from lightning.pytorch.utilities.rank_zero import rank_zero_only
 
-from replay.metrics.torch_metrics_builder import MetricName, TorchMetricsBuilder, metrics_to_df
+from replay.metrics.torch_metrics_builder import TorchMetricsBuilder, metrics_to_df
 from replay.models.nn.sequential.postprocessors import BasePostProcessor
 
 
