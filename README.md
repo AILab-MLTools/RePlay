@@ -1,6 +1,6 @@
 # RePlay: End-to-End Recommendation System Framework
 
-<img src="docs/images/replay_logo_color.svg" style="height: 50px"/>
+<img src="docs/images/replay_logo_color.svg" height="100"/>
 
 RePlay is an advanced framework designed to facilitate the development and evaluation of recommendation systems. It provides a robust set of tools covering the entire lifecycle of a recommendation system pipeline:
 
