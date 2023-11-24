@@ -173,6 +173,7 @@ print(metrics.results)
 3. [03_features_preprocessing_and_lightFM.ipynb](https://github.com/sb-ai-lab/RePlay/blob/main/examples/03_features_preprocessing_and_lightFM.ipynb) - LightFM example with pyspark for feature preprocessing.
 3. [04_splitters.ipynb](https://github.com/sb-ai-lab/RePlay/blob/main/examples/04_splitters.ipynb) - An example of using RePlay data splitters.
 3. [05_feature_generators.ipynb](https://github.com/sb-ai-lab/RePlay/blob/main/examples/05_feature_generators.ipynb) - Feature generation with RePlay.
+6. [08_sasrec_example.ipynb](https://github.com/sb-ai-lab/RePlay/blob/main/examples/08_sasrec_example.ipynb) - An example of using transformers to generate recommendations
 
 
 ### Videos and papers
