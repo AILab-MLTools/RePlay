@@ -27,7 +27,7 @@ class SASRecTrainingBatch(NamedTuple):
 
 class SASRecTrainingDataset(TorchDataset):
     """
-    Dataset that generates samples to train GPT-like model
+    Dataset that generates samples to train SASRec-like model
     """
 
     # pylint: disable=too-many-arguments
@@ -114,7 +114,7 @@ class SASRecPredictionBatch(NamedTuple):
 
 class SASRecPredictionDataset(TorchDataset):
     """
-    Dataset that generates samples to infer GPT-like model
+    Dataset that generates samples to infer SASRec-like model
     """
 
     def __init__(
