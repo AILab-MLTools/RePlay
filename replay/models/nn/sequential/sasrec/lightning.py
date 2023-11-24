@@ -121,7 +121,7 @@ class SASRec(L.LightningModule):
         :param batch_idx: Batch index.
         :param dataloader_idx: Dataloader index.
 
-        :returns: Computed loss for batch.
+        :returns: Calculated scores.
         """
         return self._model_predict(batch.features, batch.padding_mask)
 
@@ -131,7 +131,7 @@ class SASRec(L.LightningModule):
         :param batch (SASRecValidationBatch): Batch of prediction data.
         :param batch_idx (int): Batch index.
 
-        :returns: Computed loss for batch.
+        :returns: Calculated scores.
         """
         return self._model_predict(batch.features, batch.padding_mask)
 
