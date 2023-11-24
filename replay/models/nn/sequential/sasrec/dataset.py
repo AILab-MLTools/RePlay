@@ -162,7 +162,7 @@ class SASRecValidationBatch(NamedTuple):
 
 class SASRecValidationDataset(TorchDataset):
     """
-    Dataset that generates samples to infer and validate GPT-like model
+    Dataset that generates samples to infer and validate SASRec-like model
     """
 
     # pylint: disable=too-many-arguments
