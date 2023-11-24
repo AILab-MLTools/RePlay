@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Protocol, Tuple
+from typing import Dict, List, Optional, Protocol, Tuple, Literal
 
 import lightning as L
 import torch
@@ -6,6 +6,22 @@ from lightning.pytorch.utilities.rank_zero import rank_zero_only
 
 from replay.metrics.torch_metrics_builder import MetricName, TorchMetricsBuilder, metrics_to_df
 from replay.models.nn.sequential.postprocessors import BasePostProcessor
+
+
+CallbackMetricName = Literal[
+    "recall",
+    "unseen-recall",
+    "precision",
+    "unseen-precision",
+    "ndcg",
+    "unseen-ndcg",
+    "map",
+    "unseen-map",
+    "mrr",
+    "unseen-mrr",
+    "novelty",
+    "coverage",
+]
 
 
 # pylint: disable=too-few-public-methods
@@ -26,7 +42,7 @@ class ValidationMetricsCallback(L.Callback):
     # pylint: disable=invalid-name
     def __init__(
         self,
-        metrics: Optional[List[MetricName]] = None,
+        metrics: Optional[List[CallbackMetricName]] = None,
         ks: Optional[List[int]] = None,
         postprocessors: Optional[List[BasePostProcessor]] = None,
         item_count: Optional[int] = None,
