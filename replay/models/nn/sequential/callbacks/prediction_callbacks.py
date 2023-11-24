@@ -41,6 +41,13 @@ class BasePredictionCallback(L.Callback, Generic[_T]):
         rating_column: str = "rating",
         postprocessors: Optional[List[BasePostProcessor]] = None,
     ) -> None:
+        """
+        :param top_k: Takes the highest k scores in the ranking.
+        :param query_column: query column name.
+        :param item_column: item column name.
+        :param rating_column: rating column name.
+        :param postprocessors: postprocessors to apply.
+        """
         super().__init__()
         self.query_column = query_column
         self.item_column = item_column
@@ -138,6 +145,13 @@ class SparkPredictionCallback(BasePredictionCallback[SparkDataFrame]):
         spark_session: SparkSession,
         postprocessors: Optional[List[BasePostProcessor]] = None,
     ) -> None:
+        """
+        :param top_k: Takes the highest k scores in the ranking.
+        :param query_column: query column name.
+        :param item_column: item column name.
+        :param rating_column: rating column name.
+        :param postprocessors: postprocessors to apply.
+        """
         super().__init__(
             top_k=top_k,
             query_column=query_column,
@@ -186,6 +200,10 @@ class TorchPredictionCallback(BasePredictionCallback[Tuple[torch.LongTensor, tor
         top_k: int,
         postprocessors: Optional[List[BasePostProcessor]] = None,
     ) -> None:
+        """
+        :param top_k: Takes the highest k scores in the ranking.
+        :param postprocessors: postprocessors to apply.
+        """
         super().__init__(
             top_k=top_k,
             query_column="query_id",

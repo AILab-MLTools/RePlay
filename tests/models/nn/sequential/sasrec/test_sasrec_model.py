@@ -35,7 +35,7 @@ def test_sasrec_predictions(tensor_schema, simple_masks):
     }
 
     predictions_by_one = model.predict(inputs, padding_mask, torch.tensor([0, 1, 2, 3]))
-    predictions_all = model.predict_all(inputs, padding_mask)
+    predictions_all = model.predict(inputs, padding_mask)
 
     assert predictions_all.size() == predictions_by_one.size()
 

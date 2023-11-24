@@ -7,8 +7,6 @@ from lightning.pytorch.utilities.rank_zero import rank_zero_only
 from replay.metrics.torch_metrics_builder import MetricName, TorchMetricsBuilder, metrics_to_df
 from replay.models.nn.sequential.postprocessors import BasePostProcessor
 
-UNSEEN_PREFIX_NAME: str = "unseen-"
-
 
 # pylint: disable=too-few-public-methods
 class ValidationBatch(Protocol):
@@ -33,6 +31,12 @@ class ValidationMetricsCallback(L.Callback):
         postprocessors: Optional[List[BasePostProcessor]] = None,
         item_count: Optional[int] = None,
     ):
+        """
+        :param metrics: Sequence of metrics to calculate.
+        :param ks: highest k scores in ranking. Default: will be `[1, 5, 10, 20]`.
+        :param postprocessors: postprocessors to validation stage.
+        :param item_count: the total number of items in the dataset.
+        """
         self._metrics_builder = TorchMetricsBuilder(metrics, ks, item_count)
         self._postprocessors: List[BasePostProcessor] = postprocessors or []
 

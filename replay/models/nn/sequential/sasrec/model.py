@@ -67,7 +67,7 @@ class SASRecModel(torch.nn.Module):
             padding_idx=self.padding_idx,
         )
         self.item_embedder: Union[TiSASRecEmbeddings, SASRecEmbeddings]
-        self.gpt_layers: torch.nn.Module
+        self.sasrec_layers: torch.nn.Module
 
         if self.ti_modification:
             self.item_embedder = TiSASRecEmbeddings(
@@ -78,7 +78,7 @@ class SASRecModel(torch.nn.Module):
                 padding_idx=self.padding_idx,
                 time_span=self.time_span,
             )
-            self.gpt_layers = TiSASRecLayers(
+            self.sasrec_layers = TiSASRecLayers(
                 embed_size=self.embed_size,
                 num_heads=self.num_heads,
                 num_blocks=self.num_blocks,
@@ -92,7 +92,7 @@ class SASRecModel(torch.nn.Module):
                 dropout=self.dropout,
                 padding_idx=self.padding_idx,
             )
-            self.gpt_layers = SASRecLayers(
+            self.sasrec_layers = SASRecLayers(
                 embed_size=self.embed_size,
                 num_heads=self.num_heads,
                 num_blocks=self.num_blocks,
@@ -124,12 +124,13 @@ class SASRecModel(torch.nn.Module):
         self,
         feature_tensor: TensorMap,
         padding_mask: torch.BoolTensor,
-        candidates_to_score: torch.LongTensor,
+        candidates_to_score: Optional[torch.LongTensor] = None,
     ) -> torch.Tensor:
         """
         :param feature_tensor: Batch of features.
         :param padding_mask: Padding mask where 0 - <PAD>, 1 otherwise.
         :param candidates_to_score: Item ids to calculate scores.
+            if `None` predicts for all items
 
         :returns: Prediction among canditates_to_score items.
         """
@@ -141,7 +142,7 @@ class SASRecModel(torch.nn.Module):
         candidate_scores = self.get_logits(final_emb, candidates_to_score)
         return candidate_scores
 
-    def predict_all(
+    def forward_step(
         self,
         feature_tensor: TensorMap,
         padding_mask: torch.BoolTensor,
@@ -150,36 +151,16 @@ class SASRecModel(torch.nn.Module):
         :param feature_tensor: Batch of features.
         :param padding_mask: Padding mask where 0 - <PAD>, 1 otherwise.
 
-        :returns: Predictions among all items.
-        """
-        # output_emb: [B x L x E]
-        output_emb = self.forward_step(feature_tensor, padding_mask)
-
-        # output_emb: [B x L x E]
-        # final_emb: [B x E]
-        final_emb = output_emb[:, -1, :]  # last item
-        all_scores = self.get_logits(final_emb)
-        return all_scores
-
-    def forward_step(
-        self,
-        feature_tensor: TensorMap,
-        padding_mask: torch.BoolTensor,
-    ) -> torch.Tensor:
-        """
-        :param inputs: Batch of features.
-        :param padding_mask: Padding mask where 0 - <PAD>, 1 otherwise.
-
         :returns: Output embeddings.
         """
         device = feature_tensor[self.item_feature_name].device
         attention_mask, padding_mask, feature_tensor = self.masking(feature_tensor, padding_mask)
         if self.ti_modification:
             seqs, ti_embeddings = self.item_embedder(feature_tensor, padding_mask)
-            seqs = self.gpt_layers(seqs, attention_mask, padding_mask, ti_embeddings, device)
+            seqs = self.sasrec_layers(seqs, attention_mask, padding_mask, ti_embeddings, device)
         else:
             seqs = self.item_embedder(feature_tensor, padding_mask)
-            seqs = self.gpt_layers(seqs, attention_mask, padding_mask)
+            seqs = self.sasrec_layers(seqs, attention_mask, padding_mask)
         output_emb = self.output_normalization(seqs)
 
         return output_emb
