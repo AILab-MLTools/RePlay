@@ -1,10 +1,10 @@
 from .dataset import (
-    SASRecPredictionBatch,
-    SASRecPredictionDataset,
-    SASRecTrainingBatch,
-    SASRecTrainingDataset,
-    SASRecValidationBatch,
-    SASRecValidationDataset,
+    SasPredictionBatch,
+    SasPredictionDataset,
+    SasTrainingBatch,
+    SasTrainingDataset,
+    SasValidationBatch,
+    SasValidationDataset,
 )
-from .lightning import SASRec
-from .model import SASRecModel
+from .lightning import SasRec
+from .model import SasModel

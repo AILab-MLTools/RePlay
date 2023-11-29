@@ -6,12 +6,12 @@ import torch
 
 from replay.data.nn import TensorMap, TensorSchema
 from replay.models.nn.optimizer_utils import FatOptimizerFactory, LRSchedulerFactory, OptimizerFactory
-from replay.models.nn.sequential.sasrec.dataset import SASRecPredictionBatch, SASRecTrainingBatch, SASRecValidationBatch
-from replay.models.nn.sequential.sasrec.model import SASRecModel
+from replay.models.nn.sequential.sasrec.dataset import SasPredictionBatch, SasTrainingBatch, SasValidationBatch
+from replay.models.nn.sequential.sasrec.model import SasModel
 
 
 # pylint: disable=too-many-instance-attributes
-class SASRec(L.LightningModule):
+class SasRec(L.LightningModule):
     """
     SASRec Lightning module
     """
@@ -67,7 +67,7 @@ class SASRec(L.LightningModule):
         """
         super().__init__()
         self.save_hyperparameters()
-        self._model = SASRecModel(
+        self._model = SasModel(
             schema=tensor_schema,
             num_blocks=block_count,
             num_heads=head_count,
@@ -91,9 +91,9 @@ class SASRec(L.LightningModule):
         self._vocab_size = item_count
 
     # pylint: disable=unused-argument, arguments-differ
-    def training_step(self, batch: SASRecTrainingBatch, batch_idx: int) -> torch.Tensor:
+    def training_step(self, batch: SasTrainingBatch, batch_idx: int) -> torch.Tensor:
         """
-        :param batch (SASRecTrainingBatch): Batch of training data.
+        :param batch (SasTrainingBatch): Batch of training data.
         :param batch_idx (int): Batch index.
 
         :returns: Computed loss for batch.
@@ -115,7 +115,7 @@ class SASRec(L.LightningModule):
         return self._model_predict(feature_tensors, padding_mask)
 
     # pylint: disable=unused-argument
-    def predict_step(self, batch: SASRecPredictionBatch, batch_idx: int, dataloader_idx: int = 0) -> torch.Tensor:
+    def predict_step(self, batch: SasPredictionBatch, batch_idx: int, dataloader_idx: int = 0) -> torch.Tensor:
         """
         :param batch: Batch of prediction data.
         :param batch_idx: Batch index.
@@ -126,9 +126,9 @@ class SASRec(L.LightningModule):
         return self._model_predict(batch.features, batch.padding_mask)
 
     # pylint: disable=unused-argument, arguments-differ
-    def validation_step(self, batch: SASRecValidationBatch, batch_idx: int) -> torch.Tensor:
+    def validation_step(self, batch: SasValidationBatch, batch_idx: int) -> torch.Tensor:
         """
-        :param batch (SASRecValidationBatch): Batch of prediction data.
+        :param batch (SasValidationBatch): Batch of prediction data.
         :param batch_idx (int): Batch index.
 
         :returns: Calculated scores.
@@ -149,15 +149,15 @@ class SASRec(L.LightningModule):
         return [optimizer], [lr_scheduler]
 
     def _model_predict(self, feature_tensors: TensorMap, padding_mask: torch.BoolTensor) -> torch.Tensor:
-        model: SASRecModel
+        model: SasModel
         if isinstance(self._model, torch.nn.DataParallel):
-            model = cast(SASRecModel, self._model.module)  # multigpu
+            model = cast(SasModel, self._model.module)  # multigpu
         else:
             model = self._model
         scores = model.predict(feature_tensors, padding_mask)
         return scores
 
-    def _compute_loss(self, batch: SASRecTrainingBatch) -> torch.Tensor:
+    def _compute_loss(self, batch: SasTrainingBatch) -> torch.Tensor:
         if self._loss_type == "BCE":
             if self._loss_sample_count is None:
                 loss_func = self._compute_loss_bce
