@@ -99,7 +99,7 @@ class PandasSequentialDataset(SequentialDataset):
     def cardinality_callback(self, column: str) -> int:
         if self._query_id_column == column:
             return self._sequences.index.nunique()
-        return len({x for l in self._sequences[column] for x in l})
+        return len({x for seq in self._sequences[column] for x in seq})
 
     def get_query_id(self, index: int) -> int:
         return self._sequences.index[index]

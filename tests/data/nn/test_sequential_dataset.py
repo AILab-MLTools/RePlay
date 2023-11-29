@@ -18,6 +18,7 @@ if TORCH_AVAILABLE:
 def test_can_create_sequential_dataset_with_valid_schema(sequential_info):
     PandasSequentialDataset(**sequential_info)
 
+
 @pytest.mark.torch
 def test_callback_for_cardinality(sequential_info):
     schema = TensorSchema(
@@ -33,7 +34,7 @@ def test_callback_for_cardinality(sequential_info):
         assert f.cardinality is None
 
     PandasSequentialDataset(schema, "user_id", "item_id", sequential_info["sequences"])
-    
+
     assert schema.all_features[0].cardinality == 4
     assert schema.all_features[1].cardinality == 6
     assert schema.all_features[2].cardinality == 4
