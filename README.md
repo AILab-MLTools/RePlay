@@ -2,7 +2,7 @@
 <br>
 
 [![GitHub License](https://img.shields.io/github/license/sb-ai-lab/RePlay)](https://github.com/sb-ai-lab/RePlay/blob/main/LICENSE)
-[![PyPI - Version](https://img.shields.io/pypi/v/replay-rec)]((https://pypi.org/project/replay-rec))
+[![PyPI - Version](https://img.shields.io/pypi/v/replay-rec)](https://pypi.org/project/replay-rec)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/replay-rec)](https://pypistats.org/packages/replay-rec)
 <br>
 [![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/sb-ai-lab/replay/main.yml)](https://github.com/sb-ai-lab/RePlay/actions/workflows/main.yml?query=branch%3Amain)
