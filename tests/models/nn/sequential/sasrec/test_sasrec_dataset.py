@@ -3,7 +3,7 @@ import pytest
 from replay.utils import TORCH_AVAILABLE
 
 if TORCH_AVAILABLE:
-    from replay.models.nn.sequential.sasrec import SASRecPredictionDataset, SASRecTrainingDataset, SASRecValidationDataset
+    from replay.models.nn.sequential.sasrec import SasPredictionDataset, SasTrainingDataset, SasValidationDataset
 
 torch = pytest.importorskip("torch")
 
@@ -19,21 +19,21 @@ torch = pytest.importorskip("torch")
 )
 def test_sasrec_training_dataset_exceptions(wrong_sequential_dataset, max_len, feature_name, exception, exception_text):
     with exception as exc:
-        SASRecTrainingDataset(wrong_sequential_dataset, max_len, label_feature_name=feature_name)
+        SasTrainingDataset(wrong_sequential_dataset, max_len, label_feature_name=feature_name)
 
     assert str(exc.value) == exception_text
 
 
 @pytest.mark.torch
 def test_sasrec_datasets_length(sequential_dataset):
-    assert len(SASRecTrainingDataset(sequential_dataset, 8)) == 4
-    assert len(SASRecPredictionDataset(sequential_dataset, 8)) == 4
-    assert len(SASRecValidationDataset(sequential_dataset, sequential_dataset, sequential_dataset, 8)) == 4
+    assert len(SasTrainingDataset(sequential_dataset, 8)) == 4
+    assert len(SasPredictionDataset(sequential_dataset, 8)) == 4
+    assert len(SasValidationDataset(sequential_dataset, sequential_dataset, sequential_dataset, 8)) == 4
 
 
 @pytest.mark.torch
 def test_sasrec_training_dataset_getitem(sequential_dataset):
-    batch = SASRecTrainingDataset(sequential_dataset, 8, label_feature_name="item_id", padding_value=-1)[0]
+    batch = SasTrainingDataset(sequential_dataset, 8, label_feature_name="item_id", padding_value=-1)[0]
 
     assert batch.query_id.item() == 0
     assert all(batch.padding_mask == torch.tensor([0, 0, 0, 0, 0, 0, 0, 1], dtype=torch.bool))
@@ -43,7 +43,7 @@ def test_sasrec_training_dataset_getitem(sequential_dataset):
 
 @pytest.mark.torch
 def test_sasrec_prediction_dataset_getitem(sequential_dataset):
-    batch = SASRecPredictionDataset(sequential_dataset, 8, padding_value=-1)[1]
+    batch = SasPredictionDataset(sequential_dataset, 8, padding_value=-1)[1]
 
     assert batch.query_id.item() == 1
     assert all(batch.padding_mask == torch.tensor([0, 0, 0, 0, 0, 1, 1, 1], dtype=torch.bool))
@@ -51,7 +51,7 @@ def test_sasrec_prediction_dataset_getitem(sequential_dataset):
 
 @pytest.mark.torch
 def test_sasrec_validation_dataset_getitem(sequential_dataset):
-    batch = SASRecValidationDataset(
+    batch = SasValidationDataset(
         sequential_dataset, sequential_dataset, sequential_dataset, 8, label_feature_name="item_id", padding_value=-1
     )[2]
 

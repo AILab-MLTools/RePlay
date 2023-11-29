@@ -5,7 +5,7 @@ from replay.utils import TORCH_AVAILABLE
 if TORCH_AVAILABLE:
     import torch
 
-    from replay.models.nn.sequential.sasrec import SASRecModel
+    from replay.models.nn.sequential.sasrec import SasModel
 
 
 @pytest.mark.torch
@@ -17,7 +17,7 @@ if TORCH_AVAILABLE:
     ],
 )
 def test_sasrec_forward(tensor_schema, simple_masks, ti_modification):
-    model = SASRecModel(
+    model = SasModel(
         tensor_schema.subset(["item_id", "timestamp"]), embed_size=64, max_len=5, ti_modification=ti_modification
     )
     item_sequences, padding_mask, _, timestamp_sequences = simple_masks
@@ -28,7 +28,7 @@ def test_sasrec_forward(tensor_schema, simple_masks, ti_modification):
 
 @pytest.mark.torch
 def test_sasrec_predictions(tensor_schema, simple_masks):
-    model = SASRecModel(tensor_schema.subset(["item_id"]), embed_size=64, max_len=5)
+    model = SasModel(tensor_schema.subset(["item_id"]), embed_size=64, max_len=5)
     item_sequences, padding_mask, _, _ = simple_masks
     inputs = {
         "item_id": item_sequences,
@@ -42,7 +42,7 @@ def test_sasrec_predictions(tensor_schema, simple_masks):
 
 @pytest.mark.torch
 def test_item_embedder_weights(tensor_schema):
-    item_embedder = SASRecModel(
+    item_embedder = SasModel(
         tensor_schema.subset(["item_id", "timestamp"]), embed_size=64, max_len=5, ti_modification=True
     ).item_embedder
 
@@ -51,7 +51,7 @@ def test_item_embedder_weights(tensor_schema):
 
 @pytest.mark.torch
 def test_sasrec_forward_with_float_timematrix(tensor_schema, simple_masks):
-    model = SASRecModel(tensor_schema.subset(["item_id", "timestamp"]), embed_size=64, max_len=5, ti_modification=True)
+    model = SasModel(tensor_schema.subset(["item_id", "timestamp"]), embed_size=64, max_len=5, ti_modification=True)
     item_sequences, padding_mask, _, timestamp_sequences = simple_masks
     timestamp_sequences = timestamp_sequences.float()
     inputs = {"item_id": item_sequences, "timestamp": timestamp_sequences}
