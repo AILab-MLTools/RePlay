@@ -7,7 +7,7 @@ from replay.data.nn import TensorMap, TensorSchema
 
 
 # pylint: disable=too-many-instance-attributes
-class SasModel(torch.nn.Module):
+class SasRecModel(torch.nn.Module):
     """
     Sas model
     """
@@ -18,7 +18,7 @@ class SasModel(torch.nn.Module):
         schema: TensorSchema,
         num_blocks: int = 2,
         num_heads: int = 1,
-        embed_size: int = 50,
+        hidden_size: int = 50,
         max_len: int = 200,
         dropout: float = 0.2,
         ti_modification: bool = False,
@@ -30,7 +30,7 @@ class SasModel(torch.nn.Module):
             Default: ``2``.
         :param num_heads: Number of Attention heads.
             Default: ``1``.
-        :param embed_size: Embedding size.
+        :param hidden_size: Hidden size of transformer.
             Default: ``50``.
         :param max_len: Max length of sequence.
             Default: ``200``.
@@ -46,7 +46,7 @@ class SasModel(torch.nn.Module):
         # Hyperparams
         self.num_blocks = num_blocks
         self.num_heads = num_heads
-        self.embed_size = embed_size
+        self.hidden_size = hidden_size
         self.max_len = max_len
         self.dropout = dropout
         self.ti_modification = ti_modification
@@ -72,14 +72,14 @@ class SasModel(torch.nn.Module):
         if self.ti_modification:
             self.item_embedder = TiSasEmbeddings(
                 schema=schema,
-                embed_size=self.embed_size,
+                hidden_size=self.hidden_size,
                 max_len=self.max_len,
                 dropout=self.dropout,
                 padding_idx=self.padding_idx,
                 time_span=self.time_span,
             )
             self.sasrec_layers = TiSasLayers(
-                embed_size=self.embed_size,
+                hidden_size=self.hidden_size,
                 num_heads=self.num_heads,
                 num_blocks=self.num_blocks,
                 dropout=self.dropout,
@@ -87,19 +87,19 @@ class SasModel(torch.nn.Module):
         else:
             self.item_embedder = SasEmbeddings(
                 schema=schema,
-                embed_size=self.embed_size,
+                hidden_size=self.hidden_size,
                 max_len=self.max_len,
                 dropout=self.dropout,
                 padding_idx=self.padding_idx,
             )
             self.sasrec_layers = SasLayers(
-                embed_size=self.embed_size,
+                hidden_size=self.hidden_size,
                 num_heads=self.num_heads,
                 num_blocks=self.num_blocks,
                 dropout=self.dropout,
             )
         self.output_normalization = SasNormalizer(
-            embed_size=self.embed_size,
+            hidden_size=self.hidden_size,
         )
         self._head = EmbeddingTyingHead(self.item_embedder)
         self._init()
@@ -304,14 +304,14 @@ class SasEmbeddings(torch.nn.Module, BaseSasEmbeddings):
     def __init__(
         self,
         schema: TensorSchema,
-        embed_size: int,
+        hidden_size: int,
         padding_idx: int,
         max_len: int,
         dropout: float,
     ) -> None:
         """
         :param schema Tensor schema of features.
-        :param embed_size: Embedding size.
+        :param hidden_size: Hidden size of transformer.
         :param padding_idx: Padding index.
         :param max_len: Max length of sequence.
         :param dropout: Dropout rate.
@@ -321,8 +321,8 @@ class SasEmbeddings(torch.nn.Module, BaseSasEmbeddings):
         item_count = schema.item_id_features.item().cardinality
         assert item_count
 
-        self.item_emb = torch.nn.Embedding(item_count + 1, embed_size, padding_idx=padding_idx)
-        self.pos_emb = SasPositionalEmbedding(max_len=max_len, d_model=embed_size)
+        self.item_emb = torch.nn.Embedding(item_count + 1, hidden_size, padding_idx=padding_idx)
+        self.pos_emb = SasPositionalEmbedding(max_len=max_len, d_model=hidden_size)
         self.item_emb_dropout = torch.nn.Dropout(p=dropout)
 
         assert schema.item_id_feature_name
@@ -368,24 +368,24 @@ class SasLayers(torch.nn.Module):
 
     def __init__(
         self,
-        embed_size: int,
+        hidden_size: int,
         num_heads: int,
         num_blocks: int,
         dropout: float,
     ) -> None:
         """
-        :param embed_size: Embedding size.
+        :param hidden_size: Hidden size of transformer.
         :param num_heads: Number of Attention heads.
         :param num_blocks: Number of Transformer blocks.
         :param dropout: Dropout rate.
         """
         super().__init__()
         self.attention_layers = self._layers_stacker(
-            torch.nn.MultiheadAttention(embed_size, num_heads, dropout), num_blocks
+            torch.nn.MultiheadAttention(hidden_size, num_heads, dropout), num_blocks
         )
-        self.attention_layernorms = self._layers_stacker(torch.nn.LayerNorm(embed_size, eps=1e-8), num_blocks)
-        self.forward_layers = self._layers_stacker(SasPointWiseFeedForward(embed_size, dropout), num_blocks)
-        self.forward_layernorms = self._layers_stacker(torch.nn.LayerNorm(embed_size, eps=1e-8), num_blocks)
+        self.attention_layernorms = self._layers_stacker(torch.nn.LayerNorm(hidden_size, eps=1e-8), num_blocks)
+        self.forward_layers = self._layers_stacker(SasPointWiseFeedForward(hidden_size, dropout), num_blocks)
+        self.forward_layernorms = self._layers_stacker(torch.nn.LayerNorm(hidden_size, eps=1e-8), num_blocks)
 
     def forward(
         self,
@@ -427,13 +427,13 @@ class SasNormalizer(torch.nn.Module):
 
     def __init__(
         self,
-        embed_size: int,
+        hidden_size: int,
     ) -> None:
         """
-        :param embed_size: Embedding size.
+        :param hidden_size: Hidden size of transformer.
         """
         super().__init__()
-        self.last_layernorm = torch.nn.LayerNorm(embed_size, eps=1e-8)
+        self.last_layernorm = torch.nn.LayerNorm(hidden_size, eps=1e-8)
 
     def forward(self, seqs: torch.Tensor) -> torch.Tensor:
         """
@@ -517,7 +517,7 @@ class TiSasEmbeddings(torch.nn.Module, BaseSasEmbeddings):
     def __init__(
         self,
         schema: TensorSchema,
-        embed_size: int,
+        hidden_size: int,
         padding_idx: int,
         max_len: int,
         time_span: int,
@@ -525,7 +525,7 @@ class TiSasEmbeddings(torch.nn.Module, BaseSasEmbeddings):
     ) -> None:
         """
         :param schema: Tensor schema of features.
-        :param embed_size: Embedding size.
+        :param hidden_size: Hidden size of transformer.
         :param padding_idx: Padding index.
         :param max_len: Max length of sequence.
         :param time_span: Time span value.
@@ -537,11 +537,11 @@ class TiSasEmbeddings(torch.nn.Module, BaseSasEmbeddings):
         item_count = schema.item_id_features.item().cardinality
         assert item_count
 
-        self.item_emb = torch.nn.Embedding(item_count + 1, embed_size, padding_idx=padding_idx)
-        self.abs_pos_k_emb = SasPositionalEmbedding(max_len=max_len, d_model=embed_size)
-        self.abs_pos_v_emb = SasPositionalEmbedding(max_len=max_len, d_model=embed_size)
-        self.time_matrix_k_emb = torch.nn.Embedding(time_span + 1, embed_size)
-        self.time_matrix_v_emb = torch.nn.Embedding(time_span + 1, embed_size)
+        self.item_emb = torch.nn.Embedding(item_count + 1, hidden_size, padding_idx=padding_idx)
+        self.abs_pos_k_emb = SasPositionalEmbedding(max_len=max_len, d_model=hidden_size)
+        self.abs_pos_v_emb = SasPositionalEmbedding(max_len=max_len, d_model=hidden_size)
+        self.time_matrix_k_emb = torch.nn.Embedding(time_span + 1, hidden_size)
+        self.time_matrix_v_emb = torch.nn.Embedding(time_span + 1, hidden_size)
 
         self.item_emb_dropout = torch.nn.Dropout(p=dropout)
         self.abs_pos_k_emb_dropout = torch.nn.Dropout(p=dropout)
@@ -620,22 +620,22 @@ class TiSasLayers(torch.nn.Module):
 
     def __init__(
         self,
-        embed_size: int,
+        hidden_size: int,
         num_heads: int,
         num_blocks: int,
         dropout: float,
     ) -> None:
         """
-        :param embed_size: Embedding size.
+        :param hidden_size: Hidden size of transformer.
         :param num_heads: Number of Attention heads.
         :param num_blocks: Number of Transformer blocks.
         :param dropout: Dropout rate.
         """
         super().__init__()
-        self.attention_layers = self._layers_stacker(TiSasAttention(embed_size, num_heads, dropout), num_blocks)
-        self.forward_layers = self._layers_stacker(SasPointWiseFeedForward(embed_size, dropout), num_blocks)
-        self.attention_layernorms = self._layers_stacker(torch.nn.LayerNorm(embed_size, eps=1e-8), num_blocks)
-        self.forward_layernorms = self._layers_stacker(torch.nn.LayerNorm(embed_size, eps=1e-8), num_blocks)
+        self.attention_layers = self._layers_stacker(TiSasAttention(hidden_size, num_heads, dropout), num_blocks)
+        self.forward_layers = self._layers_stacker(SasPointWiseFeedForward(hidden_size, dropout), num_blocks)
+        self.attention_layernorms = self._layers_stacker(torch.nn.LayerNorm(hidden_size, eps=1e-8), num_blocks)
+        self.forward_layernorms = self._layers_stacker(torch.nn.LayerNorm(hidden_size, eps=1e-8), num_blocks)
 
     # pylint: disable=too-many-arguments
     def forward(
