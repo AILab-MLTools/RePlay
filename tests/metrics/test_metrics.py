@@ -173,7 +173,7 @@ def test_diversity_metric(topk, answer, predict_data, per_user, request):
 )
 def test_diversity_no_category_id_column(predict_data, request):
     data = request.getfixturevalue(predict_data)
-   
+
     with pytest.raises(KeyError) as exc:
         CategoricalDiversity(
             topk=[1],
