@@ -72,7 +72,7 @@ class SasRecModel(torch.nn.Module):
         if self.ti_modification:
             self.item_embedder = TiSasRecEmbeddings(
                 schema=schema,
-                hidden_size=self.hidden_size,
+                embed_size=self.hidden_size,
                 max_len=self.max_len,
                 dropout=self.dropout,
                 padding_idx=self.padding_idx,
@@ -87,7 +87,7 @@ class SasRecModel(torch.nn.Module):
         else:
             self.item_embedder = SasRecEmbeddings(
                 schema=schema,
-                hidden_size=self.hidden_size,
+                embed_size=self.hidden_size,
                 max_len=self.max_len,
                 dropout=self.dropout,
                 padding_idx=self.padding_idx,
@@ -304,14 +304,14 @@ class SasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
     def __init__(
         self,
         schema: TensorSchema,
-        hidden_size: int,
+        embed_size: int,
         padding_idx: int,
         max_len: int,
         dropout: float,
     ) -> None:
         """
         :param schema Tensor schema of features.
-        :param hidden_size: Hidden size of transformer.
+        :param embed_size: Embedding size.
         :param padding_idx: Padding index.
         :param max_len: Max length of sequence.
         :param dropout: Dropout rate.
@@ -321,8 +321,8 @@ class SasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         item_count = schema.item_id_features.item().cardinality
         assert item_count
 
-        self.item_emb = torch.nn.Embedding(item_count + 1, hidden_size, padding_idx=padding_idx)
-        self.pos_emb = SasRecPositionalEmbedding(max_len=max_len, d_model=hidden_size)
+        self.item_emb = torch.nn.Embedding(item_count + 1, embed_size, padding_idx=padding_idx)
+        self.pos_emb = SasRecPositionalEmbedding(max_len=max_len, d_model=embed_size)
         self.item_emb_dropout = torch.nn.Dropout(p=dropout)
 
         assert schema.item_id_feature_name
@@ -517,7 +517,7 @@ class TiSasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
     def __init__(
         self,
         schema: TensorSchema,
-        hidden_size: int,
+        embed_size: int,
         padding_idx: int,
         max_len: int,
         time_span: int,
@@ -525,7 +525,7 @@ class TiSasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
     ) -> None:
         """
         :param schema: Tensor schema of features.
-        :param hidden_size: Hidden size of transformer.
+        :param embed_size: Embedding size.
         :param padding_idx: Padding index.
         :param max_len: Max length of sequence.
         :param time_span: Time span value.
@@ -537,11 +537,11 @@ class TiSasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         item_count = schema.item_id_features.item().cardinality
         assert item_count
 
-        self.item_emb = torch.nn.Embedding(item_count + 1, hidden_size, padding_idx=padding_idx)
-        self.abs_pos_k_emb = SasRecPositionalEmbedding(max_len=max_len, d_model=hidden_size)
-        self.abs_pos_v_emb = SasRecPositionalEmbedding(max_len=max_len, d_model=hidden_size)
-        self.time_matrix_k_emb = torch.nn.Embedding(time_span + 1, hidden_size)
-        self.time_matrix_v_emb = torch.nn.Embedding(time_span + 1, hidden_size)
+        self.item_emb = torch.nn.Embedding(item_count + 1, embed_size, padding_idx=padding_idx)
+        self.abs_pos_k_emb = SasRecPositionalEmbedding(max_len=max_len, d_model=embed_size)
+        self.abs_pos_v_emb = SasRecPositionalEmbedding(max_len=max_len, d_model=embed_size)
+        self.time_matrix_k_emb = torch.nn.Embedding(time_span + 1, embed_size)
+        self.time_matrix_v_emb = torch.nn.Embedding(time_span + 1, embed_size)
 
         self.item_emb_dropout = torch.nn.Dropout(p=dropout)
         self.abs_pos_k_emb_dropout = torch.nn.Dropout(p=dropout)
