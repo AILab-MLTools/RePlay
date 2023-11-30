@@ -165,6 +165,24 @@ def test_diversity_metric(topk, answer, predict_data, per_user, request):
 
 
 @pytest.mark.parametrize(
+    "predict_data",
+    [
+        pytest.param("predict_pd", marks=pytest.mark.core),
+        pytest.param("predict_spark", marks=pytest.mark.spark),
+    ],
+)
+def test_diversity_no_category_id_column(predict_data, request):
+    data = request.getfixturevalue(predict_data)
+   
+    with pytest.raises(KeyError) as exc:
+        CategoricalDiversity(
+            topk=[1],
+            query_column="uid",
+            rating_column="scores"
+        )(data)
+
+
+@pytest.mark.parametrize(
     "topk, answer",
     [
         ([3, 5], [0.9, 1.0]),
@@ -344,6 +362,26 @@ def test_offline_metrics(metrics, answer, predict_data, gt_data, train_data, req
     train_data = request.getfixturevalue(train_data)
     result = OfflineMetrics(metrics, **INIT_DICT)(predict_data, gt_data, train_data)
     assert list(result.values()) == approx(answer, abs=ABS)
+
+
+@pytest.mark.parametrize(
+    "predict_data, gt_data, train_data",
+    [
+        pytest.param(
+            "predict_spark", "gt_spark", "predict_spark", marks=pytest.mark.spark
+        ),
+        pytest.param("predict_pd", "gt_pd", "predict_pd", marks=pytest.mark.core),
+    ],
+)
+def test_offline_metrics_query_id_errors(predict_data, gt_data, train_data, request):
+    predict_data = request.getfixturevalue(predict_data)
+    gt_data = request.getfixturevalue(gt_data)
+    train_data = request.getfixturevalue(train_data)
+    with pytest.raises(KeyError):
+        OfflineMetrics(
+            [Coverage(5), Recall(5), Precision(5), Novelty(5)],
+            query_column="fake_query_id"
+        )(predict_data, gt_data, train_data)
 
 
 @pytest.mark.parametrize(
