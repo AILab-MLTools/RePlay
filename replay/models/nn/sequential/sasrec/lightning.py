@@ -93,7 +93,7 @@ class SasRec(L.LightningModule):
     # pylint: disable=unused-argument, arguments-differ
     def training_step(self, batch: SasRecTrainingBatch, batch_idx: int) -> torch.Tensor:
         """
-        :param batch (SasTrainingBatch): Batch of training data.
+        :param batch (SasRecTrainingBatch): Batch of training data.
         :param batch_idx (int): Batch index.
 
         :returns: Computed loss for batch.
@@ -128,7 +128,7 @@ class SasRec(L.LightningModule):
     # pylint: disable=unused-argument, arguments-differ
     def validation_step(self, batch: SasRecValidationBatch, batch_idx: int) -> torch.Tensor:
         """
-        :param batch (SasValidationBatch): Batch of prediction data.
+        :param batch (SasRecValidationBatch): Batch of prediction data.
         :param batch_idx (int): Batch index.
 
         :returns: Calculated scores.
