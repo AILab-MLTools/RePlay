@@ -1,4 +1,7 @@
+import warnings
 from typing import Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 from replay.utils import PandasDataFrame, SparkDataFrame
 
@@ -311,6 +314,67 @@ class OfflineMetrics:
         if len(types) != 1:
             raise ValueError("All given data frames must have the same type")
 
+    def _check_dataframes_validity(
+        self,
+        recommendations: MetricsDataFrameLike,
+        ground_truth: MetricsDataFrameLike,
+        train: Optional[MetricsDataFrameLike],
+        base_recommendations: Optional[
+            Union[MetricsDataFrameLike, Dict[str, MetricsDataFrameLike]]
+        ],
+    ) -> None:
+        if len(self.main_metrics) > 0:   
+            query_column = self.main_metrics[0].query_column
+        elif len(self.unexpectedness_metric) > 0:
+            query_column = self.unexpectedness_metric[0].query_column
+        elif len(self.diversity_metric) > 0:
+            query_column = self.diversity_metric[0].query_column
+
+        if isinstance(recommendations, SparkDataFrame):
+            recommendations_names = recommendations.schema.names
+            ground_truth_names = ground_truth.schema.names
+            train_names = train.schema.names if train is not None else None
+            if base_recommendations and isinstance(base_recommendations, SparkDataFrame):
+                base_recommendations_names = base_recommendations.schema.names
+        elif isinstance(recommendations, PandasDataFrame):
+            recommendations_names = recommendations.columns
+            ground_truth_names = ground_truth.columns
+            train_names = train.columns if train is not None else None
+            if base_recommendations is not None and isinstance(base_recommendations, PandasDataFrame):
+                base_recommendations_names = base_recommendations.columns
+
+        if not isinstance(recommendations, dict):
+            if query_column not in recommendations_names:
+                raise KeyError(f"Query column {query_column} is not present in recommendations dataframe")
+            if query_column not in ground_truth_names:
+                raise KeyError(f"Query column {query_column} is not present in ground_truth dataframe")
+            if train is not None and query_column not in train_names:
+                raise KeyError(f"Query column {query_column} is not present in train dataframe")
+            if base_recommendations is not None:
+                if isinstance(base_recommendations, dict):
+                    for _, df in base_recommendations.items():
+                        if (isinstance(df, SparkDataFrame) and query_column not in df.schema.names
+                            or isinstance(df, PandasDataFrame) and query_column not in df.columns):
+                            raise KeyError(f"Query column {query_column} is not present in base_recommendations")
+                else:
+                    if query_column not in base_recommendations_names:
+                        raise KeyError(
+                            f"Query column {query_column} is not present in base_recommendations dataframe"
+                        )
+        if isinstance(recommendations, SparkDataFrame):
+            common_queries = np.intersect1d(
+                np.array(recommendations.select(query_column).collect()).reshape(-1),
+                np.array(ground_truth.select(query_column).collect()).reshape(-1),
+            )
+        elif isinstance(recommendations, PandasDataFrame):
+            common_queries = np.intersect1d(recommendations[query_column], ground_truth[query_column])
+        else:
+            common_queries = np.intersect1d(recommendations.keys(), ground_truth.keys())
+
+        if len(common_queries) < 1:
+            warnings.warn(f"Recommendations and ground_truth dataframes have no common queries")
+
+
     def __call__(  # pylint: disable=too-many-branches, too-many-locals
         self,
         recommendations: MetricsDataFrameLike,
@@ -346,6 +410,9 @@ class OfflineMetrics:
         :return: metric values
         """
         self._check_dataframes_types(
+            recommendations, ground_truth, train, base_recommendations
+        )
+        self._check_dataframes_validity(
             recommendations, ground_truth, train, base_recommendations
         )
         result = {}
