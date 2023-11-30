@@ -314,6 +314,7 @@ class OfflineMetrics:
         if len(types) != 1:
             raise ValueError("All given data frames must have the same type")
 
+    # pylint: disable=too-many-branches
     def _check_dataframes_validity(
         self,
         recommendations: MetricsDataFrameLike,
@@ -323,12 +324,14 @@ class OfflineMetrics:
             Union[MetricsDataFrameLike, Dict[str, MetricsDataFrameLike]]
         ],
     ) -> None:
-        if len(self.main_metrics) > 0:   
+        if len(self.main_metrics) > 0:
             query_column = self.main_metrics[0].query_column
         elif len(self.unexpectedness_metric) > 0:
             query_column = self.unexpectedness_metric[0].query_column
         elif len(self.diversity_metric) > 0:
             query_column = self.diversity_metric[0].query_column
+        else:
+            return
 
         if isinstance(recommendations, SparkDataFrame):
             recommendations_names = recommendations.schema.names
@@ -354,7 +357,7 @@ class OfflineMetrics:
                 if isinstance(base_recommendations, dict):
                     for _, df in base_recommendations.items():
                         if (isinstance(df, SparkDataFrame) and query_column not in df.schema.names
-                            or isinstance(df, PandasDataFrame) and query_column not in df.columns):
+                                or isinstance(df, PandasDataFrame) and query_column not in df.columns):
                             raise KeyError(f"Query column {query_column} is not present in base_recommendations")
                 else:
                     if query_column not in base_recommendations_names:
@@ -372,8 +375,7 @@ class OfflineMetrics:
             common_queries = np.intersect1d(recommendations.keys(), ground_truth.keys())
 
         if len(common_queries) < 1:
-            warnings.warn(f"Recommendations and ground_truth dataframes have no common queries")
-
+            warnings.warn("Recommendations and ground_truth dataframes have no common queries")
 
     def __call__(  # pylint: disable=too-many-branches, too-many-locals
         self,
