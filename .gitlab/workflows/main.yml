@@ -92,8 +92,6 @@ sphinx-job:
     - ./poetry_wrapper.sh --generate --experimental
     - poetry build -f wheel
     - package_name=dist/$(ls dist/ | head -1)
-  extends:
-    - .use_st_runner
   parallel:
     matrix:
       - image:
@@ -107,7 +105,9 @@ pytest-core:
   <<: *pytest_template
   stage: test
   script:
-    - ./poetry_wrapper.sh install
+    - poetry install --only dev
+    - pip install $package_name
+    # - ./poetry_wrapper.sh install
     - pytest -m core tests/
     - mv .coverage .coverage_core${image:(-4)}
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
@@ -120,7 +120,9 @@ pytest-torch:
   <<: *pytest_template
   stage: test
   script:
-    - ./poetry_wrapper.sh install -E torch
+    # - ./poetry_wrapper.sh install -E torch
+    - poetry install --only dev -E torch  
+    - pip install $package_name[torch]
     - pytest -m "not spark and not experimental" tests/
     - mv .coverage .coverage_torch${image:(-4)}
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
@@ -133,7 +135,9 @@ pytest-spark:
   <<: *pytest_template
   stage: test
   script:
-    - ./poetry_wrapper.sh install -E spark
+    # - ./poetry_wrapper.sh install -E spark
+    - poetry install --only dev -E spark
+    - pip install $package_name[spark]
     - pytest -m "not torch and not experimental" tests/
     - mv .coverage .coverage_spark${image:(-4)}
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
@@ -146,7 +150,9 @@ pytest-spark-and-torch:
   <<: *pytest_template
   stage: test
   script:
-    - ./poetry_wrapper.sh install --all-extras
+    # - ./poetry_wrapper.sh install --all-extras
+    - poetry install --only dev --all-extras  
+    - pip install $package_name[torch,spark]
     - pytest -m "not experimental" --ignore=replay/experimental --ignore=tests/experimental
     - mv .coverage .coverage_all${image:(-4)}
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
@@ -159,7 +165,9 @@ pytest-experimental:
   <<: *pytest_template
   stage: test
   script:
-    - ./poetry_wrapper.sh --experimental install --all-extras
+    # - ./poetry_wrapper.sh --experimental install --all-extras
+    - poetry install --only dev --all-extras  
+    - pip install $package_name[all]
     - pytest -m "experimental"
     - mv .coverage .coverage_experimental${image:(-4)}
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
