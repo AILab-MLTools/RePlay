@@ -85,115 +85,76 @@ sphinx-job:
   script:
     - make -C docs clean html
 
-.pytest_template: &pytest_template
-  stage: test
-  image: ${image}
-  before_script:
-    - ./poetry_wrapper.sh --generate --experimental
-    - poetry build -f wheel
-    - package_name=dist/$(ls dist/ | head -1)
-  parallel:
-    matrix:
-      - image:
-        - "${CI_REGISTRY_IMAGE}:${VERSION}_py38"
-        - "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
-        - "${CI_REGISTRY_IMAGE}:${VERSION}_py310"
-
-
-
 pytest-core:
-  <<: *pytest_template
   stage: test
   script:
-    - poetry install --only dev
-    - pip install $package_name
-    # - ./poetry_wrapper.sh install
+    - ./poetry_wrapper.sh install
     - pytest -m core tests/
-    - mv .coverage .coverage_core${image:(-4)}
+    - mv .coverage .coverage_core
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   artifacts:
     paths:
-      - .coverage_core${image:(-4)}
+      - .coverage_core
     expire_in: 1 day
 
 pytest-torch:
-  <<: *pytest_template
   stage: test
   script:
-    # - ./poetry_wrapper.sh install -E torch
-    - poetry install --only dev -E torch  
-    - pip install $package_name[torch]
+    - ./poetry_wrapper.sh install -E torch
     - pytest -m "not spark and not experimental" tests/
-    - mv .coverage .coverage_torch${image:(-4)}
+    - mv .coverage .coverage_torch
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   artifacts:
     paths:
-      - .coverage_torch${image:(-4)}
+      - .coverage_torch
     expire_in: 1 day
 
 pytest-spark:
-  <<: *pytest_template
   stage: test
   script:
-    # - ./poetry_wrapper.sh install -E spark
-    - poetry install --only dev -E spark
-    - pip install $package_name[spark]
+    - ./poetry_wrapper.sh install -E spark
     - pytest -m "not torch and not experimental" tests/
-    - mv .coverage .coverage_spark${image:(-4)}
+    - mv .coverage .coverage_spark
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   artifacts:
     paths:
-      - .coverage_spark${image:(-4)}
+      - .coverage_spark
     expire_in: 1 day
 
 pytest-spark-and-torch:
-  <<: *pytest_template
   stage: test
   script:
-    # - ./poetry_wrapper.sh install --all-extras
-    - poetry install --only dev --all-extras  
-    - pip install $package_name[torch,spark]
+    - ./poetry_wrapper.sh install --all-extras
     - pytest -m "not experimental" --ignore=replay/experimental --ignore=tests/experimental
-    - mv .coverage .coverage_all${image:(-4)}
+    - mv .coverage .coverage_all
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   artifacts:
     paths:
-      - .coverage_all${image:(-4)}
+      - .coverage_all
     expire_in: 1 day
 
 pytest-experimental:
-  <<: *pytest_template
   stage: test
   script:
-    # - ./poetry_wrapper.sh --experimental install --all-extras
-    - poetry install --only dev --all-extras  
-    - pip install $package_name[all]
+    - ./poetry_wrapper.sh --experimental install --all-extras
     - pytest -m "experimental"
-    - mv .coverage .coverage_experimental${image:(-4)}
+    - mv .coverage .coverage_experimental
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   artifacts:
     paths:
-      - .coverage_experimental${image:(-4)}
+      - .coverage_experimental
     expire_in: 1 day
 
 merge-coverage:
   stage: merge coverage
-  image: ${image}
   before_script:
     - *setup_env
     - ./poetry_wrapper.sh install --only dev
   script:
-    - coverage combine .coverage_core${image:(-4)} .coverage_spark${image:(-4)} .coverage_torch${image:(-4)} .coverage_all${image:(-4)} .coverage_experimental${image:(-4)}
+    - coverage combine .coverage_core .coverage_spark .coverage_torch .coverage_all .coverage_experimental
     - coverage report --fail-under=93
     - coverage xml
   needs: ["pytest-core", "pytest-experimental", "pytest-spark", "pytest-spark-and-torch", "pytest-torch"]
-  parallel:
-    matrix:
-      - image:
-        - "${CI_REGISTRY_IMAGE}:${VERSION}_py38"
-        - "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
-        - "${CI_REGISTRY_IMAGE}:${VERSION}_py310"
-
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
     when: always
