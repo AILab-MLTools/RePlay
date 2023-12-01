@@ -93,7 +93,7 @@ class CategoricalDiversity(Metric):
 
         :return: metric values
         """
-        self._check_validity(recommendations)
+        self._check_category_id_matches(recommendations)
         if isinstance(recommendations, SparkDataFrame):
             return self._spark_call(recommendations)
         is_pandas = isinstance(recommendations, PandasDataFrame)
@@ -105,7 +105,7 @@ class CategoricalDiversity(Metric):
         precalculated_answer = self._precalculate_unique_cats(recommendations)
         return self._dict_call(precalculated_answer)
 
-    def _check_validity(self, recommendations: MetricsDataFrameLike) -> None:
+    def _check_category_id_matches(self, recommendations: MetricsDataFrameLike) -> None:
         no_category_column_error = False
 
         if isinstance(recommendations, SparkDataFrame):

@@ -97,6 +97,7 @@ class Novelty(Metric):
         :return: metric values
         """
         self._check_dataframes_equal_types(recommendations, train)
+        self._check_dataframes_warnings(recommendations, train)
         if isinstance(recommendations, SparkDataFrame):
             self._check_duplicates_spark(recommendations)
             assert isinstance(train, SparkDataFrame)

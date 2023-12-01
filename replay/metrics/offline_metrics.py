@@ -1,7 +1,4 @@
-import warnings
 from typing import Dict, List, Optional, Tuple, Union
-
-import numpy as np
 
 from replay.utils import PandasDataFrame, SparkDataFrame
 
@@ -364,18 +361,6 @@ class OfflineMetrics:
                         raise KeyError(
                             f"Query column {query_column} is not present in base_recommendations dataframe"
                         )
-        if isinstance(recommendations, SparkDataFrame):
-            common_queries = np.intersect1d(
-                np.array(recommendations.select(query_column).collect()).reshape(-1),
-                np.array(ground_truth.select(query_column).collect()).reshape(-1),
-            )
-        elif isinstance(recommendations, PandasDataFrame):
-            common_queries = np.intersect1d(recommendations[query_column], ground_truth[query_column])
-        else:
-            common_queries = np.intersect1d(recommendations.keys(), ground_truth.keys())
-
-        if len(common_queries) < 1:
-            warnings.warn("Recommendations and ground_truth dataframes have no common queries")
 
     def __call__(  # pylint: disable=too-many-branches, too-many-locals
         self,

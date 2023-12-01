@@ -95,6 +95,7 @@ class Unexpectedness(Metric):
         :return: metric values
         """
         self._check_dataframes_equal_types(recommendations, base_recommendations)
+        self._check_dataframes_warnings(recommendations, base_recommendations)
         if isinstance(recommendations, SparkDataFrame):
             self._check_duplicates_spark(recommendations)
             self._check_duplicates_spark(base_recommendations)
