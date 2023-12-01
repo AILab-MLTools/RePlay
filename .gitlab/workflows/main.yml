@@ -188,11 +188,11 @@ merge-coverage:
     - coverage xml
   needs: ["pytest-core", "pytest-experimental", "pytest-spark", "pytest-spark-and-torch", "pytest-torch"]
   parallel:
-  matrix:
-    - image:
-      - "${CI_REGISTRY_IMAGE}:${VERSION}_py38"
-      - "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
-      - "${CI_REGISTRY_IMAGE}:${VERSION}_py310"
+    matrix:
+      - image:
+        - "${CI_REGISTRY_IMAGE}:${VERSION}_py38"
+        - "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
+        - "${CI_REGISTRY_IMAGE}:${VERSION}_py310"
 
   coverage: '/TOTAL.*\s+(\d+%)$/'
   artifacts:
