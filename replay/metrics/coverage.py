@@ -112,7 +112,12 @@ class Coverage(Metric):
 
         metrics = []
         for k in self.topk:
-            res = recs.filter(sf.col("best_position") <= k).count() / item_count
+            res = (
+                recs.filter(sf.col("best_position") <= k)
+                .join(train, on=self.item_column)
+                .select(self.item_column)
+                .distinct().count() / item_count
+            )
             metrics.append(res)
 
         if self._allow_caching:
