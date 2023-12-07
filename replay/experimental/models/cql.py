@@ -194,7 +194,7 @@ class CQL(Recommender):
         if isinstance(actor_optim_factory, dict):
             local = {}
             local["config"] = {}
-            local["config"]["params"] = {key: value for key, value in locals().items()}
+            local["config"]["params"] = dict(locals().items())
             local["config"]["type"] = "cql"
             local["observation_shape"] = self._observation_shape
             local["action_size"] = self._action_size
