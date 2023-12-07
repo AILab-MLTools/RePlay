@@ -4,10 +4,12 @@ import numpy as np
 import pytest
 from _pytest.python_api import approx
 from pytest import approx
-from d3rlpy.models.optimizers import AdamFactory
 
+pyspark = pytest.importorskip("pyspark")
+torch = pytest.importorskip("torch")
+
+from d3rlpy.models.optimizers import AdamFactory
 from pyspark.sql import functions as sf
-import d3rlpy
 
 from replay.experimental.models.base_rec import HybridRecommender, UserRecommender
 from replay.experimental.models.cql import CQL
