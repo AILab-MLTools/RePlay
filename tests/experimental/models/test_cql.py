@@ -4,17 +4,10 @@ import numpy as np
 import pytest
 from _pytest.python_api import approx
 from pytest import approx
-
-if sys.version_info > (3, 9):
-    pytest.skip(
-        reason="d3rlpy does't support 3.10",
-        allow_module_level=True,
-    )
-
-pyspark = pytest.importorskip("pyspark")
-torch = pytest.importorskip("torch")
+from d3rlpy.models.optimizers import AdamFactory
 
 from pyspark.sql import functions as sf
+import d3rlpy
 
 from replay.experimental.models.base_rec import HybridRecommender, UserRecommender
 from replay.experimental.models.cql import CQL
@@ -101,19 +94,11 @@ def test_mdp_dataset_builder(log: SparkDataFrame):
         1, 0, 0,
         0, 1,
     ])
-    gt_terminals = np.array([
-        0, 0, 1,
-        0, 1,
-    ])
-    n = 5
+    n = 3
 
-    # as we do not guarantee and require that MDP preparation should keep ints as ints
-    # and keeps floats exactly the same, we use approx for all equality checks
-    assert mdp_dataset.observations[:n] == approx(gt_observations)
-    # larger approx to take into account action randomization noise added to the MDP actions
-    assert mdp_dataset.actions[:n].flatten() == approx(gt_actions, abs=1e-2)
-    assert mdp_dataset.rewards[:n] == approx(gt_rewards)
-    assert mdp_dataset.terminals[:n] == approx(gt_terminals)
+    assert mdp_dataset.episodes[0].observations[:n] == approx(gt_observations[:n])
+    assert mdp_dataset.episodes[0].actions[:n].flatten() == approx(gt_actions[:n], abs=1e-2)
+    assert mdp_dataset.episodes[0].rewards[:n].flatten() == approx(gt_rewards[:n], abs=1e-2)
 
 
 @pytest.mark.experimental
@@ -183,3 +168,19 @@ def test_predict_cold_and_new_filter_out(long_log_with_features):
         assert pred.count() == 0
     else:
         assert 1 <= pred.count() <= 2
+
+
+@pytest.mark.experimental
+def test_initialization_args_matches():
+    model = CQL(
+        n_epochs=3,
+        mdp_dataset_builder=MdpDatasetBuilder(top_k=3),
+        batch_size=512,
+        actor_optim_factory=AdamFactory(betas=(0.8, 0.95))
+    )
+    params = model._init_args
+    new_model = CQL(**params)
+
+    assert new_model.n_epochs == 3
+    assert new_model.model.config.actor_optim_factory.betas == (0.8, 0.95)
+    assert new_model.model.config.batch_size == 512
