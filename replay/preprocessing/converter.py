@@ -3,10 +3,7 @@ from typing import Optional
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, SparkDataFrame
-
-if PYSPARK_AVAILABLE:
-    from replay.utils.spark_utils import spark_to_pandas
+from replay.utils import DataFrameLike, SparkDataFrame, PandasDataFrame
 
 
 # pylint: disable=too-few-public-methods
@@ -78,24 +75,10 @@ class CSRConverter:
         self.column_count = column_count
         self.allow_collect_to_master = allow_collect_to_master
 
-    def transform(self, data: DataFrameLike) -> csr_matrix:
-        """
-        Transform Spark or Pandas Data Frame to csr.
-
-        :param data: Spark or Pandas Data Frame containing columns
-            ``first_dim_column``, ``second_dim_column``, and optional ``data_column``.
-
-        :returns: Sparse interactions.
-        """
-
-        if isinstance(data, SparkDataFrame):
-            cols = [self.first_dim_column, self.second_dim_column]
-            if self.data_column is not None:
-                cols.append(self.data_column)
-            data = spark_to_pandas(data.select(cols), self.allow_collect_to_master)
-
+    def _transform_pandas(self, data: PandasDataFrame) -> csr_matrix:
         rows_data = data[self.first_dim_column].values
         cols_data = data[self.second_dim_column].values
+
         if self.data_column is not None:
             data = data[self.data_column].values
         else:
@@ -106,7 +89,47 @@ class CSRConverter:
 
         row_count = self.row_count if self.row_count is not None else _get_max(rows_data) + 1
         col_count = self.column_count if self.column_count is not None else _get_max(cols_data) + 1
+
         return csr_matrix(
             (data, (rows_data, cols_data)),
             shape=(row_count, col_count),
         )
+
+    def _transform_spark(self, data: SparkDataFrame) -> csr_matrix:
+        rows_data = [x[self.first_dim_column] for x in data.select(self.first_dim_column).collect()]
+        cols_data = [x[self.second_dim_column] for x in data.select(self.second_dim_column).collect()]
+
+        if self.data_column is not None:
+            data = [x[self.data_column] for x in data.select(self.data_column).collect()]
+        else:
+            data = np.ones(data.count())
+
+        def _get_max(data: np.ndarray) -> int:
+            return np.max(data) if len(data) > 0 else 0
+
+        row_count = self.row_count if self.row_count is not None else _get_max(rows_data) + 1
+        col_count = self.column_count if self.column_count is not None else _get_max(cols_data) + 1
+
+        return csr_matrix(
+            (data, (rows_data, cols_data)),
+            shape=(row_count, col_count),
+        )
+
+    def transform(self, data: DataFrameLike) -> csr_matrix:
+        """
+        Transform Spark or Pandas Data Frame to csr.
+
+        :param data: Spark or Pandas Data Frame containing columns
+            ``first_dim_column``, ``second_dim_column``, and optional ``data_column``.
+
+        :returns: Sparse interactions.
+        """
+
+        cols = [self.first_dim_column, self.second_dim_column]
+        if self.data_column is not None:
+            cols.append(self.data_column)
+
+        if isinstance(data, SparkDataFrame):
+            return self._transform_spark(data.select(cols))
+        else:
+            return self._transform_pandas(data[cols])
