@@ -1681,7 +1681,11 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
             # workaround to unify RandomRec and UCB
             if class_name == "RandomRec":
-                rating = 1 / np.arange(1, cnt + 1)
+                # rating = 1 / np.arange(1, cnt + 1)
+                numbers = local_rng.uniform(size=cnt)
+                print(query_idx, numbers)
+                rating = numbers
+                # print(query_idx, items_pd, rating)
             else:
                 rating = items_pd["probability"].values[items_positions]
 
