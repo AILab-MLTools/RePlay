@@ -30,8 +30,6 @@ class DriverNmslibIndexBuilder(IndexBuilder):
         features_col: str,
         ids_col: Optional[str] = None,
     ):
-        vectors = vectors.toPandas()
-
         NmslibIndexBuilderMixin.build_and_save_index(
             vectors, self.index_params, self.index_store
         )

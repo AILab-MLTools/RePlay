@@ -67,25 +67,27 @@ class SLIM(NeighbourRec):
         self,
         dataset: Dataset,
     ) -> None:
-        pandas_interactions = (
+        interactions = (
             dataset.interactions
             .select(self.query_column, self.item_column, self.rating_column)
-            .toPandas()
         )
 
         interactions_matrix = csc_matrix(
             (
-                pandas_interactions[self.rating_column],
+                [x[self.rating_column] for x in interactions.select(self.rating_column).collect()],
                 (
-                    pandas_interactions[self.query_column],
-                    pandas_interactions[self.item_column],
+                    [x[self.query_column] for x in interactions.select(self.query_column).collect()],
+                    [x[self.item_column] for x in interactions.select(self.item_column).collect()],
                 ),
             ),
             shape=(self._query_dim, self._item_dim),
         )
         similarity = (
             State()
-            .session.createDataFrame(pandas_interactions[self.item_column], st.IntegerType())
+            .session.createDataFrame(
+                [x[self.item_column] for x in interactions.select(self.item_column).collect()],
+                st.IntegerType()
+            )
             .withColumnRenamed("value", "item_idx_one")
         )
 
