@@ -32,12 +32,11 @@ class DriverHnswlibIndexBuilder(IndexBuilder):
         features_col: str,
         ids_col: Optional[str] = None,
     ):
-        vectors_np = np.squeeze([x[features_col] for x in vectors.select(features_col).collect()])
-
+        vectors_np = np.array([np.array(x[features_col]) for x in vectors.select(features_col).collect()])
         index = create_hnswlib_index_instance(self.index_params, init=True)
 
         if ids_col:
-            index.add_items(np.stack(vectors_np), [x[ids_col] for x in vectors.select(ids_col).collect()])
+            index.add_items(np.stack(vectors_np), np.array([x[ids_col] for x in vectors.select(ids_col).collect()]))
         else:
             index.add_items(np.stack(vectors_np))
 
