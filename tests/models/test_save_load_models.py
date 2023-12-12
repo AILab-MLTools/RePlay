@@ -84,7 +84,6 @@ def test_equal_preds(long_log_with_features, recommender, tmp_path):
     sparkDataFrameEqual(base_pred, new_pred)
 
 
-# @pytest.mark.xfail
 @pytest.mark.spark
 def test_random(long_log_with_features, tmp_path):
     path = (tmp_path / "random").resolve()
@@ -94,12 +93,7 @@ def test_random(long_log_with_features, tmp_path):
     base_pred = model.predict(dataset, 5)
     save(model, path)
     loaded_model = load(path)
-    print("ORIG", model._init_args, model.fill, model.item_popularity.show())
-    print("COPY", loaded_model._init_args, loaded_model.fill, loaded_model.item_popularity.show())
     new_pred = loaded_model.predict(dataset, 5)
-    print(base_pred.show())
-    print("ANOTHER TABLE")
-    print(new_pred.show())
     sparkDataFrameEqual(base_pred, new_pred)
 
 

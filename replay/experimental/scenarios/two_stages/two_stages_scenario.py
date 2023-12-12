@@ -2,12 +2,11 @@
 from collections.abc import Iterable
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from replay.experimental.models import ScalaALSWrap
+from replay.experimental.models import ScalaALSWrap, PopRec, RandomRec
 from replay.experimental.preprocessing.data_preparator import ToNumericFeatureTransformer
 from replay.experimental.scenarios.two_stages.reranker import LamaWrap
 from replay.metrics import Metric, Precision
-from replay.models import PopRec, RandomRec
-from replay.models.base_rec import BaseRecommender, HybridRecommender
+from replay.experimental.models.base_rec import BaseRecommender, HybridRecommender
 from replay.preprocessing.history_based_fp import HistoryBasedFeaturesProcessor
 from replay.splitters import RatioSplitter, Splitter
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, SparkDataFrame
@@ -159,7 +158,12 @@ class TwoStagesScenario(HybridRecommender):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
-        train_splitter: Splitter = RatioSplitter(test_size=0.5),
+        train_splitter: Splitter = RatioSplitter(
+            divide_column="user_idx",
+            query_column="user_idx",
+            item_column="item_idx",
+            test_size=0.5,
+        ),
         first_level_models: Union[
             List[BaseRecommender], BaseRecommender
         ] = ScalaALSWrap(rank=128),
@@ -719,125 +723,3 @@ class TwoStagesScenario(HybridRecommender):
             item_features,
             filter_seen_items,
         )
-
-    @staticmethod
-    def _optimize_one_model(
-        model: BaseRecommender,
-        train: DataFrameLike,
-        test: DataFrameLike,
-        user_features: Optional[DataFrameLike] = None,
-        item_features: Optional[DataFrameLike] = None,
-        param_borders: Optional[Dict[str, List[Any]]] = None,
-        criterion: Metric = Precision,
-        k: int = 10,
-        budget: int = 10,
-        new_study: bool = True,
-    ):
-        params = model.optimize(
-            train,
-            test,
-            user_features,
-            item_features,
-            param_borders,
-            criterion,
-            k,
-            budget,
-            new_study,
-        )
-        return params
-
-    # pylint: disable=too-many-arguments, too-many-locals
-    def optimize(
-        self,
-        train: DataFrameLike,
-        test: DataFrameLike,
-        user_features: Optional[DataFrameLike] = None,
-        item_features: Optional[DataFrameLike] = None,
-        param_borders: Optional[List[Dict[str, List[Any]]]] = None,
-        criterion: Metric = Precision,
-        k: int = 10,
-        budget: int = 10,
-        new_study: bool = True,
-    ) -> Tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
-        """
-        Optimize first level models with optuna.
-
-        :param train: train DataFrame ``[user_id, item_id, timestamp, relevance]``
-        :param test: test DataFrame ``[user_id, item_id, timestamp, relevance]``
-        :param user_features: user features ``[user_id , timestamp]`` + feature columns
-        :param item_features: item features``[item_id]`` + feature columns
-        :param param_borders: list with param grids for first level models and a fallback model.
-            Empty dict skips optimization for that model.
-            Param grid is a dict ``{param: [low, high]}``.
-        :param criterion: metric to optimize
-        :param k: length of a recommendation list
-        :param budget: number of points to train each model
-        :param new_study: keep searching with previous study or start a new study
-        :return: list of dicts of parameters
-        """
-        number_of_models = len(self.first_level_models)
-        if self.fallback_model is not None:
-            number_of_models += 1
-        if number_of_models != len(param_borders):
-            raise ValueError(
-                "Provide search grid or None for every first level model"
-            )
-
-        first_level_user_features_tr = ToNumericFeatureTransformer()
-        first_level_user_features = first_level_user_features_tr.fit_transform(
-            user_features
-        )
-        first_level_item_features_tr = ToNumericFeatureTransformer()
-        first_level_item_features = first_level_item_features_tr.fit_transform(
-            item_features
-        )
-
-        first_level_user_features = cache_if_exists(first_level_user_features)
-        first_level_item_features = cache_if_exists(first_level_item_features)
-
-        params_found = []
-        for i, model in enumerate(self.first_level_models):
-            if param_borders[i] is None or (
-                isinstance(param_borders[i], dict) and param_borders[i]
-            ):
-                self.logger.info(
-                    "Optimizing first level model number %s, %s",
-                    i,
-                    model.__str__(),
-                )
-                params_found.append(
-                    self._optimize_one_model(
-                        model=model,
-                        train=train,
-                        test=test,
-                        user_features=first_level_user_features,
-                        item_features=first_level_item_features,
-                        param_borders=param_borders[i],
-                        criterion=criterion,
-                        k=k,
-                        budget=budget,
-                        new_study=new_study,
-                    )
-                )
-            else:
-                params_found.append(None)
-
-        if self.fallback_model is None or (
-            isinstance(param_borders[-1], dict) and not param_borders[-1]
-        ):
-            return params_found, None
-
-        self.logger.info("Optimizing fallback-model")
-        fallback_params = self._optimize_one_model(
-            model=self.fallback_model,
-            train=train,
-            test=test,
-            user_features=first_level_user_features,
-            item_features=first_level_item_features,
-            param_borders=param_borders[-1],
-            criterion=criterion,
-            new_study=new_study,
-        )
-        unpersist_if_exists(first_level_item_features)
-        unpersist_if_exists(first_level_user_features)
-        return params_found, fallback_params

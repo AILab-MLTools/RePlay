@@ -19,6 +19,7 @@ from copy import deepcopy
 from os.path import join
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
+import pandas as pd
 import numpy as np
 import pandas as pd
 from numpy.random import default_rng
@@ -1681,11 +1682,16 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
             # workaround to unify RandomRec and UCB
             if class_name == "RandomRec":
-                # rating = 1 / np.arange(1, cnt + 1)
-                numbers = local_rng.uniform(size=cnt)
-                print(query_idx, numbers)
-                rating = numbers
-                # print(query_idx, items_pd, rating)
+                rating_mapping = pd.DataFrame(
+                    {
+                        item_column: items_pd[item_column].sort_values().values,
+                        "random_rating": local_rng.uniform(size=items_pd.shape[0]),
+                    }
+                )
+                rating = (
+                    items_pd.merge(rating_mapping, on=item_column)["random_rating"]
+                    .values[items_positions]
+                )
             else:
                 rating = items_pd["probability"].values[items_positions]
 

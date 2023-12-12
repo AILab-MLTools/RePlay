@@ -1,10 +1,10 @@
 from typing import Optional
 
-from replay.data import Dataset
-from .base_rec import NonPersonalizedRecommender
+from replay.experimental.models.base_rec import NonPersonalizedRecommender
 from replay.utils import PYSPARK_AVAILABLE
 
 if PYSPARK_AVAILABLE:
+    from pyspark.sql import DataFrame
     from pyspark.sql import functions as sf
 
 
@@ -31,24 +31,23 @@ class RandomRec(NonPersonalizedRecommender):
     >>> state = State(spark)
 
     >>> import pandas as pd
-    >>> from replay.data.dataset import Dataset, FeatureSchema, FeatureInfo, FeatureHint, FeatureType
     >>> from replay.utils.spark_utils import convert2spark
     >>>
-    >>> interactions = convert2spark(pd.DataFrame({
-    ...     "user_id": [1, 1, 2, 2, 3, 4],
-    ...     "item_id": [1, 2, 2, 3, 3, 3]
+    >>> log = convert2spark(pd.DataFrame({
+    ...     "user_idx": [1, 1, 2, 2, 3, 4],
+    ...     "item_idx": [1, 2, 2, 3, 3, 3]
     ... }))
-    >>> interactions.show()
-    +-------+-------+
-    |user_id|item_id|
-    +-------+-------+
-    |      1|      1|
-    |      1|      2|
-    |      2|      2|
-    |      2|      3|
-    |      3|      3|
-    |      4|      3|
-    +-------+-------+
+    >>> log.show()
+    +--------+--------+
+    |user_idx|item_idx|
+    +--------+--------+
+    |       1|       1|
+    |       1|       2|
+    |       2|       2|
+    |       2|       3|
+    |       3|       3|
+    |       4|       3|
+    +--------+--------+
     <BLANKLINE>
     >>> random_pop = RandomRec(distribution="popular_based", alpha=-1)
     Traceback (most recent call last):
@@ -60,64 +59,49 @@ class RandomRec(NonPersonalizedRecommender):
      ...
     ValueError: distribution can be one of [popular_based, relevance, uniform]
 
-    >>> feature_schema = FeatureSchema(
-    ...     [
-    ...         FeatureInfo(
-    ...             column="user_id",
-    ...             feature_type=FeatureType.CATEGORICAL,
-    ...             feature_hint=FeatureHint.QUERY_ID,
-    ...         ),
-    ...         FeatureInfo(
-    ...             column="item_id",
-    ...             feature_type=FeatureType.CATEGORICAL,
-    ...             feature_hint=FeatureHint.ITEM_ID,
-    ...         ),
-    ...     ]
-    ... )
-    >>> dataset = Dataset(feature_schema, interactions)
     >>> random_pop = RandomRec(distribution="popular_based", alpha=1.0, seed=777)
-    >>> random_pop.fit(dataset)
+    >>> random_pop.fit(log)
     >>> random_pop.item_popularity.show()
-    +-------+------------------+
-    |item_id|            rating|
-    +-------+------------------+
-    |      1|0.2222222222222222|
-    |      2|0.3333333333333333|
-    |      3|0.4444444444444444|
-    +-------+------------------+
+    +--------+------------------+
+    |item_idx|         relevance|
+    +--------+------------------+
+    |       1|0.2222222222222222|
+    |       2|0.3333333333333333|
+    |       3|0.4444444444444444|
+    +--------+------------------+
     <BLANKLINE>
-    >>> recs = random_pop.predict(dataset, 2)
+    >>> recs = random_pop.predict(log, 2)
     >>> recs.show()
-    +-------+-------+-------------------+
-    |user_id|item_id|             rating|
-    +-------+-------+-------------------+
-    |      1|      3| 0.5403400662326382|
-    |      2|      1| 0.8999281214873164|
-    |      3|      1|  0.909252584485465|
-    |      3|      2|0.14871615041196307|
-    |      4|      2| 0.9923148665602072|
-    |      4|      1| 0.4814574953690183|
-    +-------+-------+-------------------+
+    +--------+--------+------------------+
+    |user_idx|item_idx|         relevance|
+    +--------+--------+------------------+
+    |       1|       3|0.3333333333333333|
+    |       2|       1|               0.5|
+    |       3|       2|               1.0|
+    |       3|       1|0.3333333333333333|
+    |       4|       2|               1.0|
+    |       4|       1|               0.5|
+    +--------+--------+------------------+
     <BLANKLINE>
-    >>> recs = random_pop.predict(dataset, 2, queries=[1], items=[7, 8])
+    >>> recs = random_pop.predict(log, 2, users=[1], items=[7, 8])
     >>> recs.show()
-    +-------+-------+-------------------+
-    |user_id|item_id|             rating|
-    +-------+-------+-------------------+
-    |      1|      7|0.25547770543750425|
-    |      1|      8|0.12755340075617772|
-    +-------+-------+-------------------+
+    +--------+--------+---------+
+    |user_idx|item_idx|relevance|
+    +--------+--------+---------+
+    |       1|       7|      1.0|
+    |       1|       8|      0.5|
+    +--------+--------+---------+
     <BLANKLINE>
     >>> random_pop = RandomRec(seed=555)
-    >>> random_pop.fit(dataset)
+    >>> random_pop.fit(log)
     >>> random_pop.item_popularity.show()
-    +-------+------------------+
-    |item_id|            rating|
-    +-------+------------------+
-    |      1|0.3333333333333333|
-    |      2|0.3333333333333333|
-    |      3|0.3333333333333333|
-    +-------+------------------+
+    +--------+------------------+
+    |item_idx|         relevance|
+    +--------+------------------+
+    |       1|0.3333333333333333|
+    |       2|0.3333333333333333|
+    |       3|0.3333333333333333|
+    +--------+------------------+
     <BLANKLINE>
     """
 
@@ -183,38 +167,38 @@ class RandomRec(NonPersonalizedRecommender):
 
     def _fit(
         self,
-        dataset: Dataset,
+        log: DataFrame,
+        user_features: Optional[DataFrame] = None,
+        item_features: Optional[DataFrame] = None,
     ) -> None:
-        if self.rating_column is None:
-            self.rating_column = "rating"
         if self.distribution == "popular_based":
             self.item_popularity = (
-                dataset.interactions.groupBy(self.item_column)
-                .agg(sf.countDistinct(self.query_column).alias("user_count"))
+                log.groupBy("item_idx")
+                .agg(sf.countDistinct("user_idx").alias("user_count"))
                 .select(
-                    sf.col(self.item_column),
+                    sf.col("item_idx"),
                     (
                         sf.col("user_count").astype("float")
                         + sf.lit(self.alpha)
-                    ).alias(self.rating_column),
+                    ).alias("relevance"),
                 )
             )
         elif self.distribution == "relevance":
             self.item_popularity = (
-                dataset.interactions.groupBy(self.item_column)
-                .agg(sf.sum(self.rating_column).alias(self.rating_column))
-                .select(self.item_column, self.rating_column)
+                log.groupBy("item_idx")
+                .agg(sf.sum("relevance").alias("relevance"))
+                .select("item_idx", "relevance")
             )
         else:
             self.item_popularity = (
-                dataset.interactions.select(self.item_column)
+                log.select("item_idx")
                 .distinct()
-                .withColumn(self.rating_column, sf.lit(1.0))
+                .withColumn("relevance", sf.lit(1.0))
             )
         self.item_popularity = self.item_popularity.withColumn(
-            self.rating_column,
-            sf.col(self.rating_column)
-            / self.item_popularity.agg(sf.sum(self.rating_column)).first()[0],
+            "relevance",
+            sf.col("relevance")
+            / self.item_popularity.agg(sf.sum("relevance")).first()[0],
         )
         self.item_popularity.cache().count()
-        self.fill = self._calc_fill(self.item_popularity, self.cold_weight, self.rating_column)
+        self.fill = self._calc_fill(self.item_popularity, self.cold_weight)
