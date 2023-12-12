@@ -16,7 +16,7 @@ class Coverage(Metric):
 
     * take ``K`` recommendations with the biggest ``score`` for each ``user_id``
     * count the number of distinct ``item_id`` in these recommendations
-    * divide it by the number of distinct items in the whole dataset
+    * divide it by the number of distinct items in train dataset, provided to metric call
 
     >>> recommendations
        query_id  item_id  rating
@@ -33,7 +33,7 @@ class Coverage(Metric):
     10        3        4    1.0
     11        3        9    0.5
     12        3        2    0.1
-    >>> groundtruth
+    >>> train
        query_id  item_id
     0         1        5
     1         1        6
@@ -51,7 +51,7 @@ class Coverage(Metric):
     13        3        3
     14        3        4
     15        3        5
-    >>> Coverage(2)(recommendations, groundtruth)
+    >>> Coverage(2)(recommendations, train)
     {'Coverage@2': 0.5454545454545454}
     <BLANKLINE>
     """
@@ -114,9 +114,12 @@ class Coverage(Metric):
         for k in self.topk:
             res = (
                 recs.filter(sf.col("best_position") <= k)
-                .join(train, on=self.item_column)
                 .select(self.item_column)
-                .distinct().count() / item_count
+                .distinct()
+                .join(
+                    train.select(self.item_column).distinct(), on=self.item_column
+                )
+                .count() / item_count
             )
             metrics.append(res)
 
