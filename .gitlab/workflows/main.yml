@@ -180,7 +180,7 @@ build-production-package:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   stage: build packages
   script:
-- *setup_env
+    - *setup_env
     - export PACKAGE_SUFFIX=.dev${CI_JOB_ID}
     - echo $PACKAGE_SUFFIX
     - ./poetry_wrapper.sh --generate
