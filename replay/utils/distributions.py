@@ -1,7 +1,9 @@
 """Distribution calculations"""
+import warnings
 
 import seaborn as sns
 
+from .spark_utils import SparkCollectToMasterWarning
 from .types import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame
 
 if PYSPARK_AVAILABLE:
@@ -72,6 +74,11 @@ def item_distribution(
     :param k: length of a recommendation list
     :return: DataFrame with results
     """
+    warnings.warn(
+        "Prediction with sampling performs spark to pandas convertion to master node, "
+        "this may lead to OOM exception for larger dataset.",
+        SparkCollectToMasterWarning
+    )
     log = convert2spark(log)
     res = (
         log.groupBy("item_idx")
