@@ -180,7 +180,7 @@ build-production-package:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   stage: build packages
   script:
-    - *setup_env
+- *setup_env
     - export PACKAGE_SUFFIX=.dev${CI_JOB_ID}
     - echo $PACKAGE_SUFFIX
     - ./poetry_wrapper.sh --generate
@@ -206,9 +206,8 @@ release_job-production:
   rules:
     - if: $CI_COMMIT_TAG
   stage: release
-  extends:
-    - .use_st_runner
   script:
+    - *setup_env
     - ./poetry_wrapper.sh --generate
     - poetry version
     - poetry config repositories.replay ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
@@ -223,8 +222,6 @@ release_job-experimental:
   rules:
     - if: $CI_COMMIT_TAG
   stage: release
-  extends:
-    - .use_st_runner
   script:
     - export PACKAGE_SUFFIX=.preview
     - echo $PACKAGE_SUFFIX
