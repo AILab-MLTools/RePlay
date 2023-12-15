@@ -48,6 +48,7 @@ stages:
   - examples
   - build packages
   - release
+  - deploy_docs
 
 resolve-job:
   stage: resolve
