@@ -47,8 +47,6 @@ stages:
   - merge coverage
   - examples
   - build packages
-  - release
-  - deploy_docs
 
 resolve-job:
   stage: resolve
@@ -201,32 +199,3 @@ build-experimental-package:
     - poetry version
     - poetry config repositories.replay ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
     - poetry publish --build -r replay -u gitlab-ci-token -p ${CI_JOB_TOKEN}
-
-
-release_job-production:
-  rules:
-    - if: $CI_COMMIT_TAG
-  stage: release
-  script:
-    - *setup_env
-    - ./poetry_wrapper.sh --generate
-    - poetry version
-    - poetry config repositories.replay ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
-    - poetry publish --build -r replay -u ${PYPI_USER} -p ${PYPI_PASSWORD}
-  release:
-    name: "Release $CI_COMMIT_TAG"
-    tag_name: '$CI_COMMIT_TAG'
-    description: '$CI_COMMIT_TAG'
-
-
-release_job-experimental:
-  rules:
-    - if: $CI_COMMIT_TAG
-  stage: release
-  script:
-    - export PACKAGE_SUFFIX=.preview
-    - echo $PACKAGE_SUFFIX
-    - ./poetry_wrapper.sh --experimental --generate
-    - poetry version
-    - poetry config repositories.replay ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
-    - poetry publish --build -r replay -u ${PYPI_USER} -p ${PYPI_PASSWORD}

@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m venv venv
           . ./venv/bin/activate
-          pip install --upgrade pip wheel poetry==1.5.1 lightfm
+          pip install --upgrade pip wheel poetry==1.5.1 lightfm==1.17
           poetry cache clear pypi --all
           ./poetry_wrapper.sh --experimental install --all-extras
       - name: Build docs
@@ -44,7 +44,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: 'docs/build/html/'
+          path: 'docs/_build/html/'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
