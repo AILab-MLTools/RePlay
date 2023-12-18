@@ -78,7 +78,6 @@ class CQL(Recommender):
           Learning. <https://arxiv.org/abs/2006.04779>`_
 
     Args:
-        n_epochs (int): the number of epochs to learn.
         mdp_dataset_builder (MdpDatasetBuilder): the MDP dataset builder from users' log.
         actor_learning_rate (float): learning rate for policy function.
         critic_learning_rate (float): learning rate for Q functions.
@@ -108,7 +107,7 @@ class CQL(Recommender):
         Q function factory. The available options are `['mean', 'qr', 'iqn', 'fqf']`.
         See d3rlpy.models.q_functions.QFunctionFactory for details.
         batch_size (int): mini-batch size.
-        n_steps (int): N-step TD calculation.
+        n_steps (int): Number of training steps.
         gamma (float): discount factor.
         tau (float): target network synchronization coefficient.
         n_critics (int): the number of Q functions for ensemble.
@@ -133,7 +132,6 @@ class CQL(Recommender):
         impl (d3rlpy.algos.torch.cql_impl.CQLImpl): algorithm implementation.
     """
 
-    n_epochs: int
     mdp_dataset_builder: 'MdpDatasetBuilder'
     model: CQL_d3rlpy
 
@@ -145,7 +143,6 @@ class CQL(Recommender):
     _search_space = {
         "actor_learning_rate": {"type": "loguniform", "args": [1e-5, 1e-3]},
         "critic_learning_rate": {"type": "loguniform", "args": [3e-5, 3e-4]},
-        "n_epochs": {"type": "int", "args": [3, 20]},
         "temp_learning_rate": {"type": "loguniform", "args": [1e-5, 1e-3]},
         "alpha_learning_rate": {"type": "loguniform", "args": [1e-5, 1e-3]},
         "gamma": {"type": "loguniform", "args": [0.9, 0.999]},
@@ -156,7 +153,6 @@ class CQL(Recommender):
     def __init__(
             self,
             mdp_dataset_builder: 'MdpDatasetBuilder',
-            n_epochs: int = 1,
 
             # CQL inner params
             actor_learning_rate: float = 1e-4,
@@ -188,7 +184,6 @@ class CQL(Recommender):
             **params
     ):
         super().__init__()
-        self.n_epochs = n_epochs
         assert_omp_single_thread()
 
         if isinstance(actor_optim_factory, dict):
@@ -348,7 +343,6 @@ class CQL(Recommender):
     def _init_args(self) -> Dict[str, Any]:
         return {
             # non-model hyperparams
-            "n_epochs": self.n_epochs,
             "mdp_dataset_builder": self.mdp_dataset_builder.init_args(),
             "n_steps": self.n_steps,
             # model internal hyperparams
