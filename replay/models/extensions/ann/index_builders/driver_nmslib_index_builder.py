@@ -25,7 +25,6 @@ class DriverNmslibIndexBuilder(IndexBuilder):
         else:
             return NmslibIndexInferer(self.index_params, self.index_store)
 
-    # pylint: disable=no-member
     def build_index(
         self,
         vectors: SparkDataFrame,
