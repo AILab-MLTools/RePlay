@@ -37,7 +37,7 @@ jobs:
         run: |
           . ./venv/bin/activate
           export PACKAGE_SUFFIX=.preview
-          poetry build
+          ./poetry_wrapper.sh --experimental build
 
       - name: Publish Experimental
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -71,7 +71,7 @@ jobs:
       - name: Build Production
         run: |
           . ./venv/bin/activate
-          poetry build
+          ./poetry_wrapper.sh build
 
       - name: Publish Production
         uses: pypa/gh-action-pypi-publish@release/v1

@@ -69,8 +69,7 @@ jobs:
         run: |
           . ./venv/bin/activate
           export PACKAGE_SUFFIX=.dev
-          ./poetry_wrapper.sh --generate
-          poetry build
+          ./poetry_wrapper.sh build
 
   build_experimental:
     runs-on: ubuntu-20.04
@@ -96,5 +95,4 @@ jobs:
         run: |
           . ./venv/bin/activate
           export PACKAGE_SUFFIX=.preview
-          ./poetry_wrapper.sh --experimental --generate
-          poetry build
+          ./poetry_wrapper.sh --experimental build
