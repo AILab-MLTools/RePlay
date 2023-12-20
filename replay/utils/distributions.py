@@ -1,15 +1,12 @@
 """Distribution calculations"""
-import warnings
-
 import seaborn as sns
 
-from .spark_utils import SparkCollectToMasterWarning
 from .types import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame
 
 if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
 
-    from replay.utils.spark_utils import convert2spark, get_top_k_recs
+    from replay.utils.spark_utils import convert2spark, get_top_k_recs, spark_to_pandas
 
 
 def plot_user_dist(
@@ -64,7 +61,10 @@ def plot_item_dist(
 
 
 def item_distribution(
-    log: DataFrameLike, recommendations: DataFrameLike, k: int
+    log: DataFrameLike,
+    recommendations: DataFrameLike,
+    k: int,
+    allow_collect_to_master: bool = False,
 ) -> PandasDataFrame:
     """
     Calculate item distribution in ``log`` and ``recommendations``.
@@ -74,11 +74,6 @@ def item_distribution(
     :param k: length of a recommendation list
     :return: DataFrame with results
     """
-    warnings.warn(
-        "Prediction with sampling performs spark to pandas convertion to master node, "
-        "this may lead to OOM exception for larger dataset.",
-        SparkCollectToMasterWarning
-    )
     log = convert2spark(log)
     res = (
         log.groupBy("item_idx")
@@ -98,6 +93,5 @@ def item_distribution(
         res.join(rec, on="item_idx", how="outer")
         .fillna(0)
         .orderBy(["user_count", "item_idx"])
-        .toPandas()
     )
-    return res
+    return spark_to_pandas(res, allow_collect_to_master)

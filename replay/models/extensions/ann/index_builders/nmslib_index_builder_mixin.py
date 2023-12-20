@@ -3,7 +3,7 @@ from scipy.sparse import csr_matrix
 from replay.models.extensions.ann.entities.nmslib_hnsw_param import NmslibHnswParam
 from replay.models.extensions.ann.index_stores.base_index_store import IndexStore
 from replay.models.extensions.ann.utils import create_nmslib_index_instance
-from replay.utils import PandasDataFrame, DataFrameLike
+from replay.utils import PandasDataFrame
 
 
 # pylint: disable=too-few-public-methods
@@ -12,7 +12,7 @@ class NmslibIndexBuilderMixin:
 
     @staticmethod
     def build_and_save_index(
-        pdf: DataFrameLike,
+        pdf: PandasDataFrame,
         index_params: NmslibHnswParam,
         index_store: IndexStore,
     ):
@@ -35,14 +35,9 @@ class NmslibIndexBuilderMixin:
 
         index = create_nmslib_index_instance(index_params)
 
-        if isinstance(pdf, PandasDataFrame):
-            data = pdf["similarity"].values
-            row_ind = pdf["item_idx_two"].values
-            col_ind = pdf["item_idx_one"].values
-        else:
-            data = [x["similarity"] for x in pdf.select("similarity").collect()]
-            row_ind = [x["item_idx_two"] for x in pdf.select("item_idx_two").collect()]
-            col_ind = [x["item_idx_one"] for x in pdf.select("item_idx_one").collect()]
+        data = pdf["similarity"].values
+        row_ind = pdf["item_idx_two"].values
+        col_ind = pdf["item_idx_one"].values
 
         sim_matrix = csr_matrix(
             (data, (row_ind, col_ind)),
