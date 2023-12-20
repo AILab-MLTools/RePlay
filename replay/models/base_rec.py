@@ -1554,7 +1554,7 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
         warnings.warn(
             "Prediction with sampling performs spark to pandas convertion to master node, "
-            "this may lead to OOM exception for larger dataset.",
+            "this may lead to OOM exception for large item catalogue.",
             SparkCollectToMasterWarning
         )
 
