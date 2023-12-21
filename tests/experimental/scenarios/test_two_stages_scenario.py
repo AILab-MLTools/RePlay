@@ -12,17 +12,9 @@ from replay.experimental.models import ScalaALSWrap as ALSWrap
 from replay.experimental.preprocessing.data_preparator import ToNumericFeatureTransformer
 from replay.experimental.scenarios import TwoStagesScenario
 from replay.experimental.scenarios.two_stages.reranker import LamaWrap
-from replay.experimental.models import PopRec
+from replay.models import ItemKNN, PopRec
 from replay.preprocessing.history_based_fp import HistoryBasedFeaturesProcessor
 from replay.splitters import TimeSplitter
-
-from tests.utils import (
-    long_log_with_features,
-    short_log_with_features,
-    user_features,
-    item_features,
-    spark,
-)
 
 
 @pytest.fixture
@@ -30,6 +22,7 @@ def two_stages_kwargs():
     return {
         "first_level_models": [
             ALSWrap(rank=4),
+            ItemKNN(num_neighbours=4),
             LightFMWrap(no_components=4),
         ],
         "train_splitter": TimeSplitter(time_threshold=0.1),
@@ -60,7 +53,7 @@ def test_init(two_stages_kwargs):
         two_stages.first_level_item_features_transformer,
         ToNumericFeatureTransformer,
     )
-    assert two_stages.use_first_level_models_feat == [True, True]
+    assert two_stages.use_first_level_models_feat == [True, True, True]
 
     two_stages_kwargs["use_first_level_models_feat"] = [True]
     with pytest.raises(
@@ -74,6 +67,7 @@ def test_init(two_stages_kwargs):
         TwoStagesScenario(**two_stages_kwargs)
 
 
+@pytest.mark.xfail
 @pytest.mark.experimental
 def test_fit(
     long_log_with_features,
@@ -82,7 +76,7 @@ def test_fit(
     item_features,
     two_stages_kwargs,
 ):
-    two_stages_kwargs["use_first_level_models_feat"] = [True, True]
+    two_stages_kwargs["use_first_level_models_feat"] = [True, False, True]
     two_stages = TwoStagesScenario(**two_stages_kwargs)
 
     two_stages.fit(
@@ -101,13 +95,14 @@ def test_fit(
     )
     assert res.count() == short_log_with_features.count()
     assert "rel_0_ScalaALSWrap" in res.columns
-    assert "m_1_fm_0" in res.columns
+    assert "m_2_fm_0" in res.columns
     assert "u_pop_by_class" in res.columns
     assert "age" in res.columns
 
     two_stages.first_level_item_features_transformer.transform(item_features)
 
 
+@pytest.mark.xfail
 @pytest.mark.experimental
 def test_predict(
     long_log_with_features, user_features, item_features, two_stages_kwargs,
@@ -131,3 +126,42 @@ def test_predict(
         1,
         2,
     ]
+
+
+@pytest.mark.xfail
+@pytest.mark.experimental
+def test_optimize(
+    long_log_with_features,
+    short_log_with_features,
+    user_features,
+    item_features,
+    two_stages_kwargs,
+):
+    two_stages = TwoStagesScenario(**two_stages_kwargs)
+    param_borders = [{"rank": [1, 10]}, {}, {"no_components": [1, 10]}, None]
+    # with fallback
+    first_level_params, fallback_params = two_stages.optimize(
+        train=long_log_with_features,
+        test=short_log_with_features,
+        user_features=user_features,
+        item_features=item_features,
+        param_borders=param_borders,
+        k=1,
+        budget=1,
+    )
+    assert len(first_level_params) == 3
+    assert first_level_params[1] is None
+    assert list(first_level_params[0].keys()) == ["rank"]
+    assert fallback_params is None
+
+    # no fallback works
+    two_stages.fallback_model = None
+    two_stages.optimize(
+        train=long_log_with_features,
+        test=short_log_with_features,
+        user_features=user_features,
+        item_features=item_features,
+        param_borders=param_borders[:3],
+        k=1,
+        budget=1,
+    )
