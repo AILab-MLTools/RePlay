@@ -12,7 +12,7 @@ from replay.models import *
 from replay.splitters import *
 from replay.utils import PYSPARK_AVAILABLE
 from replay.utils.session_handler import State
-from replay.utils.spark_utils import save_picklable_to_parquet
+from replay.utils.spark_utils import save_picklable_to_parquet, load_pickled_from_parquet
 
 if PYSPARK_AVAILABLE:
     import pyspark.sql.types as st
@@ -20,20 +20,6 @@ if PYSPARK_AVAILABLE:
 
     from replay.utils.model_handler import get_fs
     from pyspark.sql import SparkSession
-
-    from replay.utils.spark_utils import load_pickled_from_parquet, save_picklable_to_parquet
-
-    def get_fs(spark: SparkSession):
-        """
-        Gets `org.apache.hadoop.fs.FileSystem` instance from JVM gateway
-
-        :param spark: spark session
-        :return:
-        """
-        fs = spark._jvm.org.apache.hadoop.fs.FileSystem.get(
-            spark._jsc.hadoopConfiguration()
-        )
-        return fs
 
     def get_list_of_paths(spark: SparkSession, dir_path: str):
         """
@@ -100,6 +86,7 @@ def save(
         save_picklable_to_parquet(model.study, join(path, "study"))
 
 
+# pylint: disable=too-many-locals
 def load(path: str, model_type=None) -> BaseRecommender:
     """
     Load saved model from disk
@@ -116,7 +103,6 @@ def load(path: str, model_type=None) -> BaseRecommender:
     name = args["_model_name"]
     del args["_model_name"]
 
-    print("AFTER")
     if model_type is not None:
         model_class = model_type
     else:
