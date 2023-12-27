@@ -256,7 +256,7 @@ class SequenceTokenizer:
             item_id_column,
         ]
 
-        for tensor_feature in tensor_schema.categorical_features.values():
+        for tensor_feature in tensor_schema.values():
             source = tensor_feature.feature_source
             assert source is not None
 
