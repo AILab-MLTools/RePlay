@@ -1,5 +1,5 @@
 import math
-from typing import Any, Optional, Tuple, Union, cast
+from typing import Any, Optional, Tuple, Union, cast, Dict
 
 import lightning as L
 import torch
@@ -11,7 +11,7 @@ from .dataset import (
     Bert4RecTrainingBatch,
     Bert4RecValidationBatch,
 )
-from .model import Bert4RecModel
+from .model import Bert4RecModel, CatFeatureEmbedding
 
 
 # pylint: disable=too-many-instance-attributes
@@ -392,3 +392,124 @@ class Bert4Rec(L.LightningModule):
             return torch.nn.CrossEntropyLoss()
 
         raise NotImplementedError("Not supported loss_type")
+
+    def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
+        """
+        :returns: copy of all embeddings as a dictionary.
+        """
+        return self._model.item_embedder.get_all_embeddings()
+
+    def set_new_item_embedding_by_size(self, new_vocab_size: int):
+        """
+        Set new item embeddings initialized with xavier_normal_ by new size of vocabulary
+        to item embedder.
+        
+        :param new_vocab_size: Size of vocabulary with new items.
+            Must be greater then already fitted.
+        """
+        if new_vocab_size <= self._vocab_size:
+            raise ValueError("New vocabulary size must be greater then already fitted")
+        
+        item_tensor_feature_info = self._model.schema.item_id_features.item()
+        item_tensor_feature_info._set_cardinality(new_vocab_size)
+
+        weights_new = CatFeatureEmbedding(item_tensor_feature_info)
+        torch.nn.init.xavier_normal_(weights_new.weight)
+        weights_new.weight.data[:self._vocab_size, :] = self._model.item_embedder.item_embeddings.data
+        self._model.item_embedder.cat_embeddings[self._model.schema.item_id_feature_name] = weights_new
+
+        if self._model.enable_embedding_tying is True:
+            self._model._head._item_embedder =  self._model.item_embedder
+            new_bias = torch.Tensor(new_vocab_size)
+            new_bias.normal_(0, 0.01)
+            new_bias[:self._vocab_size] = self._model._head.out_bias.data
+            self._model._head.out_bias = torch.nn.Parameter(new_bias)
+        else:
+            new_linear = torch.nn.Linear(self._model.hidden_size, new_vocab_size)
+            new_linear.weight.data[:self._vocab_size, :] = self._model._head.linear.weight.data
+            new_linear.bias.data[:self._vocab_size] = self._model._head.linear.bias.data
+            self._model._head.linear = new_linear
+
+        self._vocab_size = new_vocab_size
+        self._model.item_count = new_vocab_size
+
+    def set_new_item_embedding_by_tensor(self, all_item_embeddings: torch.Tensor):
+        """
+        Set new item embeddings initialized with xavier_normal_ by new size of vocabulary
+        to item embedder.
+        
+        :param new_vocab_size: Size of vocabulary with new items.
+            Must be greater then already fitted.
+        """
+        if all_item_embeddings.dim() != 2:
+            raise ValueError("Input tensor must have (number of all items, model hidden size) shape")
+        
+        new_vocab_size = all_item_embeddings.shape[0]
+        if new_vocab_size < self._vocab_size:
+            raise ValueError("New vocabulary size can't be less then already fitted")
+        
+        item_tensor_feature_info = self._model.schema.item_id_features.item()
+        if all_item_embeddings.shape[1] != item_tensor_feature_info.embedding_dim:
+            raise ValueError("Input tensor second dimension doesn't match embedding dim")
+        
+        item_tensor_feature_info._set_cardinality(new_vocab_size)
+
+        weights_new = CatFeatureEmbedding(item_tensor_feature_info)
+        torch.nn.init.xavier_normal_(weights_new.weight)
+        weights_new.weight.data[:new_vocab_size, :] = all_item_embeddings.data
+        self._model.item_embedder.cat_embeddings[self._model.schema.item_id_feature_name] = weights_new
+
+        if self._model.enable_embedding_tying is True:
+            self._model._head._item_embedder =  self._model.item_embedder
+            new_bias = torch.Tensor(new_vocab_size)
+            new_bias.normal_(0, 0.01)
+            new_bias[:self._vocab_size] = self._model._head.out_bias.data
+            self._model._head.out_bias = torch.nn.Parameter(new_bias)
+        else:
+            new_linear = torch.nn.Linear(self._model.hidden_size, new_vocab_size)
+            new_linear.weight.data[:self._vocab_size, :] = self._model._head.linear.weight.data
+            new_linear.bias.data[:self._vocab_size] = self._model._head.linear.bias.data
+            self._model._head.linear = new_linear
+
+        self._vocab_size = new_vocab_size
+        self._model.item_count = new_vocab_size
+
+    def append_new_item_embeddings(self, new_item_embeddings: torch.Tensor):
+        """
+        Set new item embeddings initialized with xavier_normal_ by new size of vocabulary
+        to item embedder.
+        
+        :param new_vocab_size: Size of vocabulary with new items.
+            Must be greater then already fitted.
+        """
+        if new_item_embeddings.dim() != 2:
+            raise ValueError("Input tensor must have (number of all items, model hidden size) shape")
+        
+        new_vocab_size = new_item_embeddings.shape[0] + self._vocab_size
+        
+        item_tensor_feature_info = self._model.schema.item_id_features.item()
+        if new_item_embeddings.shape[1] != item_tensor_feature_info.embedding_dim:
+            raise ValueError("Input tensor second dimension doesn't match embedding dim")
+        
+        item_tensor_feature_info._set_cardinality(new_vocab_size)
+
+        weights_new = CatFeatureEmbedding(item_tensor_feature_info)
+        torch.nn.init.xavier_normal_(weights_new.weight)
+        weights_new.weight.data[:self._vocab_size, :] = self._model.item_embedder.item_embeddings.data
+        weights_new.weight.data[self._vocab_size:, :] = new_item_embeddings.data
+        self._model.item_embedder.cat_embeddings[self._model.schema.item_id_feature_name] = weights_new
+
+        if self._model.enable_embedding_tying is True:
+            self._model._head._item_embedder =  self._model.item_embedder
+            new_bias = torch.Tensor(new_vocab_size)
+            new_bias.normal_(0, 0.01)
+            new_bias[:self._vocab_size] = self._model._head.out_bias.data
+            self._model._head.out_bias = torch.nn.Parameter(new_bias)
+        else:
+            new_linear = torch.nn.Linear(self._model.hidden_size, new_vocab_size)
+            new_linear.weight.data[:self._vocab_size, :] = self._model._head.linear.weight.data
+            new_linear.bias.data[:self._vocab_size] = self._model._head.linear.bias.data
+            self._model._head.linear = new_linear
+
+        self._vocab_size = new_vocab_size
+        self._model.item_count = new_vocab_size

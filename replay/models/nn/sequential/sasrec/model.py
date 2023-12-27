@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Optional, Tuple, Union, cast
+from typing import Any, Optional, Tuple, Union, cast, Dict
 
 import torch
 
@@ -254,6 +254,12 @@ class BaseSasRecEmbeddings(abc.ABC):
         :returns: Item weights for all items.
         """
 
+    @abc.abstractmethod
+    def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
+        """
+        :returns: copy of all embeddings presented in a layer as a dict.
+        """
+
 
 class EmbeddingTyingHead(torch.nn.Module):
     """
@@ -355,6 +361,21 @@ class SasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         """
         # Last one is reserved for padding, so we remove it
         return self.item_emb.weight[:-1, :]
+    
+    def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
+        """
+        :returns: copy of all embeddings presented in this layer as a dict.
+        """
+        return {
+            "item_embedding": torch.nn.Embedding.from_pretrained(
+                self.item_emb.weight.data[:-1, :],
+                freeze=False,
+            ),
+            "positional_embedding": torch.nn.Embedding.from_pretrained(
+                self.pos_emb.pe.weight.data,
+                freeze=False,
+            ),
+        }
 
 
 class SasRecLayers(torch.nn.Module):
@@ -607,6 +628,33 @@ class TiSasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         """
         # Last one is reserved for padding, so we remove it
         return self.item_emb.weight[:-1, :]
+    
+    def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
+        """
+        :returns: copy of all embeddings presented in this layer as a dict.
+        """
+        return {
+            "item_embedding": torch.nn.Embedding.from_pretrained(
+                self.item_emb.weight.data[:-1, :],
+                freeze=False,
+            ),
+            "abs_pos_k_emb": torch.nn.Embedding.from_pretrained(
+                self.abs_pos_k_emb.pe.weight.data,
+                freeze=False,
+            ),
+            "abs_pos_v_emb": torch.nn.Embedding.from_pretrained(
+                self.abs_pos_v_emb.pe.weight.data,
+                freeze=False,
+            ),
+            "time_matrix_k_emb": torch.nn.Embedding.from_pretrained(
+                self.time_matrix_k_emb.weight.data,
+                freeze=False,
+            ),
+            "time_matrix_v_emb": torch.nn.Embedding.from_pretrained(
+                self.time_matrix_v_emb.weight.data,
+                freeze=False,
+            ),
+        }
 
 
 class TiSasRecLayers(torch.nn.Module):
