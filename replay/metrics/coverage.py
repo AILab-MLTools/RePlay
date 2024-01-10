@@ -189,4 +189,4 @@ class Coverage(Metric):
 
     @staticmethod
     def _get_metric_value_by_user(ks, *args) -> List[float]:
-        pass
+        pass  # pragma: no cover

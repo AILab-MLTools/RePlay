@@ -118,6 +118,10 @@ class ClusterRec(QueryRecommender):
         items: SparkDataFrame,
         filter_seen_items: bool = True,
     ) -> SparkDataFrame:
+        if dataset is None:
+            raise ValueError(
+                "interactions is not provided, but it is required for prediction"
+            )
 
         query_clusters = self._make_query_clusters(queries, dataset.query_features)
         filtered_items = self.item_rel_in_cluster.join(items, on=self.item_column)
