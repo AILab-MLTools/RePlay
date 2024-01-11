@@ -170,8 +170,8 @@ def test_sasrec_get_embeddings(tensor_schema):
     assert len(model_ti_embeddings) == 5
 
     # Check types
-    assert isinstance(model_item_embedding, torch.nn.Embedding)
-    assert isinstance(model_ti_item_embedding, torch.nn.Embedding)
+    assert isinstance(model_item_embedding, torch.Tensor)
+    assert isinstance(model_ti_item_embedding, torch.Tensor)
 
     # Ensure we got copies
     assert id(model_item_embedding) != id(model._model.item_embedder.item_emb)
@@ -179,11 +179,11 @@ def test_sasrec_get_embeddings(tensor_schema):
 
     # Ensure we got same values
     assert torch.eq(
-        model_item_embedding.weight.data,
+        model_item_embedding,
         model._model.item_embedder.item_emb.weight.data[:-1, :]
     ).all()
     assert torch.eq(
-        model_ti_item_embedding.weight.data,
+        model_ti_item_embedding,
         model_ti._model.item_embedder.item_emb.weight.data[:-1, :]
     ).all()
 
@@ -198,7 +198,7 @@ def test_sasrec_fine_tuning_on_new_items_by_size(fitted_sasrec, new_items_datase
     tokenizer.item_id_encoder.partial_fit(new_items_dataset)
     new_vocab_size = len(tokenizer.item_id_encoder.mapping["item_id"])
 
-    model.set_new_item_embedding_by_size(new_vocab_size)
+    model.set_item_embeddings_by_size(new_vocab_size)
     new_items_data = model._model.item_embedder.item_emb.weight.data
     new_shape = new_items_data.shape
 
@@ -216,7 +216,7 @@ def test_sasrec_fine_tuning_on_new_items_by_tensor(fitted_sasrec, new_items_data
     tokenizer.item_id_encoder.partial_fit(new_items_dataset)
 
     new_items_tensor = torch.rand(5, 50)
-    model.set_new_item_embedding_by_tensor(new_items_tensor)
+    model.set_item_embeddings_by_tensor(new_items_tensor)
 
     new_items_data = model._model.item_embedder.item_emb.weight.data
     new_shape = new_items_data.shape
@@ -233,7 +233,7 @@ def test_sasrec_fine_tuning_on_new_items_by_appending(fitted_sasrec, new_items_d
     old_items_tensor = model._model.item_embedder.item_emb.weight.data
 
     only_new_items_tensor = torch.rand(1, 50)
-    model.append_new_item_embeddings(only_new_items_tensor)
+    model.append_item_embeddings(only_new_items_tensor)
 
     new_items_data = model._model.item_embedder.item_emb.weight.data
     new_shape = new_items_data.shape
@@ -249,17 +249,17 @@ def test_sasrec_fine_tuning_errors(fitted_sasrec):
     model, _ = fitted_sasrec
 
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_size(3)
+        model.set_item_embeddings_by_size(3)
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_tensor(torch.rand(1, 1, 1))
+        model.set_item_embeddings_by_tensor(torch.rand(1, 1, 1))
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_tensor(torch.rand(3, 50))
+        model.set_item_embeddings_by_tensor(torch.rand(3, 50))
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_tensor(torch.rand(4, 1))
+        model.set_item_embeddings_by_tensor(torch.rand(4, 1))
     with pytest.raises(ValueError):
-        model.append_new_item_embeddings(torch.rand(1, 1, 1))
+        model.append_item_embeddings(torch.rand(1, 1, 1))
     with pytest.raises(ValueError):
-        model.append_new_item_embeddings(torch.rand(1, 1))
+        model.append_item_embeddings(torch.rand(1, 1))
 
 
 @pytest.mark.torch

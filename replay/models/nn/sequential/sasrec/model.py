@@ -255,7 +255,7 @@ class BaseSasRecEmbeddings(abc.ABC):
         """
 
     @abc.abstractmethod
-    def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
+    def get_all_embeddings(self) -> Dict[str, torch.Tensor]:
         """
         :returns: copy of all embeddings presented in a layer as a dict.
         """
@@ -362,19 +362,13 @@ class SasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         # Last one is reserved for padding, so we remove it
         return self.item_emb.weight[:-1, :]
     
-    def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
+    def get_all_embeddings(self) -> Dict[str, torch.Tensor]:
         """
         :returns: copy of all embeddings presented in this layer as a dict.
         """
         return {
-            "item_embedding": torch.nn.Embedding.from_pretrained(
-                self.item_emb.weight.data[:-1, :],
-                freeze=False,
-            ),
-            "positional_embedding": torch.nn.Embedding.from_pretrained(
-                self.pos_emb.pe.weight.data,
-                freeze=False,
-            ),
+            "item_embedding": self.item_emb.weight.data[:-1, :].detach().clone(),
+            "positional_embedding": self.pos_emb.pe.weight.data.detach().clone(),
         }
 
 
@@ -629,31 +623,16 @@ class TiSasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         # Last one is reserved for padding, so we remove it
         return self.item_emb.weight[:-1, :]
     
-    def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
+    def get_all_embeddings(self) -> Dict[str, torch.Tensor]:
         """
         :returns: copy of all embeddings presented in this layer as a dict.
         """
         return {
-            "item_embedding": torch.nn.Embedding.from_pretrained(
-                self.item_emb.weight.data[:-1, :],
-                freeze=False,
-            ),
-            "abs_pos_k_emb": torch.nn.Embedding.from_pretrained(
-                self.abs_pos_k_emb.pe.weight.data,
-                freeze=False,
-            ),
-            "abs_pos_v_emb": torch.nn.Embedding.from_pretrained(
-                self.abs_pos_v_emb.pe.weight.data,
-                freeze=False,
-            ),
-            "time_matrix_k_emb": torch.nn.Embedding.from_pretrained(
-                self.time_matrix_k_emb.weight.data,
-                freeze=False,
-            ),
-            "time_matrix_v_emb": torch.nn.Embedding.from_pretrained(
-                self.time_matrix_v_emb.weight.data,
-                freeze=False,
-            ),
+            "item_embedding": self.item_emb.weight.data[:-1, :].detach().clone(),
+            "abs_pos_k_emb": self.abs_pos_k_emb.pe.weight.data.detach().clone(),
+            "abs_pos_v_emb": self.abs_pos_v_emb.pe.weight.data.detach().clone(),
+            "time_matrix_k_emb": self.time_matrix_k_emb.weight.data.detach().clone(),
+            "time_matrix_v_emb": self.time_matrix_v_emb.weight.data.detach().clone(),
         }
 
 

@@ -196,10 +196,10 @@ def test_bert4rec_get_embeddings():
     model_item_embedding = model_embeddings["item_embedding"]
 
     assert len(model_embeddings) == 3
-    assert isinstance(model_item_embedding, torch.nn.Embedding)
+    assert isinstance(model_item_embedding, torch.Tensor)
     assert id(model_item_embedding) != id(model._model.item_embedder)
     assert torch.eq(
-        model_item_embedding.weight.data,
+        model_item_embedding,
         model._model.item_embedder.item_embeddings.data
     ).all()
 
@@ -223,7 +223,7 @@ def test_bert4rec_fine_tuning_on_new_items_by_size(request, fitted_bert4rec_mode
     tokenizer.item_id_encoder.partial_fit(new_items_dataset)
     new_vocab_size = len(tokenizer.item_id_encoder.mapping["item_id"])
 
-    model.set_new_item_embedding_by_size(new_vocab_size)
+    model.set_item_embeddings_by_size(new_vocab_size)
     new_items_data = model._model.item_embedder.item_embeddings.data
     new_shape = new_items_data.shape
 
@@ -252,7 +252,7 @@ def test_bert4rec_fine_tuning_on_new_items_by_tensor(request, fitted_bert4rec_mo
     new_items_tensor = torch.rand(5, 64)
     tokenizer.item_id_encoder.partial_fit(new_items_dataset)
 
-    model.set_new_item_embedding_by_tensor(new_items_tensor)
+    model.set_item_embeddings_by_tensor(new_items_tensor)
     new_items_data = model._model.item_embedder.item_embeddings.data
     new_shape = new_items_data.shape
 
@@ -278,7 +278,7 @@ def test_bert4rec_fine_tuning_on_new_items_by_appending(request, fitted_bert4rec
     only_new_items_tensor = torch.rand(1, 64)
     tokenizer.item_id_encoder.partial_fit(new_items_dataset)
 
-    model.append_new_item_embeddings(only_new_items_tensor)
+    model.append_item_embeddings(only_new_items_tensor)
     new_items_data = model._model.item_embedder.item_embeddings.data
     new_shape = new_items_data.shape
 
@@ -293,14 +293,14 @@ def test_bert4rec_fine_tuning_errors(fitted_bert4rec):
     model, _ = fitted_bert4rec
 
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_size(3)
+        model.set_item_embeddings_by_size(3)
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_tensor(torch.rand(1, 1, 1))
+        model.set_item_embeddings_by_tensor(torch.rand(1, 1, 1))
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_tensor(torch.rand(3, 50))
+        model.set_item_embeddings_by_tensor(torch.rand(3, 50))
     with pytest.raises(ValueError):
-        model.set_new_item_embedding_by_tensor(torch.rand(4, 1))
+        model.set_item_embeddings_by_tensor(torch.rand(4, 1))
     with pytest.raises(ValueError):
-        model.append_new_item_embeddings(torch.rand(1, 1, 1))
+        model.append_item_embeddings(torch.rand(1, 1, 1))
     with pytest.raises(ValueError):
-        model.append_new_item_embeddings(torch.rand(1, 1))
+        model.append_item_embeddings(torch.rand(1, 1))
