@@ -373,18 +373,18 @@ class SasRec(L.LightningModule):
             return torch.nn.CrossEntropyLoss()
 
         raise NotImplementedError("Not supported loss_type")
-    
+
     def get_all_embeddings(self) -> Dict[str, torch.nn.Embedding]:
         """
         :returns: copy of all embeddings as a dictionary.
         """
         return self._model.item_embedder.get_all_embeddings()
-    
+
     def set_item_embeddings_by_size(self, new_vocab_size: int):
         """
         Set item embeddings initialized with xavier_normal_ by new size of vocabulary
         to item embedder.
-        
+
         :param new_vocab_size: Size of vocabulary with new items.
             Must be greater then already fitted.
         """
@@ -399,14 +399,14 @@ class SasRec(L.LightningModule):
         new_embedding.weight.data[:old_vocab_size, :] = self._model.item_embedder.item_emb.weight.data[:-1, :]
 
         self._set_new_item_embedder_to_model(new_embedding, new_vocab_size)
-    
+
     def set_item_embeddings_by_tensor(self, all_item_embeddings: torch.Tensor):
         """
         Set item embeddings with provided weights for all items.
         If new items presented, then tensor is expanded.
         The already fitted weights will be replaced with new ones.
-        
-        :param all_item_embeddings: tensor of weights for all items with 
+
+        :param all_item_embeddings: tensor of weights for all items with
             shape (n, h), where n - number of all items, h - model hidden size.
         """
         if all_item_embeddings.dim() != 2:
@@ -435,7 +435,7 @@ class SasRec(L.LightningModule):
         """
         if item_embeddings.dim() != 2:
             raise ValueError("Input tensor must have (number of new items, model hidden size) shape")
-        
+
         old_vocab_size = self._model.item_embedder.item_emb.weight.data.shape[0] - 1
         new_vocab_size = item_embeddings.shape[0] + old_vocab_size
         hidden_size = self._model.hidden_size

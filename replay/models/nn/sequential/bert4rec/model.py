@@ -284,7 +284,7 @@ class BertEmbedding(torch.nn.Module):
         :returns: Item embeddings.
         """
         return self.cat_embeddings[self.schema.item_id_feature_name].weight
-    
+
     def get_all_embeddings(self) -> Dict[str, torch.Tensor]:
         """
         :returns: copy of all embeddings presented in this layer as a dict.
@@ -294,10 +294,10 @@ class BertEmbedding(torch.nn.Module):
         }
         for feature_name, _ in self.schema.items():
             if feature_name != self.schema.item_id_feature_name:
-                embeddings[feature_name] = self.cat_embeddings[feature_name].weight.data.detach().clone(),
+                embeddings[feature_name] = self.cat_embeddings[feature_name].weight.data.detach().clone()
         if self.enable_positional_embedding:
-            embeddings["positional_embedding"] = self.position.pe.weight.data.detach().clone(),
-        
+            embeddings["positional_embedding"] = self.position.pe.weight.data.detach().clone()
+
         return embeddings
 
 

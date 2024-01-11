@@ -214,7 +214,7 @@ def test_bert4rec_get_embeddings():
 )
 def test_bert4rec_fine_tuning_on_new_items_by_size(request, fitted_bert4rec_model, new_items_dataset):
     fitted_bert4rec = request.getfixturevalue(fitted_bert4rec_model)
-    
+
     model, tokenizer = fitted_bert4rec
     old_items_data = model._model.item_embedder.item_embeddings.data
     shape = old_items_data.shape
@@ -245,7 +245,7 @@ def test_bert4rec_fine_tuning_on_new_items_by_size(request, fitted_bert4rec_mode
 )
 def test_bert4rec_fine_tuning_on_new_items_by_tensor(request, fitted_bert4rec_model, new_items_dataset):
     fitted_bert4rec = request.getfixturevalue(fitted_bert4rec_model)
-    
+
     model, tokenizer = fitted_bert4rec
     old_vocab_size = len(tokenizer.item_id_encoder.mapping["item_id"])
 
@@ -271,7 +271,7 @@ def test_bert4rec_fine_tuning_on_new_items_by_tensor(request, fitted_bert4rec_mo
 )
 def test_bert4rec_fine_tuning_on_new_items_by_appending(request, fitted_bert4rec_model, new_items_dataset):
     fitted_bert4rec = request.getfixturevalue(fitted_bert4rec_model)
-    
+
     model, tokenizer = fitted_bert4rec
     old_items_tensor = model._model.item_embedder.item_embeddings.data
 

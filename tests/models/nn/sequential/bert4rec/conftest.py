@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from replay.data import FeatureHint, FeatureSchema, FeatureInfo,  FeatureType, Dataset, FeatureSource
+from replay.data import FeatureHint, FeatureSchema, FeatureInfo, FeatureType, Dataset, FeatureSource
 from replay.utils import TORCH_AVAILABLE
 
 if TORCH_AVAILABLE:
@@ -33,7 +33,7 @@ def feature_schema_for_bert4rec():
 
 
 @pytest.fixture()
-def fitted_bert4rec(feature_schema_for_bert4rec):  
+def fitted_bert4rec(feature_schema_for_bert4rec):
     data = pd.DataFrame({
         "user_id": [0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
         "item_id": [0, 1, 2, 0, 1, 3, 1, 2, 0, 2, 3, 1, 2],
@@ -50,7 +50,7 @@ def fitted_bert4rec(feature_schema_for_bert4rec):
             feature_hint=FeatureHint.ITEM_ID,
         )
     )
-    
+
     tokenizer = SequenceTokenizer(tensor_schema, allow_collect_to_master=True)
     tokenizer.fit(train_dataset)
     sequential_train_dataset = tokenizer.transform(train_dataset)
@@ -67,7 +67,7 @@ def fitted_bert4rec(feature_schema_for_bert4rec):
 
 
 @pytest.fixture()
-def fitted_bert4rec_enable_embedding_tying(feature_schema_for_bert4rec):  
+def fitted_bert4rec_enable_embedding_tying(feature_schema_for_bert4rec):
     data = pd.DataFrame({
         "user_id": [0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
         "item_id": [0, 1, 2, 0, 1, 3, 1, 2, 0, 2, 3, 1, 2],
@@ -84,7 +84,7 @@ def fitted_bert4rec_enable_embedding_tying(feature_schema_for_bert4rec):
             feature_hint=FeatureHint.ITEM_ID,
         )
     )
-    
+
     tokenizer = SequenceTokenizer(tensor_schema, allow_collect_to_master=True)
     tokenizer.fit(train_dataset)
     sequential_train_dataset = tokenizer.transform(train_dataset)

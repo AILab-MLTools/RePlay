@@ -194,7 +194,7 @@ def test_sasrec_fine_tuning_on_new_items_by_size(fitted_sasrec, new_items_datase
     old_items_data = model._model.item_embedder.item_emb.weight.data
     shape = old_items_data.shape
     old_vocab_size = len(tokenizer.item_id_encoder.mapping["item_id"])
-    
+
     tokenizer.item_id_encoder.partial_fit(new_items_dataset)
     new_vocab_size = len(tokenizer.item_id_encoder.mapping["item_id"])
 
@@ -266,7 +266,7 @@ def test_sasrec_fine_tuning_errors(fitted_sasrec):
 def test_sasrec_get_init_parameters(fitted_sasrec):
     model, _ = fitted_sasrec
     params = model.hparams
-    
+
     assert params["tensor_schema"].item().cardinality == 4
     assert params["max_seq_len"] == 200
     assert params["hidden_size"] == 50

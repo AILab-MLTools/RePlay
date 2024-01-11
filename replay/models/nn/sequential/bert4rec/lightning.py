@@ -403,41 +403,41 @@ class Bert4Rec(L.LightningModule):
         """
         Set item embeddings initialized with xavier_normal_ by new size of vocabulary
         to item embedder.
-        
+
         :param new_vocab_size: Size of vocabulary with new items.
             Must be greater then already fitted.
         """
         if new_vocab_size <= self._vocab_size:
             raise ValueError("New vocabulary size must be greater then already fitted")
-        
+
         item_tensor_feature_info = self._model.schema.item_id_features.item()
         item_tensor_feature_info._set_cardinality(new_vocab_size)
 
         weights_new = CatFeatureEmbedding(item_tensor_feature_info)
         torch.nn.init.xavier_normal_(weights_new.weight)
         weights_new.weight.data[:self._vocab_size, :] = self._model.item_embedder.item_embeddings.data
-        
+
         self._set_new_item_embedder_to_model(weights_new, new_vocab_size)
 
     def set_item_embeddings_by_tensor(self, all_item_embeddings: torch.Tensor):
         """
         Set item embeddings initialized with xavier_normal_ by new size of vocabulary
         to item embedder.
-        
+
         :param all_item_embeddings: Size of vocabulary with new items.
             Must be greater then already fitted.
         """
         if all_item_embeddings.dim() != 2:
             raise ValueError("Input tensor must have (number of all items, model hidden size) shape")
-        
+
         new_vocab_size = all_item_embeddings.shape[0]
         if new_vocab_size < self._vocab_size:
             raise ValueError("New vocabulary size can't be less then already fitted")
-        
+
         item_tensor_feature_info = self._model.schema.item_id_features.item()
         if all_item_embeddings.shape[1] != item_tensor_feature_info.embedding_dim:
             raise ValueError("Input tensor second dimension doesn't match embedding dim")
-        
+
         item_tensor_feature_info._set_cardinality(new_vocab_size)
 
         weights_new = CatFeatureEmbedding(item_tensor_feature_info)
@@ -450,19 +450,19 @@ class Bert4Rec(L.LightningModule):
         """
         Set new item embeddings initialized with xavier_normal_ by new size of vocabulary
         to item embedder.
-        
+
         :param new_vocab_size: Size of vocabulary with new items.
             Must be greater then already fitted.
         """
         if item_embeddings.dim() != 2:
             raise ValueError("Input tensor must have (number of all items, model hidden size) shape")
-        
+
         new_vocab_size = item_embeddings.shape[0] + self._vocab_size
-        
+
         item_tensor_feature_info = self._model.schema.item_id_features.item()
         if item_embeddings.shape[1] != item_tensor_feature_info.embedding_dim:
             raise ValueError("Input tensor second dimension doesn't match embedding dim")
-        
+
         item_tensor_feature_info._set_cardinality(new_vocab_size)
 
         weights_new = CatFeatureEmbedding(item_tensor_feature_info)
@@ -476,7 +476,7 @@ class Bert4Rec(L.LightningModule):
         self._model.item_embedder.cat_embeddings[self._model.schema.item_id_feature_name] = weights_new
 
         if self._model.enable_embedding_tying is True:
-            self._model._head._item_embedder =  self._model.item_embedder
+            self._model._head._item_embedder = self._model.item_embedder
             new_bias = torch.Tensor(new_vocab_size)
             new_bias.normal_(0, 0.01)
             new_bias[:self._vocab_size] = self._model._head.out_bias.data

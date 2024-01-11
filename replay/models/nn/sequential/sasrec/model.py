@@ -361,7 +361,7 @@ class SasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         """
         # Last one is reserved for padding, so we remove it
         return self.item_emb.weight[:-1, :]
-    
+
     def get_all_embeddings(self) -> Dict[str, torch.Tensor]:
         """
         :returns: copy of all embeddings presented in this layer as a dict.
@@ -622,7 +622,7 @@ class TiSasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
         """
         # Last one is reserved for padding, so we remove it
         return self.item_emb.weight[:-1, :]
-    
+
     def get_all_embeddings(self) -> Dict[str, torch.Tensor]:
         """
         :returns: copy of all embeddings presented in this layer as a dict.
