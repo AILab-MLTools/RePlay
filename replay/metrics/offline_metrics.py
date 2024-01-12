@@ -1,3 +1,4 @@
+import warnings
 from typing import Dict, List, Optional, Tuple, Union
 
 from replay.utils import PandasDataFrame, SparkDataFrame
@@ -305,6 +306,9 @@ class OfflineMetrics:
             for _, df in base_recommendations.items():
                 if not isinstance(df, list):
                     types.add(type(df))
+                else:
+                    types.add(dict)
+                    break
         elif base_recommendations is not None:
             types.add(type(base_recommendations))
 
@@ -315,52 +319,35 @@ class OfflineMetrics:
     def _check_dataframes_validity(
         self,
         recommendations: MetricsDataFrameLike,
-        ground_truth: MetricsDataFrameLike,
-        train: Optional[MetricsDataFrameLike],
-        base_recommendations: Optional[
-            Union[MetricsDataFrameLike, Dict[str, MetricsDataFrameLike]]
-        ],
+        dataset: MetricsDataFrameLike,
+        query_column: str,
+        dataset_name: str = "ground_truth"
     ) -> None:
-        if len(self.main_metrics) > 0:
-            query_column = self.main_metrics[0].query_column
-        elif len(self.unexpectedness_metric) > 0:
-            query_column = self.unexpectedness_metric[0].query_column
-        elif len(self.diversity_metric) > 0:
-            query_column = self.diversity_metric[0].query_column
-        else:
-            return
-
         if isinstance(recommendations, SparkDataFrame):
             recommendations_names = recommendations.schema.names
-            ground_truth_names = ground_truth.schema.names
-            train_names = train.schema.names if train is not None else None
-            if base_recommendations and isinstance(base_recommendations, SparkDataFrame):
-                base_recommendations_names = base_recommendations.schema.names
+            dataset_names = dataset.schema.names
         elif isinstance(recommendations, PandasDataFrame):
             recommendations_names = recommendations.columns
-            ground_truth_names = ground_truth.columns
-            train_names = train.columns if train is not None else None
-            if base_recommendations is not None and isinstance(base_recommendations, PandasDataFrame):
-                base_recommendations_names = base_recommendations.columns
+            dataset_names = dataset.columns
 
         if not isinstance(recommendations, dict):
             if query_column not in recommendations_names:
                 raise KeyError(f"Query column {query_column} is not present in recommendations dataframe")
-            if query_column not in ground_truth_names:
-                raise KeyError(f"Query column {query_column} is not present in ground_truth dataframe")
-            if train is not None and query_column not in train_names:
-                raise KeyError(f"Query column {query_column} is not present in train dataframe")
-            if base_recommendations is not None:
-                if isinstance(base_recommendations, dict):
-                    for _, df in base_recommendations.items():
-                        if (isinstance(df, SparkDataFrame) and query_column not in df.schema.names
-                                or isinstance(df, PandasDataFrame) and query_column not in df.columns):
-                            raise KeyError(f"Query column {query_column} is not present in base_recommendations")
-                else:
-                    if query_column not in base_recommendations_names:
-                        raise KeyError(
-                            f"Query column {query_column} is not present in base_recommendations dataframe"
-                        )
+            if query_column not in dataset_names:
+                raise KeyError(f"Query column {query_column} is not present in {dataset_name}")
+
+        if isinstance(recommendations, SparkDataFrame):
+            queries = {x[query_column] for x in recommendations.select(query_column).collect()}
+            queries_dataset = {x[query_column] for x in dataset.select(query_column).collect()}
+        elif isinstance(recommendations, PandasDataFrame):
+            queries = set(recommendations[query_column])
+            queries_dataset = set(dataset[query_column])
+        else:
+            queries = set(recommendations.keys())
+            queries_dataset = set(dataset.keys())
+
+        if queries.issubset(queries_dataset) is False:
+            warnings.warn(f"{dataset_name} contains queries that are not presented in recommendations")
 
     def __call__(  # pylint: disable=too-many-branches, too-many-locals
         self,
@@ -399,9 +386,38 @@ class OfflineMetrics:
         self._check_dataframes_types(
             recommendations, ground_truth, train, base_recommendations
         )
-        self._check_dataframes_validity(
-            recommendations, ground_truth, train, base_recommendations
-        )
+
+        if len(self.main_metrics) > 0:
+            query_column = self.main_metrics[0].query_column
+        elif len(self.unexpectedness_metric) > 0:
+            query_column = self.unexpectedness_metric[0].query_column
+        else:
+            query_column = self.diversity_metric[0].query_column
+
+        self._check_dataframes_validity(recommendations, ground_truth, query_column, "ground_truth")
+        if train is not None:
+            self._check_dataframes_validity(recommendations, train, query_column, "train")
+        if base_recommendations is not None:
+            if isinstance(base_recommendations, dict):
+                for name, df in base_recommendations.items():
+                    if not isinstance(df, list):
+                        self._check_dataframes_validity(recommendations, df, query_column, name)
+                    else:
+                        self._check_dataframes_validity(
+                            recommendations,
+                            base_recommendations,
+                            query_column,
+                            "base_recommendations"
+                        )
+                        break
+            else:
+                self._check_dataframes_validity(
+                    recommendations,
+                    base_recommendations,
+                    query_column,
+                    "base_recommendations"
+                )
+
         result = {}
         if isinstance(recommendations, SparkDataFrame):
             assert isinstance(ground_truth, SparkDataFrame)

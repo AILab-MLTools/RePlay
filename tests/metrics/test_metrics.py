@@ -165,24 +165,6 @@ def test_diversity_metric(topk, answer, predict_data, per_user, request):
 
 
 @pytest.mark.parametrize(
-    "predict_data",
-    [
-        pytest.param("predict_pd", marks=pytest.mark.core),
-        pytest.param("predict_spark", marks=pytest.mark.spark),
-    ],
-)
-def test_diversity_no_category_id_column(predict_data, request):
-    data = request.getfixturevalue(predict_data)
-
-    with pytest.raises(KeyError) as exc:
-        CategoricalDiversity(
-            topk=[1],
-            query_column="uid",
-            rating_column="scores"
-        )(data)
-
-
-@pytest.mark.parametrize(
     "topk, answer",
     [
         ([3, 5], [0.9, 1.0]),
@@ -371,6 +353,7 @@ def test_offline_metrics(metrics, answer, predict_data, gt_data, train_data, req
             "predict_spark", "gt_spark", "predict_spark", marks=pytest.mark.spark
         ),
         pytest.param("predict_pd", "gt_pd", "predict_pd", marks=pytest.mark.core),
+        pytest.param("predict_fake_query_pd", "gt_pd", "predict_pd", marks=pytest.mark.core),
     ],
 )
 def test_offline_metrics_query_id_errors(predict_data, gt_data, train_data, request):
@@ -382,6 +365,28 @@ def test_offline_metrics_query_id_errors(predict_data, gt_data, train_data, requ
             [Coverage(5), Recall(5), Precision(5), Novelty(5)],
             query_column="fake_query_id"
         )(predict_data, gt_data, train_data)
+
+
+@pytest.mark.cpu
+def test_offline_metrics_subset_queries_works(predict_pd, gt_pd):
+    OfflineMetrics([
+        Recall(5),
+        Precision(5),
+    ], **INIT_DICT)(
+        predict_pd,
+        gt_pd[gt_pd["uid"] != 3]
+    )
+
+
+@pytest.mark.cpu
+def test_offline_metrics_diversity_metric_only_works(predict_pd, gt_pd):
+    OfflineMetrics(
+        [CategoricalDiversity([5])],
+        query_column=QUERY_COLUMN,
+        category_column=ITEM_COLUMN,
+        rating_column=RATING_COLUMN,
+        item_column=ITEM_COLUMN,
+    )(predict_pd, gt_pd)
 
 
 @pytest.mark.parametrize(
