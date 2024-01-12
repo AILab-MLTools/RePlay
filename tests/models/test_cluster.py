@@ -98,3 +98,18 @@ def test_predict_empty_dataset(long_log_with_features, users_features):
         train_dataset = create_dataset(long_log_with_features, user_features=users_features)
         model.fit(train_dataset)
         model.predict(None, k=1)
+
+
+def test_raise_without_features(long_log_with_features, users_features):
+    with pytest.raises(ValueError, match="Query features are missing for predict"):
+        model = ClusterRec()
+        train_dataset = create_dataset(long_log_with_features, user_features=users_features)
+        test_dataset = create_dataset(long_log_with_features)
+        pairs = long_log_with_features.select("user_idx", "item_idx").filter(
+            sf.col("user_idx") == 1
+        )
+        model.fit(train_dataset)
+        model.predict_pairs(
+            pairs,
+            dataset=test_dataset,
+        )

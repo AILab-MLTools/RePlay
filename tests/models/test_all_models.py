@@ -195,6 +195,8 @@ def test_predict_empty_log(log, log_nonpers, model):
     model.fit(dataset)
     model.predict(pred_dataset, 1)
 
+    model._clear_cache()
+
 
 @pytest.mark.spark
 @pytest.mark.parametrize(

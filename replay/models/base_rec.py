@@ -14,7 +14,7 @@ Base abstract classes:
 
 import logging
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod, abstractproperty
 from copy import deepcopy
 from os.path import join
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
@@ -59,27 +59,32 @@ class IsSavable(ABC):
     Common methods and attributes for saving and loading RePlay models
     """
 
-    @property
-    @abstractmethod
-    def _init_args(self):
+    @abstractproperty
+    def _init_args(self) -> Dict:
         """
         Dictionary of the model attributes passed during model initialization.
         Used for model saving and loading
         """
 
     @property
-    def _dataframes(self):
+    def _dataframes(self) -> Dict:
         """
         Dictionary of the model dataframes required for inference.
         Used for model saving and loading
         """
         return {}
+    
+    @abstractmethod
+    def _save_model(self, path: str) -> None:
+        """
+        Method for dump model attributes to disk
+        """
 
-    def _save_model(self, path: str):
-        pass
-
-    def _load_model(self, path: str):
-        pass
+    @abstractmethod
+    def _load_model(self, path: str) -> None:
+        """
+        Method for loading model attributes from disk
+        """
 
 
 class RecommenderCommons:
@@ -875,11 +880,10 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         :param dataset: train data
             ``[user_idx, item_idx, timestamp, rating]``.
         """
-        message = (
+        self.logger.warning(
             "native predict_pairs is not implemented for this model. "
             "Falling back to usual predict method and filtering the results."
         )
-        self.logger.warning(message)
 
         queries = pairs.select(self.query_column).distinct()
         items = pairs.select(self.item_column).distinct()
@@ -1652,7 +1656,7 @@ class NonPersonalizedRecommender(Recommender, ABC):
         rating_column = self.rating_column
         class_name = self.__class__.__name__
 
-        def grouped_map(pandas_df: PandasDataFrame) -> PandasDataFrame:
+        def grouped_map(pandas_df: PandasDataFrame) -> PandasDataFrame:  # pragma: no cover
             query_idx = pandas_df[query_column][0]
             cnt = pandas_df["cnt"][0]
 
