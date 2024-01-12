@@ -99,24 +99,6 @@ class Metric(ABC):
                 self._duplicate_warn()
                 return
 
-    def _check_dataframes_warnings(
-        self,
-        recommendations: MetricsDataFrameLike,
-        ground_truth: MetricsDataFrameLike,
-    ) -> None:
-        if isinstance(recommendations, SparkDataFrame):
-            diff = np.setdiff1d(
-                np.array(recommendations.select(self.query_column).collect()).reshape(-1),
-                np.array(ground_truth.select(self.query_column).collect()).reshape(-1),
-            )
-        elif isinstance(recommendations, PandasDataFrame):
-            diff = np.setdiff1d(recommendations[self.query_column], ground_truth[self.query_column])
-        else:
-            diff = np.setdiff1d(recommendations.keys(), ground_truth.keys())
-
-        if len(diff) > 0:
-            warnings.warn("Recommendations has queries that are not in ground truth dataframe")
-
     def __call__(
         self,
         recommendations: MetricsDataFrameLike,
@@ -135,7 +117,6 @@ class Metric(ABC):
         :return: metric values
         """
         self._check_dataframes_equal_types(recommendations, ground_truth)
-        self._check_dataframes_warnings(recommendations, ground_truth)
         if isinstance(recommendations, SparkDataFrame):
             self._check_duplicates_spark(recommendations)
             assert isinstance(ground_truth, SparkDataFrame)
