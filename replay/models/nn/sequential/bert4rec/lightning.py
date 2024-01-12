@@ -421,11 +421,12 @@ class Bert4Rec(L.LightningModule):
 
     def set_item_embeddings_by_tensor(self, all_item_embeddings: torch.Tensor):
         """
-        Set item embeddings initialized with xavier_normal_ by new size of vocabulary
-        to item embedder.
+        Set item embeddings with provided weights for all items.
+        If new items presented, then tensor is expanded.
+        The already fitted weights will be replaced with new ones.
 
-        :param all_item_embeddings: Size of vocabulary with new items.
-            Must be greater then already fitted.
+        :param all_item_embeddings: tensor of weights for all items with
+            shape (n, h), where n - number of all items, h - model hidden size.
         """
         if all_item_embeddings.dim() != 2:
             raise ValueError("Input tensor must have (number of all items, model hidden size) shape")
@@ -448,11 +449,10 @@ class Bert4Rec(L.LightningModule):
 
     def append_item_embeddings(self, item_embeddings: torch.Tensor):
         """
-        Set new item embeddings initialized with xavier_normal_ by new size of vocabulary
-        to item embedder.
+        Append provided weights for new items only to item embedder.
 
-        :param new_vocab_size: Size of vocabulary with new items.
-            Must be greater then already fitted.
+        :param item_embeddings: tensor of shape (n, h), where
+            n - number of only new items, h - model hidden size.
         """
         if item_embeddings.dim() != 2:
             raise ValueError("Input tensor must have (number of all items, model hidden size) shape")
