@@ -321,6 +321,15 @@ class OfflineMetrics:
         query_column: str,
         dataset_name: str,
     ):
+        """
+        Checks that query column presented in provided dataframe.
+
+        :param dataset: input dataframe.
+        :param query_column: name of query column.
+        :param dataset_name: name of dataframe.
+
+        :raises KeyError: if query column not found in dataframe.  
+        """
         if isinstance(dataset, SparkDataFrame):
             dataset_names = dataset.schema.names
         elif isinstance(dataset, PandasDataFrame):
@@ -334,6 +343,14 @@ class OfflineMetrics:
         dataset: MetricsDataFrameLike,
         query_column: str,
     ):
+        """
+        Returns unique queries from provided dataframe.
+
+        :param dataset: input dataframe.
+        :param query_column: name of query column.
+
+        :returns: set of unique queries.
+        """
         if isinstance(dataset, SparkDataFrame):
             return set(dataset.select(query_column).distinct().toPandas()[query_column])
         elif isinstance(dataset, PandasDataFrame):
@@ -342,6 +359,14 @@ class OfflineMetrics:
             return set(dataset.keys())
 
     def _check_contains(self, queries: set, other_queries: set, dataset_name: str):
+        """
+        Checks all queries from the first set are presented in the second one.
+        Throws warning otherwise.
+
+        :param queries: first set of queries.
+        :param other_queries: second set of queries.
+        :param dataset_name: name of dataset to specify in warning message.
+        """
         if queries.issubset(other_queries) is False:
             warnings.warn(f"{dataset_name} contains queries that are not presented in recommendations")
 
@@ -404,8 +429,7 @@ class OfflineMetrics:
                 "train"
             )
         if base_recommendations is not None:
-            is_dict = isinstance(base_recommendations, dict)
-            if is_dict is False or is_dict is True and isinstance(next(iter(base_recommendations.values())), list):
+            if not isinstance(base_recommendations, dict) or isinstance(next(iter(base_recommendations.values())), list):
                 base_recommendations = {"base_recommendations": base_recommendations}
             for name, dataset in base_recommendations.items():
                 self._check_query_column_present(dataset, query_column, name)
