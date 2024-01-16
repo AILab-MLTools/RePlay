@@ -392,7 +392,7 @@ class OfflineMetrics:
 
         self._check_query_column_present(recommendations, query_column, "recommendations")
         recs_queries = self._get_unique_queries(recommendations, query_column)
-        
+
         self._check_query_column_present(ground_truth, query_column, "ground_truth")
         self._check_contains(recs_queries, self._get_unique_queries(ground_truth, query_column), "ground_truth")
 
