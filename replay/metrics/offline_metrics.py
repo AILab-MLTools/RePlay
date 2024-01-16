@@ -315,38 +315,34 @@ class OfflineMetrics:
         if len(types) != 1:
             raise ValueError("All given data frames must have the same type")
 
-    # pylint: disable=too-many-branches
-    def _check_dataframes_validity(
+    def _check_query_column_present(
         self,
-        recommendations: MetricsDataFrameLike,
         dataset: MetricsDataFrameLike,
         query_column: str,
-        dataset_name: str = "ground_truth"
-    ) -> None:
-        if isinstance(recommendations, SparkDataFrame):
-            recommendations_names = recommendations.schema.names
+        dataset_name: str,
+    ):
+        if isinstance(dataset, SparkDataFrame):
             dataset_names = dataset.schema.names
-        elif isinstance(recommendations, PandasDataFrame):
-            recommendations_names = recommendations.columns
+        elif isinstance(dataset, PandasDataFrame):
             dataset_names = dataset.columns
 
-        if not isinstance(recommendations, dict):
-            if query_column not in recommendations_names:
-                raise KeyError(f"Query column {query_column} is not present in recommendations dataframe")
-            if query_column not in dataset_names:
-                raise KeyError(f"Query column {query_column} is not present in {dataset_name}")
+        if not isinstance(dataset, dict) and query_column not in dataset_names:
+            raise KeyError(f"Query column {query_column} is not present in {dataset_name} dataframe")
 
-        if isinstance(recommendations, SparkDataFrame):
-            queries = {x[query_column] for x in recommendations.select(query_column).collect()}
-            queries_dataset = {x[query_column] for x in dataset.select(query_column).collect()}
-        elif isinstance(recommendations, PandasDataFrame):
-            queries = set(recommendations[query_column])
-            queries_dataset = set(dataset[query_column])
+    def _get_unique_queries(
+        self,
+        dataset: MetricsDataFrameLike,
+        query_column: str,
+    ):
+        if isinstance(dataset, SparkDataFrame):
+            return set(dataset.select(query_column).distinct().toPandas()[query_column])
+        elif isinstance(dataset, PandasDataFrame):
+            return set(dataset[query_column].unique())
         else:
-            queries = set(recommendations.keys())
-            queries_dataset = set(dataset.keys())
+            return set(dataset.keys())
 
-        if queries.issubset(queries_dataset) is False:
+    def _check_contains(self, queries: set, other_queries: set, dataset_name: str):
+        if queries.issubset(other_queries) is False:
             warnings.warn(f"{dataset_name} contains queries that are not presented in recommendations")
 
     def __call__(  # pylint: disable=too-many-branches, too-many-locals
@@ -394,28 +390,29 @@ class OfflineMetrics:
         else:
             query_column = self.diversity_metric[0].query_column
 
-        self._check_dataframes_validity(recommendations, ground_truth, query_column, "ground_truth")
+        self._check_query_column_present(recommendations, query_column, "recommendations")
+        recs_queries = self._get_unique_queries(recommendations, query_column)
+        
+        self._check_query_column_present(ground_truth, query_column, "ground_truth")
+        self._check_contains(recs_queries, self._get_unique_queries(ground_truth, query_column), "ground_truth")
+
         if train is not None:
-            self._check_dataframes_validity(recommendations, train, query_column, "train")
+            self._check_query_column_present(train, query_column, "train")
+            self._check_contains(
+                recs_queries,
+                self._get_unique_queries(train, query_column),
+                "train"
+            )
         if base_recommendations is not None:
-            if isinstance(base_recommendations, dict):
-                for name, df in base_recommendations.items():
-                    if not isinstance(df, list):
-                        self._check_dataframes_validity(recommendations, df, query_column, name)
-                    else:
-                        self._check_dataframes_validity(
-                            recommendations,
-                            base_recommendations,
-                            query_column,
-                            "base_recommendations"
-                        )
-                        break
-            else:
-                self._check_dataframes_validity(
-                    recommendations,
-                    base_recommendations,
-                    query_column,
-                    "base_recommendations"
+            is_dict = isinstance(base_recommendations, dict)
+            if is_dict is False or is_dict is True and isinstance(next(iter(base_recommendations.values())), list):
+                base_recommendations = {"base_recommendations": base_recommendations}
+            for name, dataset in base_recommendations.items():
+                self._check_query_column_present(dataset, query_column, name)
+                self._check_contains(
+                    recs_queries,
+                    self._get_unique_queries(dataset, query_column),
+                    name
                 )
 
         result = {}
@@ -437,7 +434,7 @@ class OfflineMetrics:
                 "train": train,
             }
             for metric in self.metrics:
-                args_to_call: Dict[str, Optional[Dict]] = {
+                args_to_call: Dict[str, Union[PandasDataFrame, Dict]] = {
                     "recommendations": recommendations
                 }
                 for data_name in self._metrics_call_requirement_map[
