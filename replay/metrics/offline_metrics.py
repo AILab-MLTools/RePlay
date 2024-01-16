@@ -328,7 +328,7 @@ class OfflineMetrics:
         :param query_column: name of query column.
         :param dataset_name: name of dataframe.
 
-        :raises KeyError: if query column not found in dataframe.  
+        :raises KeyError: if query column not found in dataframe.
         """
         if isinstance(dataset, SparkDataFrame):
             dataset_names = dataset.schema.names
@@ -429,7 +429,8 @@ class OfflineMetrics:
                 "train"
             )
         if base_recommendations is not None:
-            if not isinstance(base_recommendations, dict) or isinstance(next(iter(base_recommendations.values())), list):
+            if (not isinstance(base_recommendations, dict)
+                    or isinstance(next(iter(base_recommendations.values())), list)):
                 base_recommendations = {"base_recommendations": base_recommendations}
             for name, dataset in base_recommendations.items():
                 self._check_query_column_present(dataset, query_column, name)
