@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name, missing-function-docstring, unused-import, wildcard-import, unused-wildcard-import
 from os.path import dirname, join
+from typing import Optional
 
 import pandas as pd
 import pytest
@@ -7,10 +8,49 @@ import pytest
 pyspark = pytest.importorskip("pyspark")
 
 import replay
+from replay.data import Dataset
 from replay.preprocessing.label_encoder import LabelEncoder, LabelEncodingRule
 from replay.splitters import *
-from replay.utils.model_handler import load_splitter, save_splitter
+from replay.models import ItemKNN, Recommender
+from replay.utils import SparkDataFrame
+from replay.utils.model_handler import (
+    save,
+    load,
+    load_splitter,
+    save_splitter,
+    load_encoder,
+    save_encoder,
+)
 from replay.utils.spark_utils import convert2spark
+from tests.utils import create_dataset, sparkDataFrameEqual, long_log_with_features, spark
+
+
+class DummyModel(Recommender):
+    def __init__(
+        self,
+        fake_param1: bool = False,
+    ) -> None:
+        self.fake_param1 = fake_param1
+
+    @property
+    def _init_args(self):
+        return {
+            "fake_param1": self.fake_param1,
+            "fake_param2": self.fake_param1,
+        }
+
+    def _fit(self, dataset: Dataset) -> None:
+        pass
+
+    def _predict(
+        self,
+        dataset: Optional[Dataset],
+        k: int,
+        queries: SparkDataFrame,
+        items: SparkDataFrame,
+        filter_seen_items: bool = True,
+    ) -> SparkDataFrame:
+        pass
 
 
 @pytest.fixture
@@ -61,6 +101,7 @@ def test_splitter(splitter, init_args, df, tmp_path):
     splitter = splitter(**init_args)
     df = df.withColumnRenamed('user_idx', 'user_id').withColumnRenamed('item_idx', 'item_id')
     save_splitter(splitter, path)
+    save_splitter(splitter, path, overwrite=True)
     train, test = splitter.split(df)
     restored_splitter = load_splitter(path)
     for arg_, value_ in init_args.items():
@@ -68,3 +109,52 @@ def test_splitter(splitter, init_args, df, tmp_path):
     new_train, new_test = restored_splitter.split(df)
     assert new_train.count() == train.count()
     assert new_test.count() == test.count()
+
+
+@pytest.mark.spark
+def test_save_load_model(long_log_with_features, tmp_path):
+    model = ItemKNN()
+    path = (tmp_path / "test").resolve()
+    dataset = create_dataset(long_log_with_features)
+    model.fit(dataset)
+    base_pred = model.predict(dataset, 5)
+    save(model, path)
+    loaded_model = load(path)
+    new_pred = loaded_model.predict(dataset, 5)
+    sparkDataFrameEqual(base_pred, new_pred)
+
+
+@pytest.mark.spark
+def test_save_raise(long_log_with_features, tmp_path):
+    model = ItemKNN()
+    path = (tmp_path / "test").resolve()
+    dataset = create_dataset(long_log_with_features)
+    model.fit(dataset)
+    save(model, path)
+    with pytest.raises(FileExistsError):
+        save(model, path)
+
+
+@pytest.mark.spark
+def test_load_extra_args(long_log_with_features, tmp_path):
+    model = DummyModel()
+    path = (tmp_path / "test").resolve()
+    dataset = create_dataset(long_log_with_features)
+    model.fit(dataset)
+    save(model, path)
+    loaded_model = load(path, model_type=DummyModel)
+
+
+@pytest.mark.spark
+def test_save_load_encoder(long_log_with_features, tmp_path):
+    encoder = LabelEncoder(
+        [
+            LabelEncodingRule("user_idx"),
+            LabelEncodingRule("item_idx"),
+        ]
+    )
+    encoder.fit(long_log_with_features)
+    save_encoder(encoder, tmp_path)
+    loaded_encoder = load_encoder(tmp_path)
+
+    assert encoder.mapping == loaded_encoder.mapping

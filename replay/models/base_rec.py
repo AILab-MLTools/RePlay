@@ -14,7 +14,7 @@ Base abstract classes:
 
 import logging
 import warnings
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from copy import deepcopy
 from os.path import join
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
@@ -59,7 +59,8 @@ class IsSavable(ABC):
     Common methods and attributes for saving and loading RePlay models
     """
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def _init_args(self) -> Dict:
         """
         Dictionary of the model attributes passed during model initialization.
@@ -73,7 +74,7 @@ class IsSavable(ABC):
         Used for model saving and loading
         """
         return {}
-    
+
     @abstractmethod
     def _save_model(self, path: str) -> None:
         """

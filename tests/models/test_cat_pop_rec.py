@@ -66,7 +66,6 @@ def cold_items(spark):
     )
 
 
-
 @pytest.fixture
 def model(cat_tree):
     return CatPopRec(cat_tree)

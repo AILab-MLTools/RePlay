@@ -120,4 +120,3 @@ def test_filter_dataset_features(log, all_users_features, item_features):
     sparkDataFrameEqual(dataset.interactions, filtered_dataset.interactions)
     sparkDataFrameEqual(dataset.query_features, filtered_dataset.query_features)
     sparkDataFrameNotEqual(dataset.item_features, filtered_dataset.item_features)
-        

@@ -185,6 +185,7 @@ def fake_fit_queries(spark):
         ]
     ).toDF("user_idx")
 
+
 def unify_dataframe(data_frame: SparkDataFrame):
     pandas_df = data_frame.toPandas()
     columns_to_sort_by: List[str] = []

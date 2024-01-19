@@ -178,7 +178,7 @@ def test_predict_pairs(model, log, caplog):
     caplog.set_level(logging.WARNING, logger="replay")
     dataset = create_dataset(log)
     model.fit(dataset)
-    
+
     res = model.predict_pairs(
         pairs=log.select("user_idx", "item_idx"),
         dataset=dataset,

@@ -3,11 +3,9 @@ import logging
 import os
 import pickle
 import warnings
-from typing import Any, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Iterable, List, Optional, Tuple, Union
 
-import numpy as np
 import pandas as pd
-from numpy.random import default_rng
 
 from .session_handler import State
 
@@ -19,7 +17,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import Column, SparkSession, Window
     from pyspark.sql import functions as sf
     from pyspark.sql.column import _to_java_column, _to_seq
-    from pyspark.sql.types import DoubleType, IntegerType, StructField, StructType
 else:
     Column = MissingImportType
 
@@ -62,32 +59,6 @@ def convert2spark(data_frame: Optional[DataFrameLike]) -> Optional[SparkDataFram
         return data_frame
     spark = State().session
     return spark.createDataFrame(data_frame)  # type: ignore
-
-
-def get_distinct_values_in_column(
-    dataframe: SparkDataFrame, column: str
-) -> Set[Any]:
-    """
-    Get unique values from a column as a set.
-
-    :param dataframe: spark DataFrame
-    :param column: column name
-    :return: set of unique values
-    """
-    return {
-        row[column] for row in (dataframe.select(column).distinct().collect())
-    }
-
-
-def func_get(vector: np.ndarray, i: int) -> float:
-    """
-    helper function for Spark UDF to get element by index
-
-    :param vector: Scala vector or numpy array
-    :param i: index in a vector
-    :returns: element value
-    """
-    return float(vector[i])
 
 
 def get_top_k(
@@ -168,7 +139,7 @@ def get_top_k_recs(
 
 if PYSPARK_AVAILABLE:
     @sf.udf(returnType=st.DoubleType())
-    def vector_dot(one: DenseVector, two: DenseVector) -> float:
+    def vector_dot(one: DenseVector, two: DenseVector) -> float:  # pragma: no cover
         """
         dot product of two column vectors
 
@@ -208,7 +179,7 @@ if PYSPARK_AVAILABLE:
     @sf.udf(returnType=VectorUDT())  # type: ignore
     def vector_mult(
         one: Union[DenseVector, NumType], two: DenseVector
-    ) -> DenseVector:
+    ) -> DenseVector:  # pragma: no cover
         """
         elementwise vector multiplication
 
@@ -246,7 +217,7 @@ if PYSPARK_AVAILABLE:
         return one * two
 
     @sf.udf(returnType=st.ArrayType(st.DoubleType()))
-    def array_mult(first: st.ArrayType, second: st.ArrayType):
+    def array_mult(first: st.ArrayType, second: st.ArrayType):  # pragma: no cover
         """
         elementwise array multiplication
 
@@ -334,59 +305,6 @@ def get_log_info(
             f"total items: {item_cnt}",
         ]
     )
-
-
-def get_stats(
-    log: SparkDataFrame, group_by: str = "user_id", target_column: str = "relevance"
-) -> SparkDataFrame:
-    """
-    Calculate log statistics: min, max, mean, median ratings, number of ratings.
-    >>> from replay.utils.session_handler import get_spark_session, State
-    >>> spark = get_spark_session(1, 1)
-    >>> test_df = (spark.
-    ...   createDataFrame([(1, 2, 1), (1, 3, 3), (1, 1, 2), (2, 3, 2)])
-    ...   .toDF("user_id", "item_id", "rel")
-    ...   )
-    >>> get_stats(test_df, target_column='rel').show()
-    +-------+--------+-------+-------+---------+----------+
-    |user_id|mean_rel|max_rel|min_rel|count_rel|median_rel|
-    +-------+--------+-------+-------+---------+----------+
-    |      1|     2.0|      3|      1|        3|         2|
-    |      2|     2.0|      2|      2|        1|         2|
-    +-------+--------+-------+-------+---------+----------+
-    <BLANKLINE>
-    >>> get_stats(test_df, group_by='item_id', target_column='rel').show()
-    +-------+--------+-------+-------+---------+----------+
-    |item_id|mean_rel|max_rel|min_rel|count_rel|median_rel|
-    +-------+--------+-------+-------+---------+----------+
-    |      2|     1.0|      1|      1|        1|         1|
-    |      3|     2.5|      3|      2|        2|         2|
-    |      1|     2.0|      2|      2|        1|         2|
-    +-------+--------+-------+-------+---------+----------+
-    <BLANKLINE>
-
-    :param log: spark DataFrame with ``user_id``, ``item_id`` and ``relevance`` columns
-    :param group_by: column to group data by, ``user_id`` or ``item_id``
-    :param target_column: column with interaction ratings
-    :return: spark DataFrame with statistics
-    """
-    agg_functions = {
-        "mean": sf.avg,
-        "max": sf.max,
-        "min": sf.min,
-        "count": sf.count,
-    }
-    agg_functions_list = [
-        func(target_column).alias(str(name + "_" + target_column))
-        for name, func in agg_functions.items()
-    ]
-    agg_functions_list.append(
-        sf.expr(f"percentile_approx({target_column}, 0.5)").alias(
-            "median_" + target_column
-        )
-    )
-
-    return log.groupBy(group_by).agg(*agg_functions_list)
 
 
 def check_numeric(feature_table: SparkDataFrame) -> None:
@@ -568,65 +486,6 @@ def join_with_col_renaming(
     )
 
 
-def add_to_date(
-    dataframe: SparkDataFrame,
-    column_name: str,
-    base_date: str,
-    base_date_format: Optional[str] = None,
-) -> SparkDataFrame:
-    """
-    Get user or item features from replay model.
-    If a model can return both user and item embeddings,
-    elementwise multiplication can be performed too.
-    If a model can't return embedding for specific user/item, zero vector is returned.
-    Treats column ``column_name`` as a number of days after the ``base_date``.
-    Converts ``column_name`` to TimestampType with
-    ``base_date`` + values of the ``column_name``.
-
-    >>> from replay.utils.session_handler import State
-    >>> from pyspark.sql.types import IntegerType
-    >>> spark = State().session
-    >>> input_data = (
-    ...     spark.createDataFrame([5, 6], IntegerType())
-    ...     .toDF("days")
-    ... )
-    >>> input_data.show()
-    +----+
-    |days|
-    +----+
-    |   5|
-    |   6|
-    +----+
-    <BLANKLINE>
-    >>> add_to_date(input_data, 'days', '2021/09/01', 'yyyy/MM/dd').show()
-    +-------------------+
-    |               days|
-    +-------------------+
-    |2021-09-06 00:00:00|
-    |2021-09-07 00:00:00|
-    +-------------------+
-    <BLANKLINE>
-
-    :param dataframe: spark dataframe
-    :param column_name: name of a column with numbers
-        to add to the ``base_date``
-    :param base_date: str with the date to add to
-    :param base_date_format: base date pattern to parse
-    :return: dataframe with new ``column_name`` converted to TimestampType
-    """
-    dataframe = (
-        dataframe.withColumn(
-            "tmp", sf.to_timestamp(sf.lit(base_date), format=base_date_format)
-        )
-        .withColumn(
-            column_name,
-            sf.to_timestamp(sf.expr(f"date_add(tmp, {column_name})")),
-        )
-        .drop("tmp")
-    )
-    return dataframe
-
-
 def process_timestamp_column(
     dataframe: SparkDataFrame,
     column_name: str,
@@ -669,7 +528,7 @@ def process_timestamp_column(
 
 if PYSPARK_AVAILABLE:
     @sf.udf(returnType=VectorUDT())
-    def list_to_vector_udf(array: st.ArrayType) -> DenseVector:
+    def list_to_vector_udf(array: st.ArrayType) -> DenseVector:  # pragma: no cover
         """
         convert spark array to vector
 
@@ -679,7 +538,7 @@ if PYSPARK_AVAILABLE:
         return Vectors.dense(array)
 
     @sf.udf(returnType=st.FloatType())
-    def vector_squared_distance(first: DenseVector, second: DenseVector) -> float:
+    def vector_squared_distance(first: DenseVector, second: DenseVector) -> float:  # pragma: no cover
         """
         :param first: first vector
         :param second: second vector
@@ -690,7 +549,7 @@ if PYSPARK_AVAILABLE:
     @sf.udf(returnType=st.FloatType())
     def vector_euclidean_distance_similarity(
         first: DenseVector, second: DenseVector
-    ) -> float:
+    ) -> float:  # pragma: no cover
         """
         :param first: first vector
         :param second: second vector
@@ -699,7 +558,7 @@ if PYSPARK_AVAILABLE:
         return 1 / (1 + float(first.squared_distance(second)) ** 0.5)
 
     @sf.udf(returnType=st.FloatType())
-    def cosine_similarity(first: DenseVector, second: DenseVector) -> float:
+    def cosine_similarity(first: DenseVector, second: DenseVector) -> float:  # pragma: no cover
         """
         :param first: first vector
         :param second: second vector
@@ -725,62 +584,6 @@ def drop_temp_view(temp_view_name: str) -> None:
     """
     spark = State().session
     spark.catalog.dropTempView(temp_view_name)
-
-
-def sample_top_k_recs(pairs: SparkDataFrame, k: int, seed: int = None):
-    """
-    Sample k items for each user with probability proportional to the relevance score.
-
-    Motivation: sometimes we have a pre-defined list of items for each user
-    and could use `predict_pairs` method of RePlay models to score them.
-    After that we could select top K most relevant items for each user
-    with `replay.utils.spark_utils.get_top_k_recs` or sample them with
-    probabilities proportional to their relevance score
-    with `replay.utils.spark_utils.sample_top_k_recs` to get more diverse recommendations.
-
-    :param pairs: spark dataframe with columns ``[user_idx, item_idx, relevance]``
-    :param k: number of items for each user to return
-    :param seed: random seed
-    :return:  spark dataframe with columns ``[user_idx, item_idx, relevance]``
-    """
-    pairs = pairs.withColumn(
-        "probability",
-        sf.col("relevance")
-        / sf.sum("relevance").over(Window.partitionBy("user_idx")),
-    )
-
-    def grouped_map(pandas_df: pd.DataFrame) -> pd.DataFrame:
-        user_idx = pandas_df["user_idx"][0]
-
-        if seed is not None:
-            local_rng = default_rng(seed + user_idx)
-        else:
-            local_rng = default_rng()
-
-        items_positions = local_rng.choice(
-            np.arange(pandas_df.shape[0]),
-            size=min(k, pandas_df.shape[0]),
-            p=pandas_df["probability"].values,
-            replace=False,
-        )
-
-        return pd.DataFrame(
-            {
-                "user_idx": k * [user_idx],
-                "item_idx": pandas_df["item_idx"].values[items_positions],
-                "relevance": pandas_df["relevance"].values[items_positions],
-            }
-        )
-    rec_schema = StructType(
-        [
-            StructField("user_idx", IntegerType()),
-            StructField("item_idx", IntegerType()),
-            StructField("relevance", DoubleType()),
-        ]
-    )
-    recs = pairs.groupby("user_idx").applyInPandas(grouped_map, rec_schema)
-
-    return recs
 
 
 def filter_cold(

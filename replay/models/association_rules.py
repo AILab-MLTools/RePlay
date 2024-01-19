@@ -66,12 +66,12 @@ class AssociationRulesItemRec(NeighbourRec):
     >>> model = AssociationRulesItemRec(min_item_count=1, min_pair_count=0, session_column="user_id")
     >>> res = model.fit(train_dataset)
     >>> model.similarity.show()
-    +------------+------------+----------+----+---------------+
-    |item_idx_one|item_idx_two|confidence|lift|confidence_gain|
-    +------------+------------+----------+----+---------------+
-    |           1|           2|       1.0| 1.5|            2.0|
-    |           2|           1|       0.5| 1.5|       Infinity|
-    +------------+------------+----------+----+---------------+
+    +------------+------------+----------+----------+----+---------------+
+    |item_idx_one|item_idx_two|similarity|confidence|lift|confidence_gain|
+    +------------+------------+----------+----------+----+---------------+
+    |           1|           2|       1.0|       1.0| 1.5|            2.0|
+    |           2|           1|       0.5|       0.5| 1.5|       Infinity|
+    +------------+------------+----------+----------+----+---------------+
     >>> model.similarity_metric = "confidence"
     >>> model.predict_pairs(pred_interactions, train_dataset).show()
     +-------+-------+------+
@@ -161,6 +161,7 @@ class AssociationRulesItemRec(NeighbourRec):
             "num_neighbours": self.num_neighbours,
             "use_rating": self.use_rating,
             "similarity_metric": self.similarity_metric,
+            "index_builder": self.index_builder.init_meta_as_dict() if self.index_builder else None,
         }
 
     def _fit(
@@ -290,6 +291,7 @@ class AssociationRulesItemRec(NeighbourRec):
         ).select(
             sf.col("antecedent").alias("item_idx_one"),
             sf.col("consequent").alias("item_idx_two"),
+            sf.col("confidence").alias("similarity"),
             "confidence",
             "lift",
             "confidence_gain",

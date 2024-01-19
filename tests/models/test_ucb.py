@@ -142,7 +142,7 @@ def test_optimize(fitted_model, log_ucb, caplog):
             k=1,
             budget=1,
         )
-        
+
         assert (
             "The UCB model has only exploration coefficient parameter, "
             "which cannot not be directly optimized"
