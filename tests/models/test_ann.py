@@ -1,25 +1,22 @@
 # pylint: disable-all
-from datetime import datetime
-
-import numpy as np
 import pytest
 
-from replay.data import get_schema
-from replay.models import Word2VecRec
 from replay.models.extensions.ann.entities.hnswlib_param import HnswlibParam
 from replay.models.extensions.ann.entities.nmslib_hnsw_param import NmslibHnswParam
 from replay.models.extensions.ann.index_builders.driver_hnswlib_index_builder import DriverHnswlibIndexBuilder
 from replay.models.extensions.ann.index_builders.executor_hnswlib_index_builder import ExecutorHnswlibIndexBuilder
 from replay.models.extensions.ann.index_builders.executor_nmslib_index_builder import ExecutorNmslibIndexBuilder
 from replay.models.extensions.ann.index_stores.shared_disk_index_store import SharedDiskIndexStore
-from replay.models.extensions.ann.index_stores.spark_files_index_store import SparkFilesIndexStore
 from replay.models.extensions.ann.index_inferers.hnswlib_index_inferer import HnswlibIndexInferer
 from replay.models.extensions.ann.index_inferers.hnswlib_filter_index_inferer import HnswlibFilterIndexInferer
 from replay.models.extensions.ann.index_inferers.nmslib_index_inferer import NmslibIndexInferer
 from replay.models.extensions.ann.index_inferers.nmslib_filter_index_inferer import NmslibFilterIndexInferer
+from replay.utils import PYSPARK_AVAILABLE
 from tests.utils import spark
 
-pyspark = pytest.importorskip("pyspark")
+
+if PYSPARK_AVAILABLE:
+    from replay.models.extensions.ann.index_stores.spark_files_index_store import SparkFilesIndexStore
 
 
 @pytest.fixture
