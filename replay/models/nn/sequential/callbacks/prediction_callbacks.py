@@ -227,6 +227,9 @@ class TorchPredictionCallback(BasePredictionCallback[Tuple[torch.LongTensor, tor
 
 
 class QueryEmbeddingsPredictionCallback(L.Callback):
+    """
+    Callback for prediction stage to get query embeddings.
+    """
     def __init__(self):
         self._embeddings_per_batch: List[torch.Tensor] = []
 
@@ -252,4 +255,7 @@ class QueryEmbeddingsPredictionCallback(L.Callback):
         self._embeddings_per_batch.append(query_embeddings)
 
     def get_result(self):
+        """
+        :returns: Query embeddings through all batches.
+        """
         return torch.cat(self._embeddings_per_batch)
