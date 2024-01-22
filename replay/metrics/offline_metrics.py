@@ -491,11 +491,6 @@ class OfflineMetrics:
                             unexpectedness_result["@".join(splitted)] = cur_result[
                                 metric_name
                             ]
-            else:
-                for unexp in self.unexpectedness_metric:
-                    unexpectedness_result.update(
-                        unexp(recommendations, base_recommendations)
-                    )
 
         if len(self.diversity_metric) != 0:
             for diversity in self.diversity_metric:
