@@ -434,7 +434,7 @@ def test_unknown_source_table_in_processor():
 
     with pytest.raises(AssertionError) as exc1:
         _SequenceProcessor(schema_cat, "user_id", "item_id", pd.DataFrame()).process_feature("item_id")
-    
+
     with pytest.raises(AssertionError) as exc2:
         _SequenceProcessor(schema_num, "user_id", "item_id", pd.DataFrame({"item_id": [1, 2, 3]})).process_feature("num_feature")
 
