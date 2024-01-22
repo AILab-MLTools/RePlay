@@ -270,6 +270,8 @@ def test_sasrec_get_init_parameters(fitted_sasrec):
     assert params["tensor_schema"].item().cardinality == 4
     assert params["max_seq_len"] == 200
     assert params["hidden_size"] == 50
+
+
 def test_predict_step_with_small_seq_len(item_user_sequential_dataset, simple_masks):
     item_sequences, padding_mask, _, _ = simple_masks
 
