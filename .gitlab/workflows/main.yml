@@ -157,7 +157,7 @@ pytest-experimental:
   script:
     - ./poetry_wrapper.sh --experimental install --all-extras
     - pytest -m "experimental"
-    - mv .coverage .coverage_experimental
+    - mv .coverage .coverage_experimental_${image:(-4)}
   artifacts:
     paths:
       - .coverage_experimental_${image:(-4)}
