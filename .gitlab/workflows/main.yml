@@ -10,6 +10,7 @@ image: "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
 variables:
   VERSION: "0.0.7"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  RUNNER: amazme-1
 
 .setup_env: &setup_env
   - pip install -q --upgrade pip wheel poetry==1.5.1 poetry-dynamic-versioning
@@ -66,28 +67,38 @@ resolve-job:
       - projects/experimental/poetry.lock
       - ${dependencies}
     expire_in: 2 week
+  tags: 
+    - ${RUNNER}
 
 pylint-job:
   <<: *install_experimental_replay_with_spark
   stage: code_quality
   script:
     - pylint replay
+  tags: 
+    - ${RUNNER}
 
 pycodestyle-job:
   <<: *install_experimental_replay_with_spark
   stage: code_quality
   script:
     - pycodestyle replay tests
+  tags: 
+    - ${RUNNER}
 
 sphinx-job:
   <<: *install_experimental_replay_with_spark
   stage: code_quality
   script:
     - make -C docs clean html
+  tags: 
+    - ${RUNNER}
 
 .pytest_template: &pytest_template
   stage: test
   image: ${image}
+  tags: 
+    - ${RUNNER}
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   parallel:
     matrix:
@@ -176,6 +187,8 @@ merge-coverage:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
+  tags: 
+    - ${RUNNER}
 
 
 examples-execute-job:
