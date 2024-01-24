@@ -165,7 +165,6 @@ pytest-experimental:
 
 merge-coverage:
   stage: merge coverage
-  image: ${image}
   before_script:
     - *setup_env
     - ./poetry_wrapper.sh install --only dev
@@ -187,9 +186,6 @@ merge-coverage:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
-  tags: 
-    - ${RUNNER}
-
 
 examples-execute-job:
   <<: *install_replay
