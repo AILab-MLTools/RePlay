@@ -44,7 +44,11 @@ cache: &global_cache
 stages:
   - resolve
   - code_quality
-  - test
+  - test_core
+  - test_torch
+  - test_spark
+  - test_spark_torch
+  - test_experimental
   - merge coverage
   - examples
   - build packages
@@ -95,11 +99,10 @@ sphinx-job:
     - ${RUNNER}
 
 .pytest_template: &pytest_template
-  stage: test
   image: ${image}
+  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   tags: 
     - ${RUNNER}
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   parallel:
     matrix:
       - image:
@@ -110,6 +113,7 @@ sphinx-job:
 
 pytest-core:
   <<: *pytest_template
+  stage: test_core
   script:
     - ./poetry_wrapper.sh install
     - pytest -m core tests/ --ignore=tests/experimental
@@ -121,6 +125,7 @@ pytest-core:
 
 pytest-torch:
   <<: *pytest_template
+  stage: test_torch
   script:
     - ./poetry_wrapper.sh install -E torch
     - pytest -m "not spark and not experimental" tests/ --ignore=tests/experimental
@@ -132,6 +137,7 @@ pytest-torch:
 
 pytest-spark:
   <<: *pytest_template
+  stage: test_spark
   script:
     - ./poetry_wrapper.sh install -E spark
     - pytest -m "not torch and not experimental" tests/ --ignore=tests/experimental
@@ -143,6 +149,7 @@ pytest-spark:
 
 pytest-spark-and-torch:
   <<: *pytest_template
+  stage: test_spark_torch
   script:
     - ./poetry_wrapper.sh install --all-extras
     - pytest -m "not experimental" --ignore=replay/experimental --ignore=tests/experimental
@@ -154,6 +161,7 @@ pytest-spark-and-torch:
 
 pytest-experimental:
   <<: *pytest_template
+  stage: test_experimental
   script:
     - ./poetry_wrapper.sh --experimental install --all-extras
     - pytest -m "experimental"
