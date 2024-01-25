@@ -102,6 +102,9 @@ sphinx-job:
   image: ${image}
   tags: 
     - ${RUNNER}
+  before_script:
+    - export REPLAY_SPARK_CORE_COUNT=8
+    - export REPLAY_SPARK_MEMORY=24
   parallel:
     matrix:
       - image:
@@ -115,6 +118,8 @@ pytest-core:
   stage: test_core
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   script:
+    - echo $REPLAY_SPARK_CORE_COUNT
+    - echo $REPLAY_SPARK_MEMORY
     - ./poetry_wrapper.sh install
     - pytest -m core tests/ --ignore=tests/experimental
     - mv .coverage .coverage_core_${image:(-4)}
