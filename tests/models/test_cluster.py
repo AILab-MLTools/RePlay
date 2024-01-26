@@ -93,11 +93,18 @@ def test_predict_empty_log(long_log_with_features, users_features):
 
 
 def test_predict_empty_dataset(long_log_with_features, users_features):
-    with pytest.raises(ValueError, match="interactions is not provided,.*"):
+    with pytest.raises(ValueError, match="Query features are missing for predict"):
         model = ClusterRec()
         train_dataset = create_dataset(long_log_with_features, user_features=users_features)
         model.fit(train_dataset)
         model.predict(None, k=1)
+
+    with pytest.raises(ValueError, match="Query features are missing for predict"):
+        model = ClusterRec()
+        train_dataset = create_dataset(long_log_with_features, user_features=users_features)
+        pred_dataset = create_dataset(long_log_with_features, user_features=None)
+        model.fit(train_dataset)
+        model.predict(pred_dataset, k=1)
 
 
 def test_raise_without_features(long_log_with_features, users_features):

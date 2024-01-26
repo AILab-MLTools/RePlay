@@ -5,7 +5,9 @@ import pickle
 import warnings
 from typing import Any, Iterable, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
+from numpy.random import default_rng
 
 from .session_handler import State
 
@@ -17,6 +19,7 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import Column, SparkSession, Window
     from pyspark.sql import functions as sf
     from pyspark.sql.column import _to_java_column, _to_seq
+    from pyspark.sql.types import DoubleType, IntegerType, StructField, StructType
 else:
     Column = MissingImportType
 
@@ -307,6 +310,59 @@ def get_log_info(
     )
 
 
+def get_stats(
+    log: SparkDataFrame, group_by: str = "user_id", target_column: str = "relevance"
+) -> SparkDataFrame:
+    """
+    Calculate log statistics: min, max, mean, median ratings, number of ratings.
+    >>> from replay.utils.session_handler import get_spark_session, State
+    >>> spark = get_spark_session(1, 1)
+    >>> test_df = (spark.
+    ...   createDataFrame([(1, 2, 1), (1, 3, 3), (1, 1, 2), (2, 3, 2)])
+    ...   .toDF("user_id", "item_id", "rel")
+    ...   )
+    >>> get_stats(test_df, target_column='rel').show()
+    +-------+--------+-------+-------+---------+----------+
+    |user_id|mean_rel|max_rel|min_rel|count_rel|median_rel|
+    +-------+--------+-------+-------+---------+----------+
+    |      1|     2.0|      3|      1|        3|         2|
+    |      2|     2.0|      2|      2|        1|         2|
+    +-------+--------+-------+-------+---------+----------+
+    <BLANKLINE>
+    >>> get_stats(test_df, group_by='item_id', target_column='rel').show()
+    +-------+--------+-------+-------+---------+----------+
+    |item_id|mean_rel|max_rel|min_rel|count_rel|median_rel|
+    +-------+--------+-------+-------+---------+----------+
+    |      2|     1.0|      1|      1|        1|         1|
+    |      3|     2.5|      3|      2|        2|         2|
+    |      1|     2.0|      2|      2|        1|         2|
+    +-------+--------+-------+-------+---------+----------+
+    <BLANKLINE>
+
+    :param log: spark DataFrame with ``user_id``, ``item_id`` and ``relevance`` columns
+    :param group_by: column to group data by, ``user_id`` or ``item_id``
+    :param target_column: column with interaction ratings
+    :return: spark DataFrame with statistics
+    """
+    agg_functions = {
+        "mean": sf.avg,
+        "max": sf.max,
+        "min": sf.min,
+        "count": sf.count,
+    }
+    agg_functions_list = [
+        func(target_column).alias(str(name + "_" + target_column))
+        for name, func in agg_functions.items()
+    ]
+    agg_functions_list.append(
+        sf.expr(f"percentile_approx({target_column}, 0.5)").alias(
+            "median_" + target_column
+        )
+    )
+
+    return log.groupBy(group_by).agg(*agg_functions_list)
+
+
 def check_numeric(feature_table: SparkDataFrame) -> None:
     """
     Check if spark DataFrame columns are of NumericType
@@ -584,6 +640,62 @@ def drop_temp_view(temp_view_name: str) -> None:
     """
     spark = State().session
     spark.catalog.dropTempView(temp_view_name)
+
+
+def sample_top_k_recs(pairs: SparkDataFrame, k: int, seed: int = None):
+    """
+    Sample k items for each user with probability proportional to the relevance score.
+
+    Motivation: sometimes we have a pre-defined list of items for each user
+    and could use `predict_pairs` method of RePlay models to score them.
+    After that we could select top K most relevant items for each user
+    with `replay.utils.spark_utils.get_top_k_recs` or sample them with
+    probabilities proportional to their relevance score
+    with `replay.utils.spark_utils.sample_top_k_recs` to get more diverse recommendations.
+
+    :param pairs: spark dataframe with columns ``[user_idx, item_idx, relevance]``
+    :param k: number of items for each user to return
+    :param seed: random seed
+    :return:  spark dataframe with columns ``[user_idx, item_idx, relevance]``
+    """
+    pairs = pairs.withColumn(
+        "probability",
+        sf.col("relevance")
+        / sf.sum("relevance").over(Window.partitionBy("user_idx")),
+    )
+
+    def grouped_map(pandas_df: pd.DataFrame) -> pd.DataFrame:  # pragma: no cover
+        user_idx = pandas_df["user_idx"][0]
+
+        if seed is not None:
+            local_rng = default_rng(seed + user_idx)
+        else:
+            local_rng = default_rng()
+
+        items_positions = local_rng.choice(
+            np.arange(pandas_df.shape[0]),
+            size=min(k, pandas_df.shape[0]),
+            p=pandas_df["probability"].values,
+            replace=False,
+        )
+
+        return pd.DataFrame(
+            {
+                "user_idx": k * [user_idx],
+                "item_idx": pandas_df["item_idx"].values[items_positions],
+                "relevance": pandas_df["relevance"].values[items_positions],
+            }
+        )
+    rec_schema = StructType(
+        [
+            StructField("user_idx", IntegerType()),
+            StructField("item_idx", IntegerType()),
+            StructField("relevance", DoubleType()),
+        ]
+    )
+    recs = pairs.groupby("user_idx").applyInPandas(grouped_map, rec_schema)
+
+    return recs
 
 
 def filter_cold(
