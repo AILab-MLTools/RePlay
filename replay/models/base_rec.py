@@ -1435,6 +1435,9 @@ class QueryRecommender(BaseRecommender, ABC):
         :return: cached recommendation dataframe with columns ``[user_idx, item_idx, rating]``
             or None if `file_path` is provided
         """
+        if not dataset or not dataset.query_features:
+            raise ValueError("Query features are missing for predict")
+
         return self._predict_wrap(
             dataset=dataset,
             k=k,
@@ -1465,6 +1468,9 @@ class QueryRecommender(BaseRecommender, ABC):
         :return: cached recommendation dataframe with columns ``[user_idx, item_idx, rating]``
             or None if `file_path` is provided
         """
+        if not dataset or not dataset.query_features:
+            raise ValueError("Query features are missing for predict")
+
         return self._predict_pairs_wrap(
             pairs=pairs,
             dataset=dataset,
