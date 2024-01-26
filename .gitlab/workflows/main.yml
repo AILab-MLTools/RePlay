@@ -102,6 +102,7 @@ sphinx-job:
   image: ${image}
   tags: 
     - ${RUNNER}
+  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   before_script:
     - export REPLAY_SPARK_CORE_COUNT=8
     - export REPLAY_SPARK_MEMORY=24
@@ -116,10 +117,7 @@ sphinx-job:
 pytest-core:
   <<: *pytest_template
   stage: test_core
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   script:
-    - echo $REPLAY_SPARK_CORE_COUNT
-    - echo $REPLAY_SPARK_MEMORY
     - ./poetry_wrapper.sh install
     - pytest -m core tests/ --ignore=tests/experimental
     - mv .coverage .coverage_core_${image:(-4)}
@@ -131,7 +129,6 @@ pytest-core:
 pytest-torch:
   <<: *pytest_template
   stage: test_torch
-  needs: ["pytest-core"]
   script:
     - ./poetry_wrapper.sh install -E torch
     - pytest -m "not spark and not experimental" tests/ --ignore=tests/experimental
@@ -144,7 +141,6 @@ pytest-torch:
 pytest-spark:
   <<: *pytest_template
   stage: test_spark
-  needs: ["pytest-torch"]
   script:
     - ./poetry_wrapper.sh install -E spark
     - pytest -m "not torch and not experimental" tests/ --ignore=tests/experimental
@@ -157,7 +153,6 @@ pytest-spark:
 pytest-spark-and-torch:
   <<: *pytest_template
   stage: test_spark_torch
-  needs: ["pytest-spark"]
   script:
     - ./poetry_wrapper.sh install --all-extras
     - pytest -m "not experimental" --ignore=replay/experimental --ignore=tests/experimental
@@ -170,7 +165,6 @@ pytest-spark-and-torch:
 pytest-experimental:
   <<: *pytest_template
   stage: test_experimental
-  needs: ["pytest-spark-and-torch"]
   script:
     - ./poetry_wrapper.sh --experimental install --all-extras
     - pytest -m "experimental"
