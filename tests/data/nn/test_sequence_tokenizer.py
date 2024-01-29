@@ -409,8 +409,8 @@ def test_invalid_source_table():
 
 
 @pytest.mark.torch
-def test_unknown_source_table_in_processor():
-    schema_cat = (
+def test_unknown_source_table_in_cat_processor():
+    schema = (
         TensorSchemaBuilder()
         .categorical(
             "item_id",
@@ -421,7 +421,15 @@ def test_unknown_source_table_in_processor():
         )
         .build()
     )
-    schema_num = (
+    with pytest.raises(AssertionError) as exc:
+        _SequenceProcessor(schema, "user_id", "item_id", pd.DataFrame()).process_feature("item_id")
+
+    assert str(exc.value) == "Unknown tensor feature source table"
+
+
+@pytest.mark.torch
+def test_unknown_source_table_in_num_processor():
+    schema = (
         TensorSchemaBuilder()
         .numerical(
             "num_feature",
@@ -431,15 +439,10 @@ def test_unknown_source_table_in_processor():
         )
         .build()
     )
+    with pytest.raises(AssertionError) as exc:
+        _SequenceProcessor(schema, "user_id", "item_id", pd.DataFrame({"item_id": [1, 2, 3]})).process_feature("num_feature")
 
-    with pytest.raises(AssertionError) as exc1:
-        _SequenceProcessor(schema_cat, "user_id", "item_id", pd.DataFrame()).process_feature("item_id")
-
-    with pytest.raises(AssertionError) as exc2:
-        _SequenceProcessor(schema_num, "user_id", "item_id", pd.DataFrame({"item_id": [1, 2, 3]})).process_feature("num_feature")
-
-    assert str(exc1.value) == "Unknown tensor feature source table"
-    assert str(exc2.value) == "Unknown tensor feature source table"
+    assert str(exc.value) == "Unknown tensor feature source table"
 
 
 @pytest.mark.torch

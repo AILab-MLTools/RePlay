@@ -28,8 +28,8 @@ def test_fallback():
         (res["user_idx"] == 1) & (res["item_idx"] == 2), "relevance"
     ].iloc[0]
     assert a > b
-    res = fallback(base, None, 2)
-    sparkDataFrameEqual(base, res)
+    bypass_res = fallback(base, None, 2)
+    sparkDataFrameEqual(bypass_res, res)
 
 
 @pytest.mark.spark
