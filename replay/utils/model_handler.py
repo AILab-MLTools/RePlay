@@ -119,17 +119,9 @@ def load(path: str, model_type=None) -> BaseRecommender:
         model_class = globals()[name]
     init_args = getfullargspec(model_class.__init__).args
     init_args.remove("self")
-    extra_args = set(args) - set(init_args)
-    if len(extra_args) > 0:
-        extra_args = {key: args[key] for key in args}
-        init_args = {key: args[key] for key in init_args}
-    else:
-        init_args = args
-        extra_args = {}
+    init_args = args
 
     model = model_class(**init_args)
-    for arg in extra_args:
-        model.arg = extra_args[arg]
 
     dataframes_paths = get_list_of_paths(spark, join(path, "dataframes"))
     for dataframe_path in dataframes_paths:

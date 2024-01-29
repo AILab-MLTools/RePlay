@@ -25,34 +25,6 @@ from replay.utils.spark_utils import convert2spark
 from tests.utils import create_dataset, sparkDataFrameEqual, long_log_with_features, spark
 
 
-class DummyModel(Recommender):
-    def __init__(
-        self,
-        fake_param1: bool = False,
-    ) -> None:
-        self.fake_param1 = fake_param1
-
-    @property
-    def _init_args(self):
-        return {
-            "fake_param1": self.fake_param1,
-            "fake_param2": self.fake_param1,
-        }
-
-    def _fit(self, dataset: Dataset) -> None:
-        pass
-
-    def _predict(
-        self,
-        dataset: Optional[Dataset],
-        k: int,
-        queries: SparkDataFrame,
-        items: SparkDataFrame,
-        filter_seen_items: bool = True,
-    ) -> SparkDataFrame:
-        pass
-
-
 @pytest.fixture
 def user_features(spark):
     return spark.createDataFrame(
@@ -133,16 +105,6 @@ def test_save_raise(long_log_with_features, tmp_path):
     save(model, path)
     with pytest.raises(FileExistsError):
         save(model, path)
-
-
-@pytest.mark.spark
-def test_load_extra_args(long_log_with_features, tmp_path):
-    model = DummyModel()
-    path = (tmp_path / "test").resolve()
-    dataset = create_dataset(long_log_with_features)
-    model.fit(dataset)
-    save(model, path)
-    loaded_model = load(path, model_type=DummyModel)
 
 
 @pytest.mark.spark

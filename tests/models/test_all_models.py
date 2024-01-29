@@ -35,7 +35,7 @@ SEED = 123
 
 
 @pytest.fixture
-def log_nonpers(log):
+def log_binary_rating(log):
     return log.withColumn(
         "relevance", sf.when(sf.col("relevance") > 3, 1).otherwise(0)
     )
@@ -184,9 +184,9 @@ def test_predict_pairs_k(log, model):
         "query_pop_rec",
     ],
 )
-def test_predict_empty_log(log, log_nonpers, model):
+def test_predict_empty_log(log, log_binary_rating, model):
     if type(model) in [ThompsonSampling, UCB, KLUCB, Wilson]:
-        log_fit = log_nonpers
+        log_fit = log_binary_rating
     else:
         log_fit = log
     dataset = create_dataset(log_fit)
@@ -222,9 +222,9 @@ def test_predict_empty_log(log, log_nonpers, model):
         "query_pop_rec",
     ],
 )
-def test_predict_empty_dataset(log, log_nonpers, model):
+def test_predict_empty_dataset(log, log_binary_rating, model):
     if type(model) in [ThompsonSampling, UCB, KLUCB, Wilson]:
-        log_fit = log_nonpers
+        log_fit = log_binary_rating
     else:
         log_fit = log
 

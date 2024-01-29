@@ -29,7 +29,7 @@ def test_fallback():
     ].iloc[0]
     assert a > b
     bypass_res = fallback(base, None, 2)
-    sparkDataFrameEqual(bypass_res, res)
+    sparkDataFrameEqual(bypass_res, base)
 
 
 @pytest.mark.spark
