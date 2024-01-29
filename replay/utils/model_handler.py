@@ -2,7 +2,6 @@
 import json
 import os
 import pickle
-from inspect import getfullargspec
 from os.path import join
 from pathlib import Path
 from typing import Union
