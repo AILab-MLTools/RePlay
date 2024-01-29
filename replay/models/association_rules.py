@@ -29,6 +29,9 @@ class AssociationRulesItemRec(NeighbourRec):
     You can change your selection before calling `.predict()` or `.predict_pairs()`
     if you set a new value for the `similarity_metric` parameter.
 
+    Usage of ANN functionality requires only sparse indices and only one `similarity_metric`,
+    defined in `__init__` will be available during inference.
+
     >>> import pandas as pd
     >>> from replay.data.dataset import Dataset, FeatureSchema, FeatureInfo, FeatureHint, FeatureType
     >>> from replay.utils.spark_utils import convert2spark
@@ -291,7 +294,7 @@ class AssociationRulesItemRec(NeighbourRec):
         ).select(
             sf.col("antecedent").alias("item_idx_one"),
             sf.col("consequent").alias("item_idx_two"),
-            sf.col("confidence").alias("similarity"),
+            sf.col(self.similarity_metric).alias("similarity"),
             "confidence",
             "lift",
             "confidence_gain",
