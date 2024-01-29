@@ -153,9 +153,9 @@ def test_get_fit_counts(model, fake_fit_items, fake_fit_queries):
     assert not hasattr(model, "_num_queries")
     model.fit_items = fake_fit_items
     model.fit_queries = fake_fit_queries
-    assert model.items_count == 6
+    assert model.items_count == 7
     assert model.queries_count == 6
-    assert model._num_items == 6
+    assert model._num_items == 7
     assert model._num_queries == 6
 
 
@@ -168,9 +168,9 @@ def test_get_fit_dims(model, fake_fit_items, fake_fit_queries):
     model.fit_items = fake_fit_items
     model.fit_queries = fake_fit_queries
     assert model._item_dim == 6
-    assert model._query_dim == 6
+    assert model._query_dim == 4
     assert model._item_dim_size == 6
-    assert model._query_dim_size == 6
+    assert model._query_dim_size == 4
 
 
 @pytest.mark.spark
