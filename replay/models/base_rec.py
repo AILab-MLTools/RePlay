@@ -21,7 +21,6 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Un
 
 import pandas as pd
 import numpy as np
-import pandas as pd
 from numpy.random import default_rng
 from optuna import create_study
 from optuna.samplers import TPESampler
