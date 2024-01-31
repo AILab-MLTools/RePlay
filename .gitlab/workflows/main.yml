@@ -9,8 +9,8 @@ image: "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
 
 variables:
   VERSION: "0.0.7"
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   RUNNER: amazme-1
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 .setup_env: &setup_env
   - pip install -q --upgrade pip wheel poetry==1.5.1 poetry-dynamic-versioning
