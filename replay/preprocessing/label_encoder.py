@@ -8,7 +8,7 @@ Contains classes for encoding categorical data
 import abc
 from typing import Dict, List, Literal, Mapping, Optional, Sequence, Union
 
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame, get_spark_session
+from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame, PolarsDataFrame, get_spark_session
 
 if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
@@ -169,6 +169,10 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         unique_col_values = df[self._col].drop_duplicates().reset_index(drop=True)
         self._mapping = {val: key for key, val in unique_col_values.to_dict().items()}
 
+    def _fit_polars(self, df: PolarsDataFrame) -> None:
+        unique_col_values = df.select(self._col).unique()
+        self._mapping = {key: val for val, key in enumerate(unique_col_values.to_series().to_list())}
+
     def fit(self, df: DataFrameLike) -> "LabelEncodingRule":
         """
         Fits encoder to input dataframe.
@@ -181,8 +185,10 @@ class LabelEncodingRule(BaseLabelEncodingRule):
 
         if isinstance(df, PandasDataFrame):
             self._fit_pandas(df)
-        else:
+        elif isinstance(df, SparkDataFrame):
             self._fit_spark(df)
+        else:
+            self._fit_polars(df)
         self._inverse_mapping = self._make_inverse_mapping()
         self._inverse_mapping_list = self._make_inverse_mapping_list()
         if self._handle_unknown == "use_default_value":
