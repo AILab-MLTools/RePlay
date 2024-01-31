@@ -139,6 +139,19 @@ pytest-torch:
       - .coverage_torch_${image:(-4)}
     expire_in: 1 day
 
+pytest-experimental:
+  <<: *pytest_template
+  stage: test_experimental
+  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
+  script:
+    - ./poetry_wrapper.sh --experimental install --all-extras
+    - pytest -m "experimental"
+    - mv .coverage .coverage_experimental_${image:(-4)}
+  artifacts:
+    paths:
+      - .coverage_experimental_${image:(-4)}
+    expire_in: 1 day
+
 pytest-spark:
   <<: *pytest_template
   stage: test_spark
@@ -163,19 +176,6 @@ pytest-spark-and-torch:
   artifacts:
     paths:
       - .coverage_all_${image:(-4)}
-    expire_in: 1 day
-
-pytest-experimental:
-  <<: *pytest_template
-  stage: test_experimental
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
-  script:
-    - ./poetry_wrapper.sh --experimental install --all-extras
-    - pytest -m "experimental"
-    - mv .coverage .coverage_experimental_${image:(-4)}
-  artifacts:
-    paths:
-      - .coverage_experimental_${image:(-4)}
     expire_in: 1 day
 
 merge-coverage:
