@@ -103,9 +103,6 @@ sphinx-job:
   tags: 
     - ${RUNNER}
   needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
-  before_script:
-    - export REPLAY_SPARK_CORE_COUNT=8
-    - export REPLAY_SPARK_MEMORY=24
   parallel:
     matrix:
       - image:
