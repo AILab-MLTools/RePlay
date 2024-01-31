@@ -9,8 +9,8 @@ image: "${CI_REGISTRY_IMAGE}:${VERSION}_py39"
 
 variables:
   VERSION: "0.0.7"
-  RUNNER: amazme-1
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  RUNNER: amazme-1
 
 .setup_env: &setup_env
   - pip install -q --upgrade pip wheel poetry==1.5.1 poetry-dynamic-versioning
@@ -102,7 +102,9 @@ sphinx-job:
   image: ${image}
   tags: 
     - ${RUNNER}
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
+  before_script:
+    - export REPLAY_SPARK_CORE_COUNT=8
+    - export REPLAY_SPARK_MEMORY=24
   parallel:
     matrix:
       - image:
@@ -114,6 +116,7 @@ sphinx-job:
 pytest-core:
   <<: *pytest_template
   stage: test_core
+  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   script:
     - ./poetry_wrapper.sh install
     - pytest -m core tests/ --ignore=tests/experimental
@@ -126,6 +129,7 @@ pytest-core:
 pytest-torch:
   <<: *pytest_template
   stage: test_torch
+  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   script:
     - ./poetry_wrapper.sh install -E torch
     - pytest -m "not spark and not experimental" tests/ --ignore=tests/experimental
@@ -138,6 +142,7 @@ pytest-torch:
 pytest-spark:
   <<: *pytest_template
   stage: test_spark
+  needs: ["pytest-core", "pytest-torch", "pytest-experimental"]
   script:
     - ./poetry_wrapper.sh install -E spark
     - pytest -m "not torch and not experimental" tests/ --ignore=tests/experimental
@@ -150,6 +155,7 @@ pytest-spark:
 pytest-spark-and-torch:
   <<: *pytest_template
   stage: test_spark_torch
+  needs: ["pytest-spark"]
   script:
     - ./poetry_wrapper.sh install --all-extras
     - pytest -m "not experimental" --ignore=replay/experimental --ignore=tests/experimental
@@ -162,6 +168,7 @@ pytest-spark-and-torch:
 pytest-experimental:
   <<: *pytest_template
   stage: test_experimental
+  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   script:
     - ./poetry_wrapper.sh --experimental install --all-extras
     - pytest -m "experimental"
@@ -180,7 +187,7 @@ merge-coverage:
     - coverage combine .coverage_core_${image:(-4)} .coverage_spark_${image:(-4)} .coverage_torch_${image:(-4)} .coverage_all_${image:(-4)} .coverage_experimental_${image:(-4)}
     - coverage report --fail-under=93
     - coverage xml
-  needs: ["pytest-core", "pytest-experimental", "pytest-spark", "pytest-spark-and-torch", "pytest-torch"]
+  needs: ["pytest-spark-and-torch"]
   parallel:
     matrix:
       - image:
