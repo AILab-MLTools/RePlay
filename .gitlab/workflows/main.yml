@@ -46,9 +46,9 @@ stages:
   - code_quality
   - test_core
   - test_torch
+  - test_experimental
   - test_spark
   - test_spark_torch
-  - test_experimental
   - merge coverage
   - examples
   - build packages
