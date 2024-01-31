@@ -3,6 +3,7 @@ from typing import Iterable, Union
 from pandas import DataFrame as PandasDataFrame
 from polars import DataFrame as PolarsDataFrame
 
+
 # pylint: disable=too-few-public-methods
 class MissingImportType:
     """
