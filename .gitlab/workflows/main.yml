@@ -46,9 +46,9 @@ stages:
   - code_quality
   - test_core
   - test_torch
-  - test_experimental
   - test_spark
   - test_spark_torch
+  - test_experimental
   - merge coverage
   - examples
   - build packages
@@ -102,6 +102,10 @@ sphinx-job:
   image: ${image}
   tags: 
     - ${RUNNER}
+  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
+  before_script:
+    - export REPLAY_SPARK_CORE_COUNT=8
+    - export REPLAY_SPARK_MEMORY=24
   parallel:
     matrix:
       - image:
@@ -112,7 +116,6 @@ sphinx-job:
 pytest-core:
   <<: *pytest_template
   stage: test_core
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   script:
     - ./poetry_wrapper.sh install
     - pytest -m core tests/ --ignore=tests/experimental
@@ -125,7 +128,6 @@ pytest-core:
 pytest-torch:
   <<: *pytest_template
   stage: test_torch
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
   script:
     - ./poetry_wrapper.sh install -E torch
     - pytest -m "not spark and not experimental" tests/ --ignore=tests/experimental
@@ -135,28 +137,9 @@ pytest-torch:
       - .coverage_torch_${image:(-4)}
     expire_in: 1 day
 
-pytest-experimental:
-  <<: *pytest_template
-  stage: test_experimental
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
-  before_script:
-    - export REPLAY_SPARK_CORE_COUNT=8
-  script:
-    - ./poetry_wrapper.sh --experimental install --all-extras
-    - pytest -m "experimental"
-    - mv .coverage .coverage_experimental_${image:(-4)}
-  artifacts:
-    paths:
-      - .coverage_experimental_${image:(-4)}
-    expire_in: 1 day
-
 pytest-spark:
   <<: *pytest_template
   stage: test_spark
-  needs: ["pytest-core", "pytest-torch", "pytest-experimental"]
-  before_script:
-    - export REPLAY_SPARK_CORE_COUNT=8
-    - export REPLAY_SPARK_MEMORY=24
   script:
     - ./poetry_wrapper.sh install -E spark
     - pytest -m "not torch and not experimental" tests/ --ignore=tests/experimental
@@ -169,10 +152,6 @@ pytest-spark:
 pytest-spark-and-torch:
   <<: *pytest_template
   stage: test_spark_torch
-  needs: ["pytest-spark"]
-  before_script:
-    - export REPLAY_SPARK_CORE_COUNT=8
-    - export REPLAY_SPARK_MEMORY=24
   script:
     - ./poetry_wrapper.sh install --all-extras
     - pytest -m "not experimental" --ignore=replay/experimental --ignore=tests/experimental
@@ -180,6 +159,18 @@ pytest-spark-and-torch:
   artifacts:
     paths:
       - .coverage_all_${image:(-4)}
+    expire_in: 1 day
+
+pytest-experimental:
+  <<: *pytest_template
+  stage: test_experimental
+  script:
+    - ./poetry_wrapper.sh --experimental install --all-extras
+    - pytest -m "experimental"
+    - mv .coverage .coverage_experimental_${image:(-4)}
+  artifacts:
+    paths:
+      - .coverage_experimental_${image:(-4)}
     expire_in: 1 day
 
 merge-coverage:
