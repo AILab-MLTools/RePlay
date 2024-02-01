@@ -69,12 +69,12 @@ class AssociationRulesItemRec(NeighbourRec):
     >>> model = AssociationRulesItemRec(min_item_count=1, min_pair_count=0, session_column="user_id")
     >>> res = model.fit(train_dataset)
     >>> model.similarity.orderBy("item_idx_one").show()
-    +------------+------------+----------+----+---------------+
-    |item_idx_one|item_idx_two|confidence|lift|confidence_gain|
-    +------------+------------+----------+----+---------------+
-    |           1|           2|       1.0| 1.5|            2.0|
-    |           2|           1|       0.5| 1.5|       Infinity|
-    +------------+------------+----------+----+---------------+
+    +------------+------------+----------+----------+----+---------------+
+    |item_idx_one|item_idx_two|similarity|confidence|lift|confidence_gain|
+    +------------+------------+----------+----------+----+---------------+
+    |           1|           2|       1.0|       1.0| 1.5|            2.0|
+    |           2|           1|       0.5|       0.5| 1.5|       Infinity|
+    +------------+------------+----------+----------+----+---------------+
     >>> model.similarity_metric = "confidence"
     >>> model.predict_pairs(pred_interactions, train_dataset).show()
     +-------+-------+------+
