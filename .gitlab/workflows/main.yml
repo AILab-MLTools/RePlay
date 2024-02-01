@@ -169,7 +169,7 @@ pytest-spark:
 pytest-spark-and-torch:
   <<: *pytest_template
   stage: test_spark_torch
-  needs: pytest-spark
+  needs: ["pytest-spark"]
   before_script:
     - export REPLAY_SPARK_CORE_COUNT=8
     - export REPLAY_SPARK_MEMORY=24
