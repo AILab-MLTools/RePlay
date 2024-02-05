@@ -284,7 +284,11 @@ class MinCountFilter(_BaseFilter):
                 pl.col(f"{self.groupby_column}_temp_count") >= self.num_entries
             )
         )
-        return filtered_interactions.join(count_by_group, on=self.groupby_column).drop(f"{self.groupby_column}_temp_count")
+        return (
+            filtered_interactions
+            .join(count_by_group, on=self.groupby_column)
+            .drop(f"{self.groupby_column}_temp_count")
+        )
 
 
 class LowRatingFilter(_BaseFilter):
