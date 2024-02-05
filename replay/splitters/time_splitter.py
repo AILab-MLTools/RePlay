@@ -1,8 +1,16 @@
 from datetime import datetime
 from typing import List, Optional, Tuple, Union
 
+import polars as pl
+
 from .base_splitter import Splitter
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame
+from replay.utils import (
+    PYSPARK_AVAILABLE,
+    DataFrameLike,
+    PandasDataFrame,
+    SparkDataFrame,
+    PolarsDataFrame,
+)
 
 if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
@@ -146,8 +154,9 @@ class TimeSplitter(Splitter):
             threshold = datetime.strptime(threshold, self.time_column_format)
         if isinstance(interactions, SparkDataFrame):
             return self._partial_split_spark(interactions, threshold)
-
-        return self._partial_split_pandas(interactions, threshold)
+        if isinstance(interactions, PandasDataFrame):
+            return self._partial_split_pandas(interactions, threshold)
+        return self._partial_split_polars(interactions, threshold)
 
     def _partial_split_pandas(
         self, interactions: PandasDataFrame, threshold: Union[datetime, str, int]
@@ -189,6 +198,30 @@ class TimeSplitter(Splitter):
         if self.session_id_column:
             res = self._recalculate_with_session_id_column(res)
         train = res.filter("is_test == 0").drop("is_test")
+        test = res.filter("is_test").drop("is_test")
+
+        return train, test
+
+    def _partial_split_polars(
+        self, interactions: PolarsDataFrame, threshold: Union[datetime, str, int]
+    ) -> Tuple[PolarsDataFrame, PolarsDataFrame]:
+        if isinstance(threshold, float):
+            test_start = int(len(interactions) * (1 - threshold)) + 1
+
+            res = (
+                interactions
+                .sort(self.timestamp_column)
+                .with_columns(
+                    (pl.col(self.timestamp_column).cum_count() >= test_start)
+                    .alias("is_test")
+                )
+            )
+        else:
+            res = interactions.with_columns((pl.col(self.timestamp_column) >= threshold).alias("is_test"))
+
+        if self.session_id_column:
+            res = self._recalculate_with_session_id_column(res)
+        train = res.filter(~pl.col("is_test")).drop("is_test")
         test = res.filter("is_test").drop("is_test")
 
         return train, test
