@@ -1,11 +1,12 @@
 """
 Select or remove data by some criteria
 """
+import polars as pl
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import Callable, Optional, Union, Tuple
 
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame
+from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, SparkDataFrame, PolarsDataFrame
 
 
 if PYSPARK_AVAILABLE:
@@ -26,7 +27,9 @@ class _BaseFilter(ABC):
         """
         if isinstance(interactions, SparkDataFrame):
             return self._filter_spark(interactions)
-        return self._filter_pandas(interactions)
+        elif isinstance(interactions, PandasDataFrame):
+            return self._filter_pandas(interactions)
+        return self._filter_polars(interactions)
 
     @abstractmethod
     def _filter_spark(self, interactions: SparkDataFrame):  # pragma: no cover
@@ -34,6 +37,10 @@ class _BaseFilter(ABC):
 
     @abstractmethod
     def _filter_pandas(self, interactions: PandasDataFrame):  # pragma: no cover
+        pass
+
+    @abstractmethod
+    def _filter_polars(self, interactions: PolarsDataFrame):  # pragma: no cover
         pass
 
 
@@ -265,6 +272,20 @@ class MinCountFilter(_BaseFilter):
             .drop(columns=["count"])
         )
 
+    def _filter_polars(self, interactions: PolarsDataFrame) -> PolarsDataFrame:
+        filtered_interactions = interactions.clone()
+        count_by_group = (
+            filtered_interactions
+            .group_by(self.groupby_column)
+            .agg(
+                pl.col(self.groupby_column).count().alias(f"{self.groupby_column}_temp_count")
+            )
+            .filter(
+                pl.col(f"{self.groupby_column}_temp_count") >= self.num_entries
+            )
+        )
+        return filtered_interactions.join(count_by_group, on=self.groupby_column).drop(f"{self.groupby_column}_temp_count")
+
 
 class LowRatingFilter(_BaseFilter):
     """
@@ -298,6 +319,9 @@ class LowRatingFilter(_BaseFilter):
 
     def _filter_pandas(self, interactions: PandasDataFrame) -> PandasDataFrame:
         return interactions[interactions[self.rating_column] >= self.value]
+
+    def _filter_polars(self, interactions: PolarsDataFrame) -> PolarsDataFrame:
+        return interactions.filter(pl.col(self.rating_column) >= self.value)
 
 
 class NumInteractionsFilter(_BaseFilter):
