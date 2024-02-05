@@ -221,7 +221,7 @@ class TimeSplitter(Splitter):
 
         if self.session_id_column:
             res = self._recalculate_with_session_id_column(res)
-        train = res.filter(~pl.col("is_test")).drop("is_test")
+        train = res.filter(~pl.col("is_test")).drop("is_test")  # pylint: disable=invalid-unary-operand-type
         test = res.filter("is_test").drop("is_test")
 
         return train, test
