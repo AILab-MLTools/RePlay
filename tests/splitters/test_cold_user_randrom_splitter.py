@@ -31,11 +31,14 @@ def log_polars(log):
     return pl.from_pandas(log)
 
 
+<<<<<<< HEAD
 @pytest.fixture()
 def log_not_implemented(log):
     return log.to_numpy()
 
 
+=======
+>>>>>>> added polars to preprocessing
 @pytest.mark.parametrize(
     "dataset_type",
     [
