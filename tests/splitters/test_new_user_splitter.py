@@ -3,6 +3,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 
 from replay.splitters import NewUsersSplitter
@@ -35,11 +36,17 @@ def log_pandas():
     return PandasDataFrame(log_data, columns=["user_id", "item_id", "timestamp", "relevance", "session_id"])
 
 
+@pytest.fixture()
+def log_polars(log_pandas):
+    return pl.from_pandas(log_pandas)
+
+
 @pytest.mark.parametrize(
     "dataset_type",
     [
         pytest.param("log", marks=pytest.mark.spark),
         pytest.param("log_pandas", marks=pytest.mark.core),
+        pytest.param("log_polars", marks=pytest.mark.core),
     ]
 )
 def test_users_are_cold(dataset_type, request):
@@ -55,6 +62,9 @@ def test_users_are_cold(dataset_type, request):
     if isinstance(log, pd.DataFrame):
         train_users = train.user_id
         test_users = test.user_id
+    elif isinstance(log, pl.DataFrame):
+        train_users = train["user_id"]
+        test_users = test["user_id"]
     else:
         train_users = train.toPandas().user_id
         test_users = test.toPandas().user_id

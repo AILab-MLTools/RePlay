@@ -122,11 +122,11 @@ class Splitter(ABC):
     ) -> PolarsDataFrame:
 
         if self.drop_cold_items:
-            train_tmp = train.select(pl.col(self.item_column)).unique()
+            train_tmp = train.select(self.item_column).unique()
             test = test.join(train_tmp, on=self.item_column)
 
         if self.drop_cold_users:
-            train_tmp = train.select(pl.col(self.query_column)).unique()
+            train_tmp = train.select(self.query_column).unique()
             test = test.join(train_tmp, on=self.query_column)
 
         return test

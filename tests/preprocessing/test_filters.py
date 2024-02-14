@@ -1,9 +1,9 @@
 import pytest
 import pandas as pd
+import polars as pl
 from datetime import datetime
-from pandas import DataFrame as PandasDataFrame
 
-from replay.utils import get_spark_session
+from replay.utils import get_spark_session, PandasDataFrame, PolarsDataFrame
 from replay.preprocessing.filters import (
     MinCountFilter,
     LowRatingFilter,
@@ -35,12 +35,17 @@ def interactions_spark(interactions_pandas):
     return get_spark_session().createDataFrame(interactions_pandas)
 
 
-@pytest.mark.spark
+@pytest.fixture
+def interactions_polars(interactions_pandas):
+    return pl.from_pandas(interactions_pandas)
+
+
 @pytest.mark.parametrize(
     "dataset_type",
     [
-        ("interactions_spark"),
-        ("interactions_pandas"),
+        pytest.param("interactions_spark", marks=pytest.mark.spark),
+        pytest.param("interactions_pandas", marks=pytest.mark.core),
+        pytest.param("interactions_polars", marks=pytest.mark.core),
     ],
 )
 def test_mincount_filter(dataset_type, request):
@@ -49,21 +54,22 @@ def test_mincount_filter(dataset_type, request):
 
     if isinstance(test_dataframe, PandasDataFrame):
         user_list = filtered_dataframe["user_id"].unique().tolist()
-        assert len(user_list) == 1
-        assert sorted(user_list)[0] == "u3"
+    elif isinstance(test_dataframe, PolarsDataFrame):
+        user_list = filtered_dataframe["user_id"].unique().to_list()
     else:
-        user_list = filtered_dataframe.select("user_id").distinct().collect()
-        ids = [x[0] for x in user_list]
-        assert len(ids) == 1
-        assert sorted(ids)[0] == "u3"
+        user_list_df = filtered_dataframe.select("user_id").distinct().collect()
+        user_list = [x[0] for x in user_list_df]
+
+    assert len(user_list) == 1
+    assert user_list[0] == "u3"
 
 
-@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
-        ("interactions_spark"),
-        ("interactions_pandas"),
+        pytest.param("interactions_spark", marks=pytest.mark.spark),
+        pytest.param("interactions_pandas", marks=pytest.mark.core),
+        pytest.param("interactions_polars", marks=pytest.mark.core),
     ],
 )
 def test_lowrating_filter(dataset_type, request):
@@ -72,21 +78,22 @@ def test_lowrating_filter(dataset_type, request):
 
     if isinstance(test_dataframe, PandasDataFrame):
         user_list = filtered_dataframe["user_id"].unique().tolist()
-        assert len(user_list) == 1
-        assert sorted(user_list)[0] == "u2"
+    elif isinstance(test_dataframe, PolarsDataFrame):
+        user_list = filtered_dataframe["user_id"].unique().to_list()
     else:
-        user_list = filtered_dataframe.select("user_id").distinct().collect()
-        ids = [x[0] for x in user_list]
-        assert len(ids) == 1
-        assert sorted(ids)[0] == "u2"
+        user_list_df = filtered_dataframe.select("user_id").distinct().collect()
+        user_list = [x[0] for x in user_list_df]
+
+    assert len(user_list) == 1
+    assert user_list[0] == "u2"
 
 
-@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
-        ("interactions_spark"),
-        ("interactions_pandas"),
+        pytest.param("interactions_spark", marks=pytest.mark.spark),
+        pytest.param("interactions_pandas", marks=pytest.mark.core),
+        pytest.param("interactions_polars", marks=pytest.mark.core),
     ],
 )
 @pytest.mark.parametrize(
@@ -103,19 +110,21 @@ def test_numinteractions_filter(dataset_type, first, item_column, request):
 
     if isinstance(test_dataframe, PandasDataFrame):
         user_list = filtered_dataframe["user_id"].unique().tolist()
-        assert len(user_list) == 3
+    elif isinstance(test_dataframe, PolarsDataFrame):
+        user_list = filtered_dataframe["user_id"].unique().to_list()
     else:
-        user_list = filtered_dataframe.select("user_id").distinct().collect()
-        ids = [x[0] for x in user_list]
-        assert len(ids) == 3
+        user_list_df = filtered_dataframe.select("user_id").distinct().collect()
+        user_list = [x[0] for x in user_list_df]
+
+    assert len(user_list) == 3
 
 
-@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
-        ("interactions_spark"),
-        ("interactions_pandas"),
+        pytest.param("interactions_spark", marks=pytest.mark.spark),
+        pytest.param("interactions_pandas", marks=pytest.mark.core),
+        pytest.param("interactions_polars", marks=pytest.mark.core),
     ],
 )
 @pytest.mark.parametrize(
@@ -129,16 +138,18 @@ def test_entitydays_filter(dataset_type, first, answer, request):
 
     if isinstance(test_dataframe, PandasDataFrame):
         assert len(filtered_dataframe) == answer
+    elif isinstance(test_dataframe, PolarsDataFrame):
+        assert len(filtered_dataframe) == answer
     else:
         assert filtered_dataframe.count() == answer
 
 
-@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
-        ("interactions_spark"),
-        ("interactions_pandas"),
+        pytest.param("interactions_spark", marks=pytest.mark.spark),
+        pytest.param("interactions_pandas", marks=pytest.mark.core),
+        pytest.param("interactions_polars", marks=pytest.mark.core),
     ],
 )
 @pytest.mark.parametrize(
@@ -152,21 +163,25 @@ def test_globaldays_filter(dataset_type, first, answer, request):
 
     if isinstance(test_dataframe, PandasDataFrame):
         item_list = filtered_dataframe["item_id"].unique().tolist()
-        assert len(filtered_dataframe) == answer
-        assert len(item_list) == 2
+        items_count = len(filtered_dataframe)
+    elif isinstance(test_dataframe, PolarsDataFrame):
+        item_list = filtered_dataframe["item_id"].unique().to_list()
+        items_count = len(filtered_dataframe)
     else:
-        item_list = filtered_dataframe.select("item_id").distinct().collect()
-        ids = [x[0] for x in item_list]
-        assert filtered_dataframe.count() == answer
-        assert len(ids) == 2
+        item_list_df = filtered_dataframe.select("item_id").distinct().collect()
+        item_list = [x[0] for x in item_list_df]
+        items_count = filtered_dataframe.count()
+
+    assert items_count == answer
+    assert len(item_list) == 2
 
 
-@pytest.mark.spark
 @pytest.mark.parametrize(
     "dataset_type",
     [
-        ("interactions_spark"),
-        ("interactions_pandas"),
+        pytest.param("interactions_spark", marks=pytest.mark.spark),
+        pytest.param("interactions_pandas", marks=pytest.mark.core),
+        pytest.param("interactions_polars", marks=pytest.mark.core),
     ],
 )
 @pytest.mark.parametrize(
@@ -184,10 +199,14 @@ def test_timeperiod_filter(dataset_type, start, end, answer, item_ids, request):
 
     if isinstance(test_dataframe, PandasDataFrame):
         item_list = filtered_dataframe["item_id"].unique().tolist()
-        assert len(filtered_dataframe) == answer
-        assert len(item_list) == item_ids
+        items_count = len(filtered_dataframe)
+    elif isinstance(test_dataframe, PolarsDataFrame):
+        item_list = filtered_dataframe["item_id"].unique().to_list()
+        items_count = len(filtered_dataframe)
     else:
-        item_list = filtered_dataframe.select("item_id").distinct().collect()
-        ids = [x[0] for x in item_list]
-        assert filtered_dataframe.count() == answer
-        assert len(ids) == item_ids
+        item_list_df = filtered_dataframe.select("item_id").distinct().collect()
+        item_list = [x[0] for x in item_list_df]
+        items_count = filtered_dataframe.count()
+
+    assert items_count == answer
+    assert len(item_list) == item_ids
