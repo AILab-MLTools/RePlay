@@ -1,6 +1,7 @@
 from typing import List
 
 import pandas as pd
+import polars as pl
 import pytest
 
 from replay.splitters import RatioSplitter
@@ -17,6 +18,10 @@ def _get_column_list(data, column: str) -> List[List]:
 
 def _get_column_list_pandas(data, column: str) -> List[List]:
     return [dataframe[column].tolist() for dataframe in data]
+
+
+def _get_column_list_polars(data, column: str) -> List[List]:
+    return [dataframe[column].to_list() for dataframe in data]
 
 
 def _check_assert(user_ids, item_ids, user_answer, item_answer):
@@ -78,6 +83,11 @@ def pandas_dataframe_test():
     return dataframe
 
 
+@pytest.fixture(scope="module")
+def polars_dataframe_test(pandas_dataframe_test):
+    return pl.from_pandas(pandas_dataframe_test)
+
+
 @pytest.mark.parametrize(
     "ratio, user_answer, item_answer, split_by_fraqtions",
     [
@@ -112,6 +122,7 @@ def pandas_dataframe_test():
     [
         pytest.param("spark_dataframe_test", marks=pytest.mark.spark),
         pytest.param("pandas_dataframe_test", marks=pytest.mark.core),
+        pytest.param("polars_dataframe_test", marks=pytest.mark.core),
     ],
 )
 def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_fraqtions, request, dataset_type):
@@ -129,6 +140,9 @@ def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_
     if dataset_type == "pandas_dataframe_test":
         item_ids = _get_column_list_pandas(filtered_dataframe, "item_id")
         user_ids = _get_column_list_pandas(filtered_dataframe, "user_id")
+    elif dataset_type == "polars_dataframe_test":
+        item_ids = _get_column_list_polars(filtered_dataframe, "item_id")
+        user_ids = _get_column_list_polars(filtered_dataframe, "user_id")
     else:
         item_ids = _get_column_list(filtered_dataframe, "item_id")
         user_ids = _get_column_list(filtered_dataframe, "user_id")
@@ -174,6 +188,7 @@ def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_
     [
         pytest.param("spark_dataframe_test", marks=pytest.mark.spark),
         pytest.param("pandas_dataframe_test", marks=pytest.mark.core),
+        pytest.param("polars_dataframe_test", marks=pytest.mark.core),
     ],
 )
 def test_ratio_splitter_min_user_interactions(
@@ -194,6 +209,9 @@ def test_ratio_splitter_min_user_interactions(
     if dataset_type == "pandas_dataframe_test":
         item_ids = _get_column_list_pandas(filtered_dataframe, "item_id")
         user_ids = _get_column_list_pandas(filtered_dataframe, "user_id")
+    elif dataset_type == "polars_dataframe_test":
+        item_ids = _get_column_list_polars(filtered_dataframe, "item_id")
+        user_ids = _get_column_list_polars(filtered_dataframe, "user_id")
     else:
         item_ids = _get_column_list(filtered_dataframe, "item_id")
         user_ids = _get_column_list(filtered_dataframe, "user_id")
@@ -221,6 +239,7 @@ def test_ratio_splitter_min_user_interactions(
     [
         pytest.param("spark_dataframe_test", marks=pytest.mark.spark),
         pytest.param("pandas_dataframe_test", marks=pytest.mark.core),
+        pytest.param("polars_dataframe_test", marks=pytest.mark.core),
     ],
 )
 def test_ratio_splitter_drop_users(ratio, user_answer, item_answer, dataset_type, request):
@@ -237,6 +256,9 @@ def test_ratio_splitter_drop_users(ratio, user_answer, item_answer, dataset_type
     if dataset_type == "pandas_dataframe_test":
         item_ids = _get_column_list_pandas(filtered_dataframe, "item_id")
         user_ids = _get_column_list_pandas(filtered_dataframe, "user_id")
+    elif dataset_type == "polars_dataframe_test":
+        item_ids = _get_column_list_polars(filtered_dataframe, "item_id")
+        user_ids = _get_column_list_polars(filtered_dataframe, "user_id")
     else:
         item_ids = _get_column_list(filtered_dataframe, "item_id")
         user_ids = _get_column_list(filtered_dataframe, "user_id")
@@ -259,6 +281,7 @@ def test_ratio_splitter_drop_users(ratio, user_answer, item_answer, dataset_type
     [
         pytest.param("spark_dataframe_test", marks=pytest.mark.spark),
         pytest.param("pandas_dataframe_test", marks=pytest.mark.core),
+        pytest.param("polars_dataframe_test", marks=pytest.mark.core),
     ],
 )
 def test_ratio_splitter_drop_items(ratio, user_answer, item_answer, dataset_type, request):
@@ -275,6 +298,9 @@ def test_ratio_splitter_drop_items(ratio, user_answer, item_answer, dataset_type
     if dataset_type == "pandas_dataframe_test":
         item_ids = _get_column_list_pandas(filtered_dataframe, "item_id")
         user_ids = _get_column_list_pandas(filtered_dataframe, "user_id")
+    elif dataset_type == "polars_dataframe_test":
+        item_ids = _get_column_list_polars(filtered_dataframe, "item_id")
+        user_ids = _get_column_list_polars(filtered_dataframe, "user_id")
     else:
         item_ids = _get_column_list(filtered_dataframe, "item_id")
         user_ids = _get_column_list(filtered_dataframe, "user_id")
@@ -334,6 +360,7 @@ def test_datasets_types_mismatch(spark_dataframe_test, pandas_dataframe_test):
     [
         pytest.param("spark_dataframe_test", marks=pytest.mark.spark),
         pytest.param("pandas_dataframe_test", marks=pytest.mark.core),
+        pytest.param("polars_dataframe_test", marks=pytest.mark.core),
     ],
 )
 def test_ratio_splitter_without_drops_with_sessions(
@@ -355,6 +382,9 @@ def test_ratio_splitter_without_drops_with_sessions(
     if dataset_type == "pandas_dataframe_test":
         item_ids = _get_column_list_pandas(filtered_dataframe, "item_id")
         user_ids = _get_column_list_pandas(filtered_dataframe, "user_id")
+    elif dataset_type == "polars_dataframe_test":
+        item_ids = _get_column_list_polars(filtered_dataframe, "item_id")
+        user_ids = _get_column_list_polars(filtered_dataframe, "user_id")
     else:
         item_ids = _get_column_list(filtered_dataframe, "item_id")
         user_ids = _get_column_list(filtered_dataframe, "user_id")
