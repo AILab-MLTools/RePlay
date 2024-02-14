@@ -851,7 +851,7 @@ class TimePeriodFilter(_BaseFilter):
 
     def _format_datetime(self, date: Optional[Union[str, datetime]], time_format: str) -> datetime:
         if isinstance(date, str):
-            date = datetime.strptime(time_format, format)
+            date = datetime.strptime(date, time_format)
         return date
 
     def _filter_spark(self, interactions: SparkDataFrame) -> SparkDataFrame:
