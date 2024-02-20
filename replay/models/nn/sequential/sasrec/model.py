@@ -708,8 +708,8 @@ class TiSasRecLayers(torch.nn.Module):
 
         return seqs
 
-    def _layers_stacker(self, num_blocks: int, LayerClass: Any, *args, **kwargs) -> torch.nn.ModuleList:
-        return torch.nn.ModuleList([LayerClass(*args, **kwargs) for _ in range(num_blocks)])
+    def _layers_stacker(self, num_blocks: int, layer_class: Any, *args, **kwargs) -> torch.nn.ModuleList:
+        return torch.nn.ModuleList([layer_class(*args, **kwargs) for _ in range(num_blocks)])
 
 
 class TiSasRecAttention(torch.nn.Module):
