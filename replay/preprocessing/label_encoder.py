@@ -146,7 +146,7 @@ class LabelEncodingRule(BaseLabelEncodingRule):
 
     def _fit_spark(self, df: SparkDataFrame) -> None:
         unique_col_values = df.select(self._col).distinct().persist(StorageLevel.MEMORY_ONLY)
-        
+
         mapping_on_spark = (
             unique_col_values.rdd.zipWithIndex()
             .toDF(
@@ -154,7 +154,7 @@ class LabelEncodingRule(BaseLabelEncodingRule):
                 .add("_1",
                      StructType()
                      .add(self._col, df.schema[self._col].dataType, True),
-                      True)
+                     True)
                 .add("_2", LongType(), True)
             )
             .select(sf.col(f"_1.{self._col}").alias(self._col), sf.col("_2").alias(self._target_col))
