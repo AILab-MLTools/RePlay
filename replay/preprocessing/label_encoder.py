@@ -13,7 +13,7 @@ from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, Spar
 if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
     from pyspark.storagelevel import StorageLevel
-    from pyspark.sql.types import StructType, StringType, LongType
+    from pyspark.sql.types import StructType, LongType
 
 HandleUnknownStrategies = Literal["error", "use_default_value"]
 
