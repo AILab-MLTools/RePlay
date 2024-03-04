@@ -152,11 +152,15 @@ class TimeSplitter(Splitter):
     ) -> Tuple[DataFrameLike, DataFrameLike]:
         if isinstance(threshold, str):
             threshold = datetime.strptime(threshold, self.time_column_format)
+
         if isinstance(interactions, SparkDataFrame):
             return self._partial_split_spark(interactions, threshold)
         if isinstance(interactions, PandasDataFrame):
             return self._partial_split_pandas(interactions, threshold)
-        return self._partial_split_polars(interactions, threshold)
+        if isinstance(interactions, PolarsDataFrame):
+            return self._partial_split_polars(interactions, threshold)
+
+        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
 
     def _partial_split_pandas(
         self, interactions: PandasDataFrame, threshold: Union[datetime, str, int]

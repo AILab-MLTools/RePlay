@@ -41,6 +41,11 @@ def log_polars(log_pandas):
     return pl.from_pandas(log_pandas)
 
 
+@pytest.fixture()
+def log_not_implemented(log_pandas):
+    return log_pandas.to_numpy()
+
+
 @pytest.mark.parametrize(
     "dataset_type",
     [
@@ -76,3 +81,9 @@ def test_users_are_cold(dataset_type, request):
 def test_bad_test_size():
     with pytest.raises(ValueError):
         NewUsersSplitter(1.2)
+
+
+@pytest.mark.core
+def test_not_implemented_dataframe(log_not_implemented):
+    with pytest.raises(NotImplementedError):
+        NewUsersSplitter(0.2).split(log_not_implemented)

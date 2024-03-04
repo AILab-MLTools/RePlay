@@ -836,6 +836,11 @@ def simple_dataframe_polars(simple_dataframe_pandas):
 
 
 @pytest.fixture(scope="module")
+def dataframe_not_implemented(simple_dataframe_pandas):
+    return simple_dataframe_pandas.to_numpy()
+
+
+@pytest.fixture(scope="module")
 def simple_dataframe_array_pandas():
     columns_array = ["user_id", "item_id", "timestamp"]
     data_array = [

@@ -168,7 +168,10 @@ class RatioSplitter(Splitter):
             return self._add_time_partition_to_spark(interactions)
         if isinstance(interactions, PandasDataFrame):
             return self._add_time_partition_to_pandas(interactions)
-        return self._add_time_partition_to_polars(interactions)
+        if isinstance(interactions, PolarsDataFrame):
+            return self._add_time_partition_to_polars(interactions)
+
+        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
 
     def _add_time_partition_to_pandas(self, interactions: PandasDataFrame) -> PandasDataFrame:
         res = interactions.copy(deep=True)
@@ -208,7 +211,8 @@ class RatioSplitter(Splitter):
             return self._partial_split_fraqtions_spark(res, train_size)
         if isinstance(res, PandasDataFrame):
             return self._partial_split_fraqtions_pandas(res, train_size)
-        return self._partial_split_fraqtions_polars(res, train_size)
+        else:
+            return self._partial_split_fraqtions_polars(res, train_size)
 
     def _partial_split_fraqtions_pandas(
         self, interactions: PandasDataFrame, train_size: float
@@ -293,7 +297,8 @@ class RatioSplitter(Splitter):
             return self._partial_split_spark(res, ratio)
         if isinstance(res, PandasDataFrame):
             return self._partial_split_pandas(res, ratio)
-        return self._partial_split_polars(res, ratio)
+        else:
+            return self._partial_split_polars(res, ratio)
 
     def _partial_split_pandas(
         self, interactions: PandasDataFrame, ratio: float

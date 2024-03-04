@@ -42,6 +42,11 @@ def log_polars(log_pandas):
     return pl.from_pandas(log_pandas)
 
 
+@pytest.fixture
+def log_not_implemented(log_pandas):
+    return log_pandas.to_numpy()
+
+
 @pytest.mark.parametrize(
     "dataset_type",
     [
@@ -312,3 +317,18 @@ def test_split_proportion(dataset_type, request):
     else:
         num_items = test.toPandas().user_id.value_counts()
         assert num_items[0] == 1
+
+
+@pytest.mark.core
+def test_not_implemented_dataframe(log_not_implemented):
+    with pytest.raises(NotImplementedError):
+        TwoStageSplitter(
+            first_divide_size=1,
+            second_divide_size=0.4,
+        ).split(log_not_implemented)
+
+    with pytest.raises(NotImplementedError):
+        TwoStageSplitter(
+            first_divide_size=1,
+            second_divide_size=2,
+        ).split(log_not_implemented)

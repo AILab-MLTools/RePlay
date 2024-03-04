@@ -269,10 +269,12 @@ class TwoStageSplitter(Splitter):
         """
         if isinstance(interactions, SparkDataFrame):
             return self._split_proportion_spark(interactions)
-        elif isinstance(interactions, PandasDataFrame):
+        if isinstance(interactions, PandasDataFrame):
             return self._split_proportion_pandas(interactions)
-        else:
+        if isinstance(interactions, PolarsDataFrame):
             return self._split_proportion_polars(interactions)
+
+        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
 
     def _split_quantity_spark(self, interactions: SparkDataFrame) -> SparkDataFrame:
         test_users = self._get_test_values(interactions).withColumn(
@@ -360,7 +362,10 @@ class TwoStageSplitter(Splitter):
             return self._split_quantity_spark(interactions)
         if isinstance(interactions, PandasDataFrame):
             return self._split_quantity_pandas(interactions)
-        return self._split_quantity_polars(interactions)
+        if isinstance(interactions, PolarsDataFrame):
+            return self._split_quantity_polars(interactions)
+
+        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
 
     def _core_split(self, interactions: DataFrameLike) -> SplitterReturnType:
         if 0 <= self.second_divide_size < 1.0:

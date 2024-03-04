@@ -26,6 +26,11 @@ def df_polars(df):
     return pl.from_pandas(df)
 
 
+@pytest.fixture
+def df_not_implemented(df):
+    return df.to_numpy()
+
+
 @pytest.mark.spark
 def test_sum_spark(df_spark):
     res = pd.DataFrame()
@@ -60,3 +65,9 @@ def test_sum_polars(df_polars):
 def test_wrong_type():
     with pytest.raises(ValueError):
         next(KFolds(2, strategy="totally not query"))
+
+
+@pytest.mark.core
+def test_not_implemented_dataframe(df_not_implemented):
+    with pytest.raises(NotImplementedError):
+        KFolds(2).split(df_not_implemented)

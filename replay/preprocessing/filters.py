@@ -29,7 +29,10 @@ class _BaseFilter(ABC):
             return self._filter_spark(interactions)
         elif isinstance(interactions, PandasDataFrame):
             return self._filter_pandas(interactions)
-        return self._filter_polars(interactions)
+        elif isinstance(interactions, PolarsDataFrame):
+            return self._filter_polars(interactions)
+        else:
+            raise NotImplementedError(f"{self.__class__.__name__} is not implemented for {type(interactions)}")
 
     @abstractmethod
     def _filter_spark(self, interactions: SparkDataFrame):  # pragma: no cover
@@ -212,7 +215,7 @@ class InteractionEntriesFilter(_BaseFilter):
             filtered_interactions = filtered_interactions.filter(sf.col("count") <= max_inter)
         filtered_interactions = filtered_interactions.drop("count")
 
-        if self.allow_caching is True:
+        if self.allow_caching:
             filtered_interactions.cache()
             interactions.unpersist()
         end_len_dataframe = filtered_interactions.count()
@@ -492,7 +495,7 @@ class NumInteractionsFilter(_BaseFilter):
         if self.item_column is not None:
             sorting_columns.append(self.item_column)
 
-        descending = [not self.first] * len(sorting_columns)
+        descending = not self.first
 
         return (
             interactions

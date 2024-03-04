@@ -84,7 +84,8 @@ class Splitter(ABC):
             return self._drop_cold_items_and_users_from_spark(train, test)
         if isinstance(test, PandasDataFrame):
             return self._drop_cold_items_and_users_from_pandas(train, test)
-        return self._drop_cold_items_and_users_from_polars(train, test)
+        else:
+            return self._drop_cold_items_and_users_from_polars(train, test)
 
     def _drop_cold_items_and_users_from_pandas(
         self,
@@ -157,7 +158,8 @@ class Splitter(ABC):
             return self._recalculate_with_session_id_column_spark(data)
         if isinstance(data, PandasDataFrame):
             return self._recalculate_with_session_id_column_pandas(data)
-        return self._recalculate_with_session_id_column_polars(data)
+        else:
+            return self._recalculate_with_session_id_column_polars(data)
 
     def _recalculate_with_session_id_column_pandas(self, data: PandasDataFrame) -> PandasDataFrame:
         agg_function_name = "first" if self.session_id_processing_strategy == "train" else "last"

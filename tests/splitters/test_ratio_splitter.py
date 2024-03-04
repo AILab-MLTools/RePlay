@@ -88,6 +88,11 @@ def polars_dataframe_test(pandas_dataframe_test):
     return pl.from_pandas(pandas_dataframe_test)
 
 
+@pytest.fixture(scope="module")
+def dataframe_not_implemented(pandas_dataframe_test):
+    return pandas_dataframe_test.to_numpy()
+
+
 @pytest.mark.parametrize(
     "ratio, user_answer, item_answer, split_by_fraqtions",
     [
@@ -398,3 +403,9 @@ def test_original_dataframe_not_change(pandas_dataframe_test):
     RatioSplitter(0.5, query_column="user_id", divide_column="user_id",).split(original_dataframe)
 
     assert original_dataframe.equals(pandas_dataframe_test)
+
+
+@pytest.mark.core
+def test_not_implemented_dataframe(dataframe_not_implemented):
+    with pytest.raises(NotImplementedError):
+        RatioSplitter(0.5).split(dataframe_not_implemented)
