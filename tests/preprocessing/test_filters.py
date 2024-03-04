@@ -39,6 +39,7 @@ def interactions_spark(interactions_pandas):
 def interactions_polars(interactions_pandas):
     return pl.from_pandas(interactions_pandas)
 
+
 @pytest.fixture
 def interactions_not_implemented(interactions_pandas):
     return interactions_pandas.to_numpy()
