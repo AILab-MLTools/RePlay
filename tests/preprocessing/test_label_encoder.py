@@ -446,7 +446,7 @@ def test_label_encoder_pandas_transform_optimization(simple_dataframe_pandas):
 
 @pytest.mark.core
 @pytest.mark.usefixtures("dataframe_not_implemented")
-def test_label_encoder_pandas_transform_optimization(dataframe_not_implemented):
+def test_label_encoder_not_implemented_df(dataframe_not_implemented):
     rule = LabelEncodingRule("user_id", default_value="last")
     with pytest.raises(NotImplementedError):
         LabelEncoder([rule]).fit(dataframe_not_implemented)
