@@ -119,6 +119,11 @@ def log_polars(log_pandas):
     return pl.from_pandas(log_pandas)
 
 
+@pytest.fixture()
+def log_not_implemented(log_pandas):
+    return log_pandas.to_numpy()
+
+
 @pytest.mark.parametrize(
     "time_threshold, user_answer, item_answer",
     [
@@ -525,3 +530,9 @@ def test_wrong_threshold_format_passed(dataset_type, request, split_date):
     )
     with pytest.raises(ValueError):
         splitter.split(log)
+
+
+@pytest.mark.core
+def test_not_implemented_dataframe(log_not_implemented):
+    with pytest.raises(NotImplementedError):
+        TimeSplitter(0.5).split(log_not_implemented)

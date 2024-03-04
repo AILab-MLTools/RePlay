@@ -231,4 +231,7 @@ class NewUsersSplitter(Splitter):
             return self._core_split_spark(interactions, self.test_size)
         if isinstance(interactions, PandasDataFrame):
             return self._core_split_pandas(interactions, self.test_size)
-        return self._core_split_polars(interactions, self.test_size)
+        if isinstance(interactions, PolarsDataFrame):
+            return self._core_split_polars(interactions, self.test_size)
+
+        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")

@@ -39,6 +39,10 @@ def interactions_spark(interactions_pandas):
 def interactions_polars(interactions_pandas):
     return pl.from_pandas(interactions_pandas)
 
+@pytest.fixture
+def interactions_not_implemented(interactions_pandas):
+    return interactions_pandas.to_numpy()
+
 
 @pytest.mark.parametrize(
     "dataset_type",
@@ -210,3 +214,20 @@ def test_timeperiod_filter(dataset_type, start, end, answer, item_ids, request):
 
     assert items_count == answer
     assert len(item_list) == item_ids
+
+
+@pytest.mark.core
+@pytest.mark.parametrize(
+    "filter, kwargs",
+    [
+        (MinCountFilter, {"num_entries": 1}),
+        (LowRatingFilter, {"value": 3}),
+        (NumInteractionsFilter, {}),
+        (EntityDaysFilter, {}),
+        (GlobalDaysFilter, {}),
+        (TimePeriodFilter, {}),
+    ],
+)
+def test_filter_not_implemented(filter, kwargs, interactions_not_implemented):
+    with pytest.raises(NotImplementedError):
+        filter(**kwargs).transform(interactions_not_implemented)

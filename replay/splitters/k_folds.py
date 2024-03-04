@@ -150,4 +150,7 @@ class KFolds(Splitter):
                 return self._query_split_spark(interactions)
             if isinstance(interactions, PandasDataFrame):
                 return self._query_split_pandas(interactions)
-            return self._query_split_polars(interactions)
+            if isinstance(interactions, PolarsDataFrame):
+                return self._query_split_polars(interactions)
+
+            raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")

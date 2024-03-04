@@ -169,7 +169,10 @@ class LastNSplitter(Splitter):
             return self._add_time_partition_to_spark(interactions)
         if isinstance(interactions, PandasDataFrame):
             return self._add_time_partition_to_pandas(interactions)
-        return self._add_time_partition_to_polars(interactions)
+        if isinstance(interactions, PolarsDataFrame):
+            return self._add_time_partition_to_polars(interactions)
+
+        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
 
     def _add_time_partition_to_pandas(self, interactions: PandasDataFrame) -> PandasDataFrame:
         res = interactions.copy(deep=True)
@@ -199,7 +202,10 @@ class LastNSplitter(Splitter):
             return self._to_unix_timestamp_spark(interactions)
         if isinstance(interactions, PandasDataFrame):
             return self._to_unix_timestamp_pandas(interactions)
-        return self._to_unix_timestamp_polars(interactions)
+        if isinstance(interactions, PolarsDataFrame):
+            return self._to_unix_timestamp_polars(interactions)
+
+        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
 
     def _to_unix_timestamp_pandas(self, interactions: PandasDataFrame) -> PandasDataFrame:
         time_column_type = dict(interactions.dtypes)[self.timestamp_column]
@@ -234,8 +240,8 @@ class LastNSplitter(Splitter):
             return self._partial_split_interactions_spark(res, N)
         if isinstance(interactions, PandasDataFrame):
             return self._partial_split_interactions_pandas(res, N)
-
-        return self._partial_split_interactions_polars(res, N)
+        else:
+            return self._partial_split_interactions_polars(res, N)
 
     def _partial_split_interactions_pandas(
         self, interactions: PandasDataFrame, N: int
@@ -294,8 +300,8 @@ class LastNSplitter(Splitter):
             return self._partial_split_timedelta_spark(interactions, timedelta)
         if isinstance(interactions, PandasDataFrame):
             return self._partial_split_timedelta_pandas(interactions, timedelta)
-
-        return self._partial_split_timedelta_polars(interactions, timedelta)
+        else:
+            return self._partial_split_timedelta_polars(interactions, timedelta)
 
     def _partial_split_timedelta_pandas(
         self, interactions: PandasDataFrame, timedelta: int

@@ -89,6 +89,11 @@ def polars_dataframe_test(pandas_dataframe_test):
     return pl.from_pandas(pandas_dataframe_test)
 
 
+@pytest.fixture(scope="module")
+def dataframe_not_implemented(pandas_dataframe_test):
+    return pandas_dataframe_test.to_numpy()
+
+
 @pytest.mark.parametrize("strategy", ["interacitons", "INTERACTIONS", "interaction", "second"])
 def test_lastnsplitter_wrong_strategy(strategy):
     with pytest.raises(ValueError):
@@ -594,6 +599,7 @@ def test_last_n_seconds_to_unix_timestamp(dataset_type, result_type, request):
         assert dataframe_splitted["timestamp"].dtype == result_type
 
 
+@pytest.mark.core
 def test_invalid_unix_timestamp(pandas_dataframe_test):
     pandas_dataframe_test_formated_time = LastNSplitter(
         N=86400,
@@ -610,9 +616,19 @@ def test_invalid_unix_timestamp(pandas_dataframe_test):
     assert pandas_dataframe_test_formated_time["timestamp"].dtype == np.dtype("<M8[ns]")
 
 
+@pytest.mark.core
 def test_original_dataframe_not_change(pandas_dataframe_test):
     original_dataframe = pandas_dataframe_test.copy(deep=True)
 
     LastNSplitter(5, divide_column="user_id", query_column="user_id").split(original_dataframe)
 
     assert original_dataframe.equals(pandas_dataframe_test)
+
+
+@pytest.mark.core
+def test_not_implemented_dataframe(dataframe_not_implemented):
+    with pytest.raises(NotImplementedError):
+        LastNSplitter(5).split(dataframe_not_implemented)
+
+    with pytest.raises(NotImplementedError):
+        LastNSplitter(5, strategy="timedelta").split(dataframe_not_implemented)

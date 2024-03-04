@@ -195,8 +195,10 @@ class LabelEncodingRule(BaseLabelEncodingRule):
             self._fit_pandas(df)
         elif isinstance(df, SparkDataFrame):
             self._fit_spark(df)
-        else:
+        elif isinstance(df, PolarsDataFrame):
             self._fit_polars(df)
+        else:
+            raise NotImplementedError(f"{self.__class__.__name__} is not implemented for {type(df)}")
         self._inverse_mapping = self._make_inverse_mapping()
         self._inverse_mapping_list = self._make_inverse_mapping_list()
         if self._handle_unknown == "use_default_value":
@@ -271,8 +273,10 @@ class LabelEncodingRule(BaseLabelEncodingRule):
             self._partial_fit_spark(df)
         elif isinstance(df, PandasDataFrame):
             self._partial_fit_pandas(df)
-        else:
+        elif isinstance(df, PolarsDataFrame):
             self._partial_fit_polars(df)
+        else:
+            raise NotImplementedError(f"{self.__class__.__name__} is not implemented for {type(df)}")
 
         self._is_fitted = True
         return self
@@ -365,8 +369,10 @@ class LabelEncodingRule(BaseLabelEncodingRule):
             transformed_df = self._transform_pandas(df, default_value)  # type: ignore
         elif isinstance(df, SparkDataFrame):
             transformed_df = self._transform_spark(df, default_value)  # type: ignore
-        else:
+        elif isinstance(df, PolarsDataFrame):
             transformed_df = self._transform_polars(df, default_value)  # type: ignore
+        else:
+            raise NotImplementedError(f"{self.__class__.__name__} is not implemented for {type(df)}")
         return transformed_df
 
     def _inverse_transform_pandas(self, df: PandasDataFrame) -> PandasDataFrame:
@@ -411,8 +417,10 @@ class LabelEncodingRule(BaseLabelEncodingRule):
             transformed_df = self._inverse_transform_pandas(df)
         elif isinstance(df, SparkDataFrame):
             transformed_df = self._inverse_transform_spark(df)
-        else:
+        elif isinstance(df, PolarsDataFrame):
             transformed_df = self._inverse_transform_polars(df)
+        else:
+            raise NotImplementedError(f"{self.__class__.__name__} is not implemented for {type(df)}")
         return transformed_df
 
     def set_default_value(self, default_value: Optional[Union[int, str]]) -> None:

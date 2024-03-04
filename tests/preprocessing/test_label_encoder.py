@@ -442,3 +442,22 @@ def test_label_encoder_pandas_transform_optimization(simple_dataframe_pandas):
     mapped_data_mod = encoder_mod.transform(simple_dataframe_pandas)
 
     assert mapped_data.equals(mapped_data_mod)
+
+
+@pytest.mark.core
+@pytest.mark.usefixtures("dataframe_not_implemented")
+def test_label_encoder_pandas_transform_optimization(dataframe_not_implemented):
+    rule = LabelEncodingRule("user_id", default_value="last")
+    with pytest.raises(NotImplementedError):
+        LabelEncoder([rule]).fit(dataframe_not_implemented)
+
+    rule._mapping = {"fake": "mapping"}
+    encoder = LabelEncoder([rule])
+    with pytest.raises(NotImplementedError):
+        encoder.transform(dataframe_not_implemented)
+
+    with pytest.raises(NotImplementedError):
+        encoder.partial_fit(dataframe_not_implemented)
+
+    with pytest.raises(NotImplementedError):
+        encoder.inverse_transform(dataframe_not_implemented)

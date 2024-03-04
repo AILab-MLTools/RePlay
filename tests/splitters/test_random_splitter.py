@@ -92,6 +92,11 @@ def log_polars(log):
     return pl.from_pandas(log)
 
 
+@pytest.fixture()
+def log_not_implemented(log):
+    return log.to_numpy()
+
+
 SEED = 7777
 test_sizes = [0.1, 0.3, 0.5, 0.7, 0.9]
 
@@ -180,3 +185,9 @@ def test_with_multiple_splitting(dataset_type, request):
         assert train.count() + test.count() == log.count()
 
     assert np.isclose(real_test_size, 0.6, atol=0.015)
+
+
+@pytest.mark.core
+def test_not_implemented_dataframe(log_not_implemented):
+    with pytest.raises(NotImplementedError):
+        RandomSplitter(0.2).split(log_not_implemented)
