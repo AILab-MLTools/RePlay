@@ -203,7 +203,7 @@ class Metric(ABC):
             metrics.append(self._mode.cpu(distribution[:, k]))
         return self._aggregate_results(metrics)
 
-    def _get_items_list_per_user(
+    def _get_items_list_per_user_spark(
         self, recommendations: SparkDataFrame, extra_column: str = None
     ) -> SparkDataFrame:
         recommendations = recommendations.groupby(self.query_column).agg(
@@ -229,6 +229,36 @@ class Metric(ABC):
 
         recommendations = recommendations.select(*selection)
         return recommendations
+
+    def _get_items_list_per_user_polars(
+        self, recommendations: PolarsDataFrame, extra_column: str = None
+    ) -> PolarsDataFrame:
+        selection = [self.query_column, "pred_item_id"]
+        sorting = [self.rating_column, self.item_column]
+        agg = [pl.col(self.item_column)]
+        if extra_column is not None:
+            sorting.append(extra_column)
+            agg.append(pl.col(extra_column))
+            selection.append(extra_column)
+
+        recommendations = (
+            recommendations
+            .sort(sorting, descending=True)
+            .group_by(self.query_column)
+            .agg(*agg)
+            .rename({self.item_column: "pred_item_id"})
+        )
+
+        recommendations = recommendations.select(*selection)
+        return recommendations
+
+    def _get_items_list_per_user(
+        self, recommendations: Union[SparkDataFrame, PolarsDataFrame], extra_column: str = None
+    ) -> Union[SparkDataFrame, PolarsDataFrame]:
+        if isinstance(recommendations, SparkDataFrame):
+            return self._get_items_list_per_user_spark(recommendations, extra_column)
+        else:
+            return self._get_items_list_per_user_polars(recommendations, extra_column)
 
     def _rearrange_columns(
         self, data: Union[SparkDataFrame, PolarsDataFrame]
@@ -269,14 +299,6 @@ class Metric(ABC):
         recommendations: PolarsDataFrame,
         ground_truth: PolarsDataFrame,
     ) -> PolarsDataFrame:
-        sorted_by_score_recommendations = (
-            recommendations
-            .sort(self.rating_column, descending=True)
-            .group_by(self.query_column)
-            .agg(pl.col(self.item_column))
-            .rename({self.item_column: "pred_item_id"})
-        )
-
         true_items_by_users = (
             ground_truth
             .group_by(self.query_column)
@@ -284,8 +306,10 @@ class Metric(ABC):
             .rename({self.item_column: "ground_truth"})
         )
 
-        enriched_recommendations = sorted_by_score_recommendations.join(
-            true_items_by_users, on=self.query_column
+        sorted_by_score_recommendations = self._get_items_list_per_user(recommendations)
+
+        enriched_recommendations = true_items_by_users.join(
+            sorted_by_score_recommendations, on=self.query_column, how="left"
         )
         return self._rearrange_columns(enriched_recommendations)
 
@@ -379,7 +403,7 @@ class Metric(ABC):
 
     def _get_metric_distribution_polars(self, recs: PolarsDataFrame) -> PolarsDataFrame:
         cur_class = self.__class__
-        distribution = recs.map_rows(lambda x: (x[0], *cur_class._get_metric_value_by_user(self.topk, x[1], x[2])))
+        distribution = recs.map_rows(lambda x: (x[0], *cur_class._get_metric_value_by_user(self.topk, *x[1:])))
         distribution = distribution.rename({"column_0": self.query_column})
         distribution = distribution.rename(
             {distribution.columns[x + 1]: f"value_{self.topk[x]}"

@@ -142,12 +142,8 @@ class Surprisal(Metric):
             item_weights, on=self.item_column, how="left"
         ).fill_nan(1.0)
 
-        sorted_by_score_recommendations = (
-            recommendations
-            .sort(self.rating_column, descending=True)
-            .group_by(self.query_column)
-            .agg(pl.col(self.item_column, "weight"))
-            .rename({self.item_column: "pred_item_id"})
+        sorted_by_score_recommendations = self._get_items_list_per_user(
+            recommendations, "weight"
         )
         return self._rearrange_columns(sorted_by_score_recommendations)
 
