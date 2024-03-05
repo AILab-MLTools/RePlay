@@ -1,5 +1,4 @@
 from typing import List, Optional, Union
-import polars as pl
 
 from replay.utils import PandasDataFrame, SparkDataFrame, PolarsDataFrame
 
@@ -91,21 +90,11 @@ class Unexpectedness(Metric):
     def _get_enriched_recommendations_polars(  # pylint: disable=arguments-renamed
         self, recommendations: PolarsDataFrame, base_recommendations: PolarsDataFrame
     ) -> PolarsDataFrame:
-        sorted_by_score_recommendations = (
-            recommendations
-            .sort(self.rating_column, descending=True)
-            .group_by(self.query_column)
-            .agg(pl.col(self.item_column))
-            .rename({self.item_column: "pred_item_id"})
-        )
+        sorted_by_score_recommendations = self._get_items_list_per_user(recommendations)
 
-        sorted_by_score_base_recommendations = (
+        sorted_by_score_base_recommendations = self._get_items_list_per_user(
             base_recommendations
-            .sort(self.rating_column, descending=True)
-            .group_by(self.query_column)
-            .agg(pl.col(self.item_column))
-            .rename({self.item_column: "base_pred_item_id"})
-        )
+        ).rename({"pred_item_id": "base_pred_item_id"})
 
         enriched_recommendations = sorted_by_score_recommendations.join(
             sorted_by_score_base_recommendations, how="left", on=self.query_column

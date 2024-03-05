@@ -461,25 +461,19 @@ class OfflineMetrics:
                 )
 
         result = {}
-        if isinstance(recommendations, SparkDataFrame):
-            assert isinstance(ground_truth, SparkDataFrame)
-            assert train is None or isinstance(train, SparkDataFrame)
+        if isinstance(recommendations, (SparkDataFrame, PolarsDataFrame)):
+            is_spark = isinstance(recommendations, SparkDataFrame)
+            assert isinstance(ground_truth, type(recommendations))
+            assert train is None or isinstance(train, type(recommendations))
             enriched_recs_dict, train = self._get_enriched_recommendations(
                 recommendations, ground_truth, train
             )
 
-            if self._allow_caching:
+            if is_spark and self._allow_caching:
                 self._cache_dataframes(enriched_recs_dict)
-            result.update(self._calculate_metrics(enriched_recs_dict, train))
-            if self._allow_caching:
+            result.update(self._calculate_metrics(enriched_recs_dict, train, is_spark))
+            if is_spark and self._allow_caching:
                 self._unpersist_dataframes(enriched_recs_dict)
-        elif isinstance(recommendations, PolarsDataFrame):
-            assert isinstance(ground_truth, PolarsDataFrame)
-            assert train is None or isinstance(train, PolarsDataFrame)
-            enriched_recs_dict, train = self._get_enriched_recommendations(
-                recommendations, ground_truth, train
-            )
-            result.update(self._calculate_metrics(enriched_recs_dict, train, is_spark=False))
         else:  # Calculating metrics in dict format
             current_map: Dict[str, Union[PandasDataFrame, Dict]] = {
                 "ground_truth": ground_truth,
