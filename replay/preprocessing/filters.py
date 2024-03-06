@@ -506,7 +506,7 @@ class NumInteractionsFilter(_BaseFilter):
                 .over(self.query_column)
                 .alias("temp_rank")
             )
-            .filter(pl.col("temp_rank") <= 1).drop("temp_rank")
+            .filter(pl.col("temp_rank") <= self.num_interactions).drop("temp_rank")
         )
 
 

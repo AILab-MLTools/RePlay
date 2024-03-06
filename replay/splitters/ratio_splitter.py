@@ -91,7 +91,7 @@ class RatioSplitter(Splitter):
         "item_column",
         "timestamp_column",
         "min_interactions_per_group",
-        "split_by_fraqtions",
+        "split_by_fractions",
         "session_id_column",
         "session_id_processing_strategy",
     ]
@@ -107,7 +107,7 @@ class RatioSplitter(Splitter):
         item_column: str = "item_id",
         timestamp_column: str = "timestamp",
         min_interactions_per_group: Optional[int] = None,
-        split_by_fraqtions: bool = True,
+        split_by_fractions: bool = True,
         session_id_column: Optional[str] = None,
         session_id_processing_strategy: str = "test",
     ):
@@ -131,7 +131,7 @@ class RatioSplitter(Splitter):
             if value is less than min_interactions_per_group, than whole group goes to train.
             If not set, than any amount of interactions will be split.
             default: ``None``.
-        :param split_by_fraqtions: the variable that is responsible for using the split by fractions.
+        :param split_by_fractions: the variable that is responsible for using the split by fractions.
             Split by fractions means that each line is marked with its fraq (line number / number of lines)
             and only those lines with a fraq > test_ratio get into the test.
             Split not by fractions means that the number of rows in the train is calculated by rounding the formula:
@@ -158,7 +158,7 @@ class RatioSplitter(Splitter):
         self.divide_column = divide_column
         self._precision = 3
         self.min_interactions_per_group = min_interactions_per_group
-        self.split_by_fraqtions = split_by_fraqtions
+        self.split_by_fractions = split_by_fractions
         if test_size < 0 or test_size > 1:
             raise ValueError("test_size must between 0 and 1")
         self.test_size = test_size
@@ -201,20 +201,20 @@ class RatioSplitter(Splitter):
 
         return res
 
-    def _partial_split_fraqtions(
+    def _partial_split_fractions(
         self, interactions: DataFrameLike, ratio: float
     ) -> Tuple[DataFrameLike, DataFrameLike]:
         res = self._add_time_partition(interactions)
         train_size = round(1 - ratio, self._precision)
 
         if isinstance(res, SparkDataFrame):
-            return self._partial_split_fraqtions_spark(res, train_size)
+            return self._partial_split_fractions_spark(res, train_size)
         if isinstance(res, PandasDataFrame):
-            return self._partial_split_fraqtions_pandas(res, train_size)
+            return self._partial_split_fractions_pandas(res, train_size)
         else:
-            return self._partial_split_fraqtions_polars(res, train_size)
+            return self._partial_split_fractions_polars(res, train_size)
 
-    def _partial_split_fraqtions_pandas(
+    def _partial_split_fractions_pandas(
         self, interactions: PandasDataFrame, train_size: float
     ) -> Tuple[PandasDataFrame, PandasDataFrame]:
         interactions["count"] = interactions.groupby(self.divide_column, sort=False)[self.divide_column].transform(len)
@@ -231,7 +231,7 @@ class RatioSplitter(Splitter):
 
         return train, test
 
-    def _partial_split_fraqtions_spark(
+    def _partial_split_fractions_spark(
         self, interactions: SparkDataFrame, train_size: float
     ) -> Tuple[SparkDataFrame, SparkDataFrame]:
         interactions = interactions.withColumn(
@@ -259,7 +259,7 @@ class RatioSplitter(Splitter):
 
         return train, test
 
-    def _partial_split_fraqtions_polars(
+    def _partial_split_fractions_polars(
         self, interactions: PolarsDataFrame, train_size: float
     ) -> Tuple[PolarsDataFrame, PolarsDataFrame]:
         interactions = interactions.with_columns(
@@ -411,7 +411,7 @@ class RatioSplitter(Splitter):
 
     # pylint: disable=invalid-name
     def _core_split(self, interactions: DataFrameLike) -> List[DataFrameLike]:
-        if self.split_by_fraqtions:
-            return self._partial_split_fraqtions(interactions, self.test_size)
+        if self.split_by_fractions:
+            return self._partial_split_fractions(interactions, self.test_size)
         else:
             return self._partial_split(interactions, self.test_size)

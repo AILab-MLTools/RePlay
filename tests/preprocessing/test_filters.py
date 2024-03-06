@@ -110,7 +110,7 @@ def test_lowrating_filter(dataset_type, request):
 def test_numinteractions_filter(dataset_type, first, item_column, request):
     test_dataframe = request.getfixturevalue(dataset_type)
     filtered_dataframe = NumInteractionsFilter(
-        num_interactions=1, first=first, item_column=item_column
+        num_interactions=2, first=first, item_column=item_column
     ).transform(test_dataframe)
 
     if isinstance(test_dataframe, PandasDataFrame):

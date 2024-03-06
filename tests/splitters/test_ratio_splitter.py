@@ -94,7 +94,7 @@ def dataframe_not_implemented(pandas_dataframe_test):
 
 
 @pytest.mark.parametrize(
-    "ratio, user_answer, item_answer, split_by_fraqtions",
+    "ratio, user_answer, item_answer, split_by_fractions",
     [
         (
             0.5,
@@ -130,7 +130,7 @@ def dataframe_not_implemented(pandas_dataframe_test):
         pytest.param("polars_dataframe_test", marks=pytest.mark.core),
     ],
 )
-def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_fraqtions, request, dataset_type):
+def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_fractions, request, dataset_type):
     dataframe = request.getfixturevalue(dataset_type)
 
     filtered_dataframe = RatioSplitter(
@@ -139,7 +139,7 @@ def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_
         query_column="user_id",
         drop_cold_users=False,
         drop_cold_items=False,
-        split_by_fraqtions=split_by_fraqtions,
+        split_by_fractions=split_by_fractions,
     ).split(dataframe)
 
     if dataset_type == "pandas_dataframe_test":
@@ -156,7 +156,7 @@ def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_
 
 
 @pytest.mark.parametrize(
-    "ratio, user_answer, item_answer, min_interactions_per_group, split_by_fraqtions",
+    "ratio, user_answer, item_answer, min_interactions_per_group, split_by_fractions",
     [
         (
             0.5,
@@ -197,7 +197,7 @@ def test_ratio_splitter_without_drops(ratio, user_answer, item_answer, split_by_
     ],
 )
 def test_ratio_splitter_min_user_interactions(
-    ratio, user_answer, item_answer, min_interactions_per_group, split_by_fraqtions, dataset_type, request
+    ratio, user_answer, item_answer, min_interactions_per_group, split_by_fractions, dataset_type, request
 ):
     dataframe = request.getfixturevalue(dataset_type)
 
@@ -208,7 +208,7 @@ def test_ratio_splitter_min_user_interactions(
         drop_cold_users=False,
         drop_cold_items=False,
         min_interactions_per_group=min_interactions_per_group,
-        split_by_fraqtions=split_by_fraqtions,
+        split_by_fractions=split_by_fractions,
     ).split(dataframe)
 
     if dataset_type == "pandas_dataframe_test":
@@ -328,7 +328,7 @@ def test_datasets_types_mismatch(spark_dataframe_test, pandas_dataframe_test):
 
 
 @pytest.mark.parametrize(
-    "ratio, user_answer, item_answer, split_by_fraqtions, session_id_processing_strategy",
+    "ratio, user_answer, item_answer, split_by_fractions, session_id_processing_strategy",
     [
         (
             0.1,
@@ -369,7 +369,7 @@ def test_datasets_types_mismatch(spark_dataframe_test, pandas_dataframe_test):
     ],
 )
 def test_ratio_splitter_without_drops_with_sessions(
-    ratio, user_answer, item_answer, split_by_fraqtions, session_id_processing_strategy, dataset_type, request
+    ratio, user_answer, item_answer, split_by_fractions, session_id_processing_strategy, dataset_type, request
 ):
     dataframe = request.getfixturevalue(dataset_type)
 
@@ -379,7 +379,7 @@ def test_ratio_splitter_without_drops_with_sessions(
         query_column="user_id",
         drop_cold_users=False,
         drop_cold_items=False,
-        split_by_fraqtions=split_by_fraqtions,
+        split_by_fractions=split_by_fractions,
         session_id_column="session_id",
         session_id_processing_strategy=session_id_processing_strategy,
     ).split(dataframe)

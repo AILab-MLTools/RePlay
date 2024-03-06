@@ -186,7 +186,7 @@ class Splitter(ABC):
     def _recalculate_with_session_id_column_polars(self, data: PolarsDataFrame) -> PolarsDataFrame:
         agg_function = pl.Expr.first if self.session_id_processing_strategy == "train" else pl.Expr.last
         res = data.with_columns(
-            agg_function(pl.col("is_test").sort_by("timestamp"))
-            .over(["user_id", "session_id"]))
+            agg_function(pl.col("is_test").sort_by(self.timestamp_column))
+            .over([self.query_column, self.session_id_column]))
 
         return res
