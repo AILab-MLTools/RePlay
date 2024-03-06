@@ -2,7 +2,9 @@ import abc
 from typing import Tuple, Union
 
 import numpy as np
+import polars as pl
 from pandas import DataFrame as PandasDataFrame
+from polars import DataFrame as PolarsDataFrame
 
 from replay.data.schema import FeatureType
 from .schema import TensorSchema
@@ -179,6 +181,113 @@ class PandasSequentialDataset(SequentialDataset):
 
     @classmethod
     def _check_if_schema_matches_data(cls, tensor_schema: TensorSchema, data: PandasDataFrame) -> None:
+        for tensor_feature_name in tensor_schema.keys():
+            if tensor_feature_name not in data:
+                raise ValueError("Tensor schema does not match with provided data frame")
+            
+
+class PolarsSequentialDataset(SequentialDataset):
+    """
+    Sequential dataset that stores sequences in PolarsDataFrame format.
+    """
+
+    def __init__(
+        self,
+        tensor_schema: TensorSchema,
+        query_id_column: str,
+        item_id_column: str,
+        sequences: PolarsDataFrame,
+    ) -> None:
+        """
+        :param tensor_schema: schema of tensor features.
+        :param query_id_column: The name of the column containing query ids.
+        :param item_id_column: The name of the column containing item ids.
+        :param sequences: PolarsDataFrame with sequences corresponding to the tensor schema.
+        """
+        self._check_if_schema_matches_data(tensor_schema, sequences)
+
+        self._tensor_schema = tensor_schema
+        self._query_id_column = query_id_column
+        self._item_id_column = item_id_column
+
+        self._sequences = sequences
+
+        for feature in tensor_schema.all_features:
+            if feature.feature_type == FeatureType.CATEGORICAL:
+                # pylint: disable=protected-access
+                feature._set_cardinality_callback(self.cardinality_callback)
+
+    def __len__(self) -> int:
+        return len(self._sequences)
+
+    def cardinality_callback(self, column: str) -> int:
+        if self._query_id_column == column:
+            return self._sequences.n_unique(self._query_id_column)
+        return self._sequences.n_unique(pl.col(self._item_id_column).arr.explode())
+
+    def get_query_id(self, index: int) -> int:
+        return (
+            self._sequences
+            .sort(self._query_id_column)
+            .with_columns(row_num=pl.int_range(len(self._sequences)))
+            .filter(pl.col("row_num") == index)
+            .select(self._query_id_column)
+            .rows()[0][0]
+        )
+
+    def get_all_query_ids(self) -> np.ndarray:
+        return self._sequences[self._query_id_column].unique().to_numpy()
+
+    def get_sequence_length(self, index: int) -> int:
+        return len(
+            self._sequences
+            .sort(self._query_id_column)
+            .with_columns(row_num=pl.int_range(len(self._sequences)))
+            .filter(pl.col("row_num") == index)
+            .select(self._item_id_column)
+            .rows()[0][0]
+        )
+
+    def get_max_sequence_length(self) -> int:
+        return self._sequences[self._item_id_column].list.len().max()
+
+    def get_sequence(self, index: Union[int, np.ndarray], feature_name: str) -> np.ndarray:
+        return self._sequences.sort(self._query_id_column)[feature_name].to_numpy()[index]
+
+    def get_sequence_by_query_id(self, query_id: Union[int, np.ndarray], feature_name: str) -> np.ndarray:
+        result = (
+            pl.DataFrame({self._query_id_column: query_id})
+            .join(self._sequences, on=self._query_id_column, how="left")
+            .drop_nulls()
+            [feature_name].to_numpy()
+        )
+        if len(result) == len(query_id):
+            return result
+        else:
+            return np.array([], dtype=np.int64)
+
+    def filter_by_query_id(self, query_ids_to_keep: np.ndarray) -> "PolarsSequentialDataset":
+        filtered_sequences = (
+            pl.DataFrame({self._query_id_column: query_ids_to_keep})
+            .join(self._sequences, on=self._query_id_column, how="left")
+            .drop_nulls()
+        )
+        if len(filtered_sequences) == len(query_ids_to_keep):
+            return PolarsSequentialDataset(
+                tensor_schema=self._tensor_schema,
+                query_id_column=self._query_id_column,
+                item_id_column=self._item_id_column,
+                sequences=filtered_sequences,
+            )
+        else:
+            raise IndexError("Some query ids are not presented in dataframe")
+
+    @property
+    def schema(self) -> TensorSchema:
+        return self._tensor_schema
+
+    @classmethod
+    def _check_if_schema_matches_data(cls, tensor_schema: TensorSchema, data: PolarsDataFrame) -> None:
         for tensor_feature_name in tensor_schema.keys():
             if tensor_feature_name not in data:
                 raise ValueError("Tensor schema does not match with provided data frame")
