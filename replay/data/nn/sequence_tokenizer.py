@@ -164,7 +164,7 @@ class SequenceTokenizer:
             dataset_type = PolarsSequentialDataset
         else:
             dataset_type = PandasSequentialDataset
-        
+
         return dataset_type(
             tensor_schema=schema,
             query_id_column=dataset.feature_schema.query_id_column,
@@ -482,6 +482,8 @@ class _SequenceProcessor:
                     .join(self._item_features, on=self._item_id_column, how="left")
                     .select(source.column).to_numpy().reshape(-1).tolist()
                 )
+            else:
+                assert False, "Unknown tensor feature source table"
 
         return (
             self._grouped_interactions
@@ -500,7 +502,7 @@ class _SequenceProcessor:
     def _process_num_feature(self, tensor_feature: TensorFeatureInfo) -> List[np.ndarray]:
         assert tensor_feature.feature_sources is not None
         assert tensor_feature.is_seq
-        
+
         if self._is_polars:
             return self._process_num_feature_polars(tensor_feature)
 
@@ -551,7 +553,7 @@ class _SequenceProcessor:
             else:
                 result = self._query_features
                 repeat_value = 1
-    
+
             return result.select(
                 self._query_id_column, pl.col(source.column).repeat_by(repeat_value)
             ).rename({source.column: tensor_feature.name})

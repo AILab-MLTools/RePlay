@@ -37,7 +37,7 @@ def groupby_sequences(events: DataFrameLike, groupby_col: str, sort_col: Optiona
             event_cols_without_groupby.remove(sort_col)
             event_cols_without_groupby.insert(0, sort_col)
             events = events.sort(event_cols_without_groupby)
-        
+
         grouped_sequences = events.group_by(groupby_col).agg(
             *[pl.col(x) for x in event_cols_without_groupby]
         )
