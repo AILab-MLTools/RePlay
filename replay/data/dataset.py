@@ -519,13 +519,10 @@ def check_dataframes_types_equal(dataframe: DataFrameLike, other: DataFrameLike)
 
     :returns: True if dataframes have same type.
     """
-    if isinstance(dataframe, PandasDataFrame):
-        if isinstance(other, PandasDataFrame):
-            return True
-    if isinstance(dataframe, SparkDataFrame):
-        if isinstance(other, SparkDataFrame):
-            return True
-    if isinstance(dataframe, PolarsDataFrame):
-        if isinstance(other, PolarsDataFrame):
-            return True
+    if isinstance(dataframe, PandasDataFrame) and isinstance(other, PandasDataFrame):
+        return True
+    if isinstance(dataframe, SparkDataFrame) and isinstance(other, SparkDataFrame):
+        return True
+    if isinstance(dataframe, PolarsDataFrame) and isinstance(other, PolarsDataFrame):
+        return True
     return False
