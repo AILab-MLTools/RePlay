@@ -1681,15 +1681,12 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
             # workaround to unify RandomRec and UCB
             if class_name == "RandomRec":
-                rating_mapping = pd.DataFrame(
+                return PandasDataFrame(
                     {
-                        item_column: items_pd[item_column].sort_values().values,
-                        "random_rating": local_rng.uniform(size=items_pd.shape[0]),
+                        query_column: cnt * [query_idx],
+                        item_column: items_pd[item_column].sort_values().values[items_positions],
+                        rating_column: local_rng.uniform(size=items_pd.shape[0])[items_positions],
                     }
-                )
-                rating = (
-                    items_pd.merge(rating_mapping, on=item_column)["random_rating"]
-                    .values[items_positions]
                 )
             else:
                 rating = items_pd["probability"].values[items_positions]
