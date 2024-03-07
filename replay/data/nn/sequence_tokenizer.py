@@ -474,7 +474,7 @@ class _SequenceProcessor:
             if source.source == FeatureSource.INTERACTIONS:
                 return (
                     self._grouped_interactions
-                    .filter(pl.col(self._query_id_column) == user).select(source.column).rows()[0][0]
+                    .filter(pl.col(self._query_id_column) == user)[source.column][0]
                 )
             elif source.source == FeatureSource.ITEM_FEATURES:
                 return (

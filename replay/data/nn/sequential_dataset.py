@@ -184,7 +184,7 @@ class PandasSequentialDataset(SequentialDataset):
         for tensor_feature_name in tensor_schema.keys():
             if tensor_feature_name not in data:
                 raise ValueError("Tensor schema does not match with provided data frame")
-            
+
 
 class PolarsSequentialDataset(SequentialDataset):
     """
@@ -210,7 +210,7 @@ class PolarsSequentialDataset(SequentialDataset):
         self._query_id_column = query_id_column
         self._item_id_column = item_id_column
 
-        self._sequences = sequences
+        self._sequences = sequences.with_columns(index=pl.int_range(len(sequences)))
 
         for feature in tensor_schema.all_features:
             if feature.feature_type == FeatureType.CATEGORICAL:
@@ -226,42 +226,41 @@ class PolarsSequentialDataset(SequentialDataset):
         return self._sequences.n_unique(pl.col(self._item_id_column).arr.explode())
 
     def get_query_id(self, index: int) -> int:
-        return (
-            self._sequences
-            .sort(self._query_id_column)
-            .with_columns(row_num=pl.int_range(len(self._sequences)))
-            .filter(pl.col("row_num") == index)
-            .select(self._query_id_column)
-            .rows()[0][0]
-        )
+        return self._sequences.filter(pl.col("index") == index)[self._query_id_column][0]
 
     def get_all_query_ids(self) -> np.ndarray:
         return self._sequences[self._query_id_column].unique().to_numpy()
 
     def get_sequence_length(self, index: int) -> int:
-        return len(
-            self._sequences
-            .sort(self._query_id_column)
-            .with_columns(row_num=pl.int_range(len(self._sequences)))
-            .filter(pl.col("row_num") == index)
-            .select(self._item_id_column)
-            .rows()[0][0]
-        )
+        return len(self._sequences.filter(pl.col("index") == index)[self._item_id_column][0])
 
     def get_max_sequence_length(self) -> int:
         return self._sequences[self._item_id_column].list.len().max()
 
     def get_sequence(self, index: Union[int, np.ndarray], feature_name: str) -> np.ndarray:
-        return self._sequences.sort(self._query_id_column)[feature_name].to_numpy()[index]
+        result = (
+            pl.DataFrame({"index": index})
+            .join(self._sequences, on="index", how="left")[feature_name]
+            .drop_nulls()
+            .to_numpy()
+        )
+        if isinstance(index, int) and len(result) == 1:
+            return result[0]
+        elif not isinstance(index, int) and len(result) == len(index):
+            return result
+        else:
+            raise IndexError("single positional indexer is out-of-bounds")
 
     def get_sequence_by_query_id(self, query_id: Union[int, np.ndarray], feature_name: str) -> np.ndarray:
         result = (
             pl.DataFrame({self._query_id_column: query_id})
-            .join(self._sequences, on=self._query_id_column, how="left")
+            .join(self._sequences, on=self._query_id_column, how="left")[feature_name]
             .drop_nulls()
-            [feature_name].to_numpy()
+            .to_numpy()
         )
-        if len(result) == len(query_id):
+        if isinstance(query_id, int) and len(result) == 1:
+            return result[0]
+        elif not isinstance(query_id, int) and len(result) == len(query_id):
             return result
         else:
             return np.array([], dtype=np.int64)
