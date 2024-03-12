@@ -50,11 +50,6 @@ def interactions_not_implemented(interactions_pandas):
     return interactions_pandas.to_numpy()
 
 
-@pytest.fixture
-def interactions_not_implemented(interactions_pandas):
-    return interactions_pandas.to_numpy()
-
-
 @pytest.mark.parametrize(
     "dataset_type",
     [
