@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
 
 from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
@@ -126,11 +127,37 @@ def fake_small_dataset():
         [
             FeatureInfo("user_id", FeatureType.CATEGORICAL, FeatureHint.QUERY_ID),
             FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
-            FeatureInfo("timestamp", FeatureType.CATEGORICAL, FeatureHint.TIMESTAMP),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP),
         ]
     )
 
     interactions = pd.DataFrame(
+        {
+            "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
+            "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
+            "timestamp": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        }
+    )
+
+    dataset = Dataset(
+        feature_schema,
+        interactions,
+    )
+
+    return dataset
+
+
+@pytest.fixture
+def fake_small_dataset_polars():
+    feature_schema = FeatureSchema(
+        [
+            FeatureInfo("user_id", FeatureType.CATEGORICAL, FeatureHint.QUERY_ID),
+            FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP),
+        ]
+    )
+
+    interactions = pl.DataFrame(
         {
             "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
             "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
@@ -154,7 +181,7 @@ def small_dataset():
             FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
             FeatureInfo("some_user_feature", FeatureType.CATEGORICAL, None, FeatureSource.QUERY_FEATURES),
             FeatureInfo("some_item_feature", FeatureType.CATEGORICAL, None, FeatureSource.ITEM_FEATURES),
-            FeatureInfo("timestamp", FeatureType.CATEGORICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
         ]
     )
 
@@ -191,6 +218,50 @@ def small_dataset():
 
 
 @pytest.fixture
+def small_dataset_polars():
+    feature_schema = FeatureSchema(
+        [
+            FeatureInfo("user_id", FeatureType.CATEGORICAL, FeatureHint.QUERY_ID),
+            FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
+            FeatureInfo("some_user_feature", FeatureType.CATEGORICAL, None, FeatureSource.QUERY_FEATURES),
+            FeatureInfo("some_item_feature", FeatureType.CATEGORICAL, None, FeatureSource.ITEM_FEATURES),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
+        ]
+    )
+
+    interactions = pl.DataFrame(
+        {
+            "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
+            "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
+            "timestamp": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        }
+    )
+
+    query_features = pl.DataFrame(
+        {
+            "user_id": [1, 2, 3, 4],
+            "some_user_feature": [1, 2, 1, 1],
+        }
+    )
+
+    item_features = pl.DataFrame(
+        {
+            "item_id": [1, 2, 3, 4, 5, 6],
+            "some_item_feature": [2, 3, 4, 5, 6, 7],
+        }
+    )
+
+    dataset = Dataset(
+        feature_schema,
+        interactions,
+        query_features,
+        item_features,
+    )
+
+    return dataset
+
+
+@pytest.fixture
 def small_numerical_dataset():
     feature_schema = FeatureSchema(
         [
@@ -199,7 +270,7 @@ def small_numerical_dataset():
             FeatureInfo("feature", FeatureType.NUMERICAL, None, FeatureSource.INTERACTIONS),
             FeatureInfo("some_user_feature", FeatureType.NUMERICAL, None, FeatureSource.QUERY_FEATURES),
             FeatureInfo("some_item_feature", FeatureType.NUMERICAL, None, FeatureSource.ITEM_FEATURES),
-            FeatureInfo("timestamp", FeatureType.CATEGORICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
         ]
     )
 
@@ -237,16 +308,88 @@ def small_numerical_dataset():
 
 
 @pytest.fixture
+def small_numerical_dataset_polars():
+    feature_schema = FeatureSchema(
+        [
+            FeatureInfo("user_id", FeatureType.CATEGORICAL, FeatureHint.QUERY_ID),
+            FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
+            FeatureInfo("feature", FeatureType.NUMERICAL, None, FeatureSource.INTERACTIONS),
+            FeatureInfo("some_user_feature", FeatureType.NUMERICAL, None, FeatureSource.QUERY_FEATURES),
+            FeatureInfo("some_item_feature", FeatureType.NUMERICAL, None, FeatureSource.ITEM_FEATURES),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
+        ]
+    )
+
+    interactions = pl.DataFrame(
+        {
+            "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
+            "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
+            "feature": [1, 0, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6],
+            "timestamp": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        }
+    )
+
+    query_features = pl.DataFrame(
+        {
+            "user_id": [1, 2, 3, 4],
+            "some_user_feature": [1, 2, 1, 1],
+        }
+    )
+
+    item_features = pl.DataFrame(
+        {
+            "item_id": [1, 2, 3, 4, 5, 6],
+            "some_item_feature": [2, 3, 4, 5, 6, 7],
+        }
+    )
+
+    dataset = Dataset(
+        feature_schema,
+        interactions,
+        query_features,
+        item_features,
+    )
+
+    return dataset
+
+
+@pytest.fixture
 def small_dataset_no_features():
     feature_schema = FeatureSchema(
         [
             FeatureInfo("user_id", FeatureType.CATEGORICAL, FeatureHint.QUERY_ID),
             FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
-            FeatureInfo("timestamp", FeatureType.CATEGORICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
         ]
     )
 
     interactions = pd.DataFrame(
+        {
+            "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
+            "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
+            "timestamp": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        }
+    )
+
+    dataset = Dataset(
+        feature_schema,
+        interactions,
+    )
+
+    return dataset
+
+
+@pytest.fixture
+def small_dataset_no_features_polars():
+    feature_schema = FeatureSchema(
+        [
+            FeatureInfo("user_id", FeatureType.CATEGORICAL, FeatureHint.QUERY_ID),
+            FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
+            FeatureInfo("timestamp", FeatureType.NUMERICAL, FeatureHint.TIMESTAMP, FeatureSource.INTERACTIONS),
+        ]
+    )
+
+    interactions = pl.DataFrame(
         {
             "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
             "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
@@ -272,6 +415,30 @@ def small_dataset_no_timestamp():
     )
 
     interactions = pd.DataFrame(
+        {
+            "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
+            "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
+        }
+    )
+
+    dataset = Dataset(
+        feature_schema,
+        interactions,
+    )
+
+    return dataset
+
+
+@pytest.fixture
+def small_dataset_no_timestamp_polars():
+    feature_schema = FeatureSchema(
+        [
+            FeatureInfo("user_id", FeatureType.CATEGORICAL, FeatureHint.QUERY_ID),
+            FeatureInfo("item_id", FeatureType.CATEGORICAL, FeatureHint.ITEM_ID),
+        ]
+    )
+
+    interactions = pl.DataFrame(
         {
             "user_id": [1, 1, 2, 2, 2, 3, 4, 4, 4, 4, 4, 4],
             "item_id": [1, 2, 1, 3, 4, 2, 1, 2, 3, 4, 5, 6],
@@ -364,6 +531,16 @@ def sequential_info(scope="package"):
     return {
         "tensor_schema": schema,
         "sequences": sequences,
+        "query_id_column": "user_id",
+        "item_id_column": "item_id",
+    }
+
+
+@pytest.fixture()
+def sequential_info_polars(sequential_info, scope="package"):
+    return {
+        "tensor_schema": sequential_info["tensor_schema"],
+        "sequences": pl.from_pandas(sequential_info["sequences"]),
         "query_id_column": "user_id",
         "item_id_column": "item_id",
     }
