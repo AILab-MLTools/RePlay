@@ -146,8 +146,9 @@ class SequenceTokenizer:
             schema = schema.subset(tensor_features_to_keep)
 
         matched_dataset = self._match_features_with_tensor_schema(dataset, schema)
-        encoded_dataset = self._encode_dataset(matched_dataset)
 
+        is_polars = isinstance(dataset.interactions, PolarsDataFrame)
+        encoded_dataset = self._encode_dataset(matched_dataset)
         is_polars = isinstance(encoded_dataset.interactions, PolarsDataFrame)
         grouped_interactions, query_features, item_features = self._group_dataset(encoded_dataset)
         sequence_features = self._make_sequence_features(
@@ -472,10 +473,11 @@ class _SequenceProcessor:
     def _process_num_feature_polars(self, tensor_feature: TensorFeatureInfo) -> PolarsDataFrame:
         def get_sequence(user, source, data):
             if source.source == FeatureSource.INTERACTIONS:
-                return (
+                return np.array(
                     self._grouped_interactions
-                    .filter(pl.col(self._query_id_column) == user)[source.column][0]
-                )
+                    .filter(pl.col(self._query_id_column) == user)[source.column][0],
+                    dtype=np.float32
+                ).tolist()
             elif source.source == FeatureSource.ITEM_FEATURES:
                 return (
                     pl.DataFrame({self._item_id_column: data})
@@ -484,20 +486,26 @@ class _SequenceProcessor:
                 )
             else:
                 assert False, "Unknown tensor feature source table"
-
-        return (
+        result = (
             self._grouped_interactions
             .select(self._query_id_column, self._item_id_column)
             .map_rows(
                 lambda x:
                 (
                     x[0],
-                    np.array([get_sequence(x[0], source, x[1])
-                              for source in tensor_feature.feature_sources], dtype=np.float32)
-                    .reshape(-1, len(tensor_feature.feature_sources))
+                    [get_sequence(x[0], source, x[1])
+                     for source in tensor_feature.feature_sources]
                 )
             )
         ).rename({"column_0": self._query_id_column, "column_1": tensor_feature.name})
+
+        return pl.DataFrame({
+            self._query_id_column: result[self._query_id_column].to_list(),
+            tensor_feature.name: list(map(
+                lambda x: np.array(x).reshape(-1, len(tensor_feature.feature_sources)).tolist(),
+                result[tensor_feature.name].to_list()
+            ))
+        })
 
     def _process_num_feature(self, tensor_feature: TensorFeatureInfo) -> List[np.ndarray]:
         assert tensor_feature.feature_sources is not None

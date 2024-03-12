@@ -186,7 +186,8 @@ class PandasSequentialDataset(SequentialDataset):
                 raise ValueError("Tensor schema does not match with provided data frame")
 
 
-class PolarsSequentialDataset(SequentialDataset):
+# pylint:disable=super-init-not-called
+class PolarsSequentialDataset(PandasSequentialDataset):
     """
     Sequential dataset that stores sequences in PolarsDataFrame format.
     """
@@ -210,80 +211,25 @@ class PolarsSequentialDataset(SequentialDataset):
         self._query_id_column = query_id_column
         self._item_id_column = item_id_column
 
-        self._sequences = sequences.with_columns(index=pl.int_range(len(sequences)))
+        self._sequences = sequences.to_pandas()
+        if self._sequences.index.name != query_id_column:
+            self._sequences = self._sequences.set_index(query_id_column)
 
         for feature in tensor_schema.all_features:
             if feature.feature_type == FeatureType.CATEGORICAL:
                 # pylint: disable=protected-access
                 feature._set_cardinality_callback(self.cardinality_callback)
 
-    def __len__(self) -> int:
-        return len(self._sequences)
-
-    def cardinality_callback(self, column: str) -> int:
-        if self._query_id_column == column:
-            return self._sequences.n_unique(self._query_id_column)
-        return self._sequences.n_unique(pl.col(self._item_id_column).arr.explode())
-
-    def get_query_id(self, index: int) -> int:
-        return self._sequences.filter(pl.col("index") == index)[self._query_id_column][0]
-
-    def get_all_query_ids(self) -> np.ndarray:
-        return self._sequences[self._query_id_column].unique().to_numpy()
-
-    def get_sequence_length(self, index: int) -> int:
-        return len(self._sequences.filter(pl.col("index") == index)[self._item_id_column][0])
-
-    def get_max_sequence_length(self) -> int:
-        return self._sequences[self._item_id_column].list.len().max()
-
-    def get_sequence(self, index: Union[int, np.ndarray], feature_name: str) -> np.ndarray:
-        result = (
-            pl.DataFrame({"index": index})
-            .join(self._sequences, on="index", how="left")[feature_name]
-            .drop_nulls()
-            .to_numpy()
-        )
-        if isinstance(index, int) and len(result) == 1:
-            return result[0]
-        elif not isinstance(index, int) and len(result) == len(index):
-            return result
-        else:
-            raise IndexError("single positional indexer is out-of-bounds")
-
-    def get_sequence_by_query_id(self, query_id: Union[int, np.ndarray], feature_name: str) -> np.ndarray:
-        result = (
-            pl.DataFrame({self._query_id_column: query_id})
-            .join(self._sequences, on=self._query_id_column, how="left")[feature_name]
-            .drop_nulls()
-            .to_numpy()
-        )
-        if isinstance(query_id, int) and len(result) == 1:
-            return result[0]
-        elif not isinstance(query_id, int) and len(result) == len(query_id):
-            return result
-        else:
-            return np.array([], dtype=np.int64)
-
     def filter_by_query_id(self, query_ids_to_keep: np.ndarray) -> "PolarsSequentialDataset":
-        filtered_sequences = (
-            pl.DataFrame({self._query_id_column: query_ids_to_keep})
-            .join(self._sequences, on=self._query_id_column, how="left")
-            .drop_nulls()
+        filtered_sequences = self._sequences.loc[query_ids_to_keep]
+        if filtered_sequences.index.name == self._query_id_column:
+            filtered_sequences = filtered_sequences.reset_index()
+        return PolarsSequentialDataset(
+            tensor_schema=self._tensor_schema,
+            query_id_column=self._query_id_column,
+            item_id_column=self._item_id_column,
+            sequences=pl.from_pandas(filtered_sequences),
         )
-        if len(filtered_sequences) == len(query_ids_to_keep):
-            return PolarsSequentialDataset(
-                tensor_schema=self._tensor_schema,
-                query_id_column=self._query_id_column,
-                item_id_column=self._item_id_column,
-                sequences=filtered_sequences,
-            )
-        else:
-            raise IndexError("Some query ids are not presented in dataframe")
-
-    @property
-    def schema(self) -> TensorSchema:
-        return self._tensor_schema
 
     @classmethod
     def _check_if_schema_matches_data(cls, tensor_schema: TensorSchema, data: PolarsDataFrame) -> None:
