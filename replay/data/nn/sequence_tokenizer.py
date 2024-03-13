@@ -400,6 +400,13 @@ class SequenceTokenizer:
 class _SequenceProcessor:
     """
     Class to process sequences of different categorical and numerical features.
+
+    Processing performs over all features in `tensor_schema`. Each feature processing steps
+    depends on feature type (categorical/numerical), feature source (interactions/query features/item features)
+    and `grouped_interactions` data format (Pandas/Polars).
+    If `grouped_interactions` is `PolarsDataFrame` object, then method `process_features_polars` is called.
+    If `grouped_interactions` is `PandasDataFrame` object, then method `process_features` is called,
+        with passing all tensor features one by one.
     """
 
     # pylint: disable=too-many-arguments
@@ -430,7 +437,9 @@ class _SequenceProcessor:
 
     def process_feature(self, tensor_feature_name: str) -> List[np.ndarray]:
         """
-        :param tensor_feature_name: name of feature to process
+        Process each tensor feature for Pandas dataframes.
+
+        :param tensor_feature_name: name of feature to process.
 
         :returns: values for provided tensor_feature_name column
         """
@@ -443,6 +452,10 @@ class _SequenceProcessor:
 
     def process_features_polars(self) -> PolarsDataFrame:
         """
+        Process all features in `tensor_schema` for Polars dataframes.
+        Each Polars processing step returns DataFrame with query and target column
+        to join in result dataframe.
+
         :returns: processed Polars DataFrame with all features from tensor schema.
         """
         data = self._grouped_interactions.select(self._query_id_column)
@@ -461,6 +474,9 @@ class _SequenceProcessor:
         return data
 
     def _process_cat_feature(self, tensor_feature: TensorFeatureInfo) -> List[np.ndarray]:
+        """
+        Process categorical tensor feature depends on it source.
+        """
         assert tensor_feature.feature_source is not None
         if tensor_feature.feature_source.source == FeatureSource.INTERACTIONS:
             return self._process_cat_interaction_feature(tensor_feature)
@@ -508,6 +524,16 @@ class _SequenceProcessor:
         })
 
     def _process_num_feature(self, tensor_feature: TensorFeatureInfo) -> List[np.ndarray]:
+        """
+        Process numerical feature for all sources.
+
+        :param tensor_feature: tensor feature information.
+
+        :returns: sequences for each source for each query.
+            If feature came from item features then gets item features values.
+            If feature came from interactions then gets values from interactions.
+            The results are combined in one sequence array.
+        """
         assert tensor_feature.feature_sources is not None
         assert tensor_feature.is_seq
 
@@ -533,6 +559,13 @@ class _SequenceProcessor:
         return values
 
     def _process_cat_interaction_feature(self, tensor_feature: TensorFeatureInfo) -> List[np.ndarray]:
+        """
+        Process categorical interaction feature.
+
+        :param tensor_feature: tensor feature information.
+
+        :returns: tensor feature column as a sequences from `grouped_interactions`.
+        """
         assert tensor_feature.is_seq
 
         source = tensor_feature.feature_source
@@ -546,6 +579,14 @@ class _SequenceProcessor:
         return [np.array(sequence, dtype=np.int64) for sequence in self._grouped_interactions[source.column]]
 
     def _process_cat_query_feature(self, tensor_feature: TensorFeatureInfo) -> List[np.ndarray]:
+        """
+        Process categorical feature from query features dataset.
+
+        :param tensor_feature: tensor feature information.
+
+        :returns: sequences with length of item sequence for each query for
+            sequential features and one size sequences otherwise.
+        """
         assert self._query_features is not None
 
         source = tensor_feature.feature_source
@@ -575,6 +616,14 @@ class _SequenceProcessor:
         return [np.array([query_feature[i]], dtype=np.int64) for i in range(len(self._grouped_interactions))]
 
     def _process_cat_item_feature(self, tensor_feature: TensorFeatureInfo) -> List[np.ndarray]:
+        """
+        Process categorical feature from item features dataset.
+
+        :param tensor_feature: tensor feature information.
+
+        :returns: item features as a sequence for each item in a sequence
+            for each query.
+        """
         assert tensor_feature.is_seq
         assert self._item_features is not None
 
