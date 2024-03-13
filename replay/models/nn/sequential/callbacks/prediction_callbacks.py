@@ -133,7 +133,7 @@ class PandasPredictionCallback(BasePredictionCallback[PandasDataFrame]):
 
 class PolarsPredictionCallback(BasePredictionCallback[PolarsDataFrame]):
     """
-    Callback for predition stage with pandas data frame
+    Callback for predition stage with polars data frame
     """
 
     def _ids_to_result(
