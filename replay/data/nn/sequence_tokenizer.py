@@ -515,7 +515,7 @@ class _SequenceProcessor:
             )
         ).rename({"column_0": self._query_id_column, "column_1": tensor_feature.name})
 
-        if tensor_feature.feature_hint and tensor_feature.feature_hint == FeatureHint.TIMESTAMP:
+        if tensor_feature.feature_hint == FeatureHint.TIMESTAMP:
             reshape_size = -1
         else:
             reshape_size = (-1, len(tensor_feature.feature_sources))
@@ -559,7 +559,7 @@ class _SequenceProcessor:
                 else:
                     assert False, "Unknown tensor feature source table"
             all_seqs = np.array(all_features_for_user, dtype=np.float32)
-            if tensor_feature.feature_hint and tensor_feature.feature_hint == FeatureHint.TIMESTAMP:
+            if tensor_feature.feature_hint == FeatureHint.TIMESTAMP:
                 all_seqs = all_seqs.reshape(-1)
             else:
                 all_seqs = all_seqs.reshape(-1, (len(tensor_feature.feature_sources)))
