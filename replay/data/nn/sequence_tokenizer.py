@@ -332,12 +332,12 @@ class SequenceTokenizer:
         item_id_column = dataset.feature_schema.item_id_column
 
         interaction_feature_columns = {
-            dataset.feature_schema.interaction_features.columns,
+            *dataset.feature_schema.interaction_features.columns,
             query_id_column,
             item_id_column,
         }
-        query_feature_columns = {dataset.feature_schema.query_features.columns, *query_id_column}
-        item_feature_columns = {dataset.feature_schema.item_features.columns, *item_id_column}
+        query_feature_columns = {*dataset.feature_schema.query_features.columns, query_id_column}
+        item_feature_columns = {*dataset.feature_schema.item_features.columns, item_id_column}
 
         for feature_source in sources_for_tensors:
             assert feature_source is not None
