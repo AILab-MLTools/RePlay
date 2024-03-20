@@ -88,7 +88,7 @@ class Experiment:
     model     0.333333  0.489760     0.719587
     >>> ex.compare("baseline")
               NDCG@2   NDCG@3 Surprisal@3
-    baseline       -        -           -
+    baseline       –        –           –
     model     63.09%  108.73%      18.26%
     >>> ex = Experiment([Precision(3, mode=Median()), Precision(3, mode=ConfidenceInterval(0.95))], groundtruth)
     >>> ex.add_result("baseline", base_rec)

@@ -79,10 +79,10 @@ def get_top_k(
     >>> from replay.utils.session_handler import State
     >>> spark = State().session
     >>> log = (
-        spark
-        .createDataFrame([(1, 2, 1.), (1, 3, 1.), (1, 4, 0.5), (2, 1, 1.)])
-        .toDF("user_id", "item_id", "relevance")
-    )
+    ...    spark
+    ...    .createDataFrame([(1, 2, 1.), (1, 3, 1.), (1, 4, 0.5), (2, 1, 1.)])
+    ...    .toDF("user_id", "item_id", "relevance")
+    ... )
     >>> log.show()
     +-------+-------+---------+
     |user_id|item_id|relevance|

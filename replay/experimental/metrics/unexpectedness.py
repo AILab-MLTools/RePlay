@@ -16,17 +16,17 @@ class Unexpectedness(RecOnlyMetric):
     >>> state = State(spark)
 
     >>> log = pd.DataFrame({
-            "user_idx": [1, 1, 1],
-            "item_idx": [1, 2, 3],
-            "relevance": [5, 5, 5],
-            "timestamp": [1, 1, 1],
-        })
+    ...    "user_idx": [1, 1, 1],
+    ...    "item_idx": [1, 2, 3],
+    ...    "relevance": [5, 5, 5],
+    ...    "timestamp": [1, 1, 1],
+    ... })
     >>> recs = pd.DataFrame({
-            "user_idx": [1, 1, 1],
-            "item_idx": [0, 0, 1],
-            "relevance": [5, 5, 5],
-            "timestamp": [1, 1, 1],
-        })
+    ...    "user_idx": [1, 1, 1],
+    ...    "item_idx": [0, 0, 1],
+    ...    "relevance": [5, 5, 5],
+    ...    "timestamp": [1, 1, 1],
+    ... })
     >>> metric = Unexpectedness(log)
     >>> round(metric(recs, 3), 2)
     0.67

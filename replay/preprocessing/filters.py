@@ -756,9 +756,9 @@ class TimePeriodFilter(_BaseFilter):
     <BLANKLINE>
 
     >>> TimePeriodFilter(
-        start_date="2020-01-01 14:00:00",
-        end_date=datetime(2020, 1, 3, 0, 0, 0)
-    ).transform(log_sp).show()
+    ...    start_date="2020-01-01 14:00:00",
+    ...    end_date=datetime(2020, 1, 3, 0, 0, 0)
+    ... ).transform(log_sp).show()
     +-------+-------+------+-------------------+
     |user_id|item_id|rating|          timestamp|
     +-------+-------+------+-------------------+

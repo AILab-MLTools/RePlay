@@ -130,7 +130,7 @@ force-wrap-aliases = true
 max-complexity = 13
 
 [tool.ruff.per-file-ignores]
-"*/" = ["PERF203", "RUF001", "RUF012", "E402"]
+"*/" = ["PERF203", "RUF001", "RUF002", "RUF012", "E402"]
 "__init__.py" = ["F401"]
 "replay/utils/model_handler.py" = ["F403", "F405"]
 "tests/*" = ["ARG", "E402", "INP", "ISC", "N", "S", "SIM", "F811"]

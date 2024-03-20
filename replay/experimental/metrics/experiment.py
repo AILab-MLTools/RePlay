@@ -32,7 +32,7 @@ class Experiment:
     model              0.386853  0.530721     0.666667
     >>> ex.compare("baseline")
                        NDCG@2  NDCG@3 Surprisal@3
-    baseline                -       -           -
+    baseline                –       –           –
     baseline_gt_users  -50.0%  -50.0%      -50.0%
     model                0.0%  79.25%     -33.33%
     >>> ex = Experiment(test, {Precision(): [3]}, calc_median=True, calc_conf_interval=0.95)
