@@ -60,7 +60,7 @@ class LastNSplitter(Splitter):
     13        3        1 2020-01-04
     14        3        2 2020-01-05
     >>> splitter = LastNSplitter(
-    ...     n=2,
+    ...     N=2,
     ...     divide_column="query_id",
     ...     time_column_format="yyyy-MM-dd",
     ...     query_column="query_id",
@@ -90,7 +90,7 @@ class LastNSplitter(Splitter):
     """
 
     _init_arg_names = [
-        "n",
+        "N",
         "divide_column",
         "timestamp_col_format",
         "strategy",
@@ -105,7 +105,7 @@ class LastNSplitter(Splitter):
 
     def __init__(
         self,
-        n: int,
+        N: int,  # noqa: N803
         divide_column: str = "query_id",
         time_column_format: str = "yyyy-MM-dd HH:mm:ss",
         strategy: StrategyName = "interactions",
@@ -118,7 +118,7 @@ class LastNSplitter(Splitter):
         session_id_processing_strategy: str = "test",
     ):
         """
-        :param n: Array of interactions/timedelta to split.
+        :param N: Array of interactions/timedelta to split.
         :param divide_column: Name of column for dividing
             in dataframe, default: ``query_id``.
         :param time_column_format: Format of time_column,
@@ -158,7 +158,7 @@ class LastNSplitter(Splitter):
             session_id_column=session_id_column,
             session_id_processing_strategy=session_id_processing_strategy,
         )
-        self.N = n
+        self.N = N
         self.strategy = strategy
         self.divide_column = divide_column
         self.timestamp_col_format = None

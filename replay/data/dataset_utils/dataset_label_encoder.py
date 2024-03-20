@@ -157,7 +157,7 @@ class DatasetLabelEncoder:
         self._check_if_initialized()
 
         columns_set: Set[str]
-        columns_set = {[columns]} if isinstance(columns, str) else {columns}
+        columns_set = {columns} if isinstance(columns, str) else {*columns}
 
         def get_encoding_rules() -> Iterator[LabelEncodingRule]:
             for column, rule in self._encoding_rules.items():
