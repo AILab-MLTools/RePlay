@@ -27,7 +27,6 @@ if PYSPARK_AVAILABLE:
 HandleUnknownStrategies = Literal["error", "use_default_value"]
 
 
-# pylint: disable=missing-function-docstring
 class BaseLabelEncodingRule(abc.ABC):  # pragma: no cover
     """
     Interface of the label encoding rule
@@ -71,7 +70,6 @@ class BaseLabelEncodingRule(abc.ABC):  # pragma: no cover
         raise NotImplementedError()
 
 
-# pylint: disable=too-many-instance-attributes
 class LabelEncodingRule(BaseLabelEncodingRule):
     """
     Implementation of the encoding rule for categorical variables of PySpark and Pandas Data Frames.
@@ -586,12 +584,12 @@ class LabelEncoder:
             If ``str`` value, should be \"last\" only, then fill by n_classes number.
             Default ``None``.
         """
-        columns = [i.column for i in self.rules]  # pylint: disable=W0212
+        columns = [i.column for i in self.rules]
         for column, handle_unknown in handle_unknown_rules.items():
             if column not in columns:
                 msg = f"Column {column} not found."
                 raise ValueError(msg)
-            rule = list(filter(lambda x: x.column == column, self.rules))  # pylint: disable = W0212, W0640
+            rule = list(filter(lambda x: x.column == column, self.rules))
             rule[0].set_handle_unknown(handle_unknown)
 
     def set_default_values(self, default_value_rules: Dict[str, Optional[Union[int, str]]]) -> None:
@@ -610,10 +608,10 @@ class LabelEncoder:
             to the value given for the parameter default_value.
             Default: ``error``.
         """
-        columns = [i.column for i in self.rules]  # pylint: disable=W0212
+        columns = [i.column for i in self.rules]
         for column, default_value in default_value_rules.items():
             if column not in columns:
                 msg = f"Column {column} not found."
                 raise ValueError(msg)
-            rule = list(filter(lambda x: x.column == column, self.rules))  # pylint: disable = W0212, W0640
+            rule = list(filter(lambda x: x.column == column, self.rules))
             rule[0].set_default_value(default_value)

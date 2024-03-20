@@ -50,7 +50,6 @@ class TorchRecommender(Recommender):
             self.logger.debug(valid_debug_message)
         return valid_loss.item()
 
-    # pylint: disable=too-many-arguments
     def train(
         self,
         train_data_loader: DataLoader,
@@ -113,8 +112,6 @@ class TorchRecommender(Recommender):
         :return: 1x1 tensor
         """
 
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     def _predict(
         self,
         log: SparkDataFrame,

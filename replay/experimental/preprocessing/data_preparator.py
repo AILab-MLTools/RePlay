@@ -30,7 +30,7 @@ LOG_COLUMNS = ["user_id", "item_id", "timestamp", "relevance"]
 
 if PYSPARK_AVAILABLE:
 
-    class Indexer:  # pylint: disable=too-many-instance-attributes
+    class Indexer:
         """
         This class is used to convert arbitrary id to numerical idx and back.
         """
@@ -172,7 +172,6 @@ if PYSPARK_AVAILABLE:
                 inv_indexer.setLabels(new_labels)
 
     # We need to inherit it from DefaultParamsWriter to make it being saved correctly within Pipeline
-    # pylint: disable=too-few-public-methods
     class JoinIndexerMLWriter(DefaultParamsWriter):
         """Implements saving the JoinIndexerTransformer instance to disk.
         Used when saving a trained pipeline.
@@ -183,7 +182,6 @@ if PYSPARK_AVAILABLE:
             super().__init__(instance)
             self.instance = instance
 
-        # pylint: disable=invalid-name
         def saveImpl(self, path: str) -> None:  # noqa: N802
             """Save implementation"""
             super().saveImpl(path)
@@ -191,20 +189,18 @@ if PYSPARK_AVAILABLE:
             spark = State().session
 
             init_args = self.instance._init_args
-            sc = spark.sparkContext  # pylint: disable=invalid-name
+            sc = spark.sparkContext
             df = spark.read.json(sc.parallelize([json.dumps(init_args)]))
             df.coalesce(1).write.mode("overwrite").json(join(path, "init_args.json"))
 
             self.instance.user_col_2_index_map.write.mode("overwrite").save(join(path, "user_col_2_index_map.parquet"))
             self.instance.item_col_2_index_map.write.mode("overwrite").save(join(path, "item_col_2_index_map.parquet"))
 
-    # pylint: disable=too-few-public-methods
     class JoinIndexerMLReader(MLReader):
         """Implements reading the JoinIndexerTransformer instance from disk.
         Used when loading a trained pipeline.
         """
 
-        # pylint: disable=no-self-use
         def load(self, path):
             """Load the ML instance from the input path."""
             spark = State().session
@@ -223,13 +219,11 @@ if PYSPARK_AVAILABLE:
 
             return indexer
 
-    # pylint: disable=too-many-instance-attributes
     class JoinBasedIndexerTransformer(Transformer, MLWritable, MLReadable):
         """
         JoinBasedIndexer, that index user column and item column in input dataframe
         """
 
-        # pylint: disable=too-many-arguments
         def __init__(
             self,
             user_col: str,
@@ -351,13 +345,11 @@ if PYSPARK_AVAILABLE:
                 )
             return df
 
-    # pylint: disable=too-few-public-methods
     class JoinBasedIndexerEstimator(Estimator):
         """
         Estimator that produces JoinBasedIndexerTransformer
         """
 
-        # pylint: disable=super-init-not-called
         def __init__(self, user_col="user_id", item_col="item_id"):
             """
             Provide column names for indexer to use
@@ -612,7 +604,6 @@ if PYSPARK_AVAILABLE:
                     df = df.withColumnRenamed(in_col, out_col)
             return df
 
-        # pylint: disable=too-many-arguments
         def transform(
             self,
             columns_mapping: Dict[str, str],

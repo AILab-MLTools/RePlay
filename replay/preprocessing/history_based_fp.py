@@ -29,7 +29,6 @@ class EmptyFeatureProcessor:
         :param features: DataFrame with ``user_idx/item_idx`` and feature columns
         """
 
-    # pylint: disable=no-self-use
     def transform(self, log: SparkDataFrame) -> SparkDataFrame:
         """
         Return log without any transformations
@@ -380,7 +379,6 @@ class ConditionalPopularityProcessor(EmptyFeatureProcessor):
             unpersist_if_exists(df)
 
 
-# pylint: disable=too-many-instance-attributes, too-many-arguments
 class HistoryBasedFeaturesProcessor:
     """
     Calculate user and item features based on interactions history (log).

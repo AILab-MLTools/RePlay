@@ -3,7 +3,6 @@ import math
 from .base_metric import Metric
 
 
-# pylint: disable=too-few-public-methods
 class NDCG(Metric):
     """
     Normalized Discounted Cumulative Gain is a metric

@@ -17,7 +17,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import types as st
 
 
-# pylint: disable=too-many-ancestors, too-many-instance-attributes
 class SLIM(NeighbourRec):
     """`SLIM: Sparse Linear Methods for Top-N Recommender Systems
     <http://glaros.dtc.umn.edu/gkhome/fetch/papers/SLIM2011icdm.pdf>`_"""
@@ -32,7 +31,6 @@ class SLIM(NeighbourRec):
         "lambda_": {"type": "loguniform", "args": [1e-6, 2]},
     }
 
-    # pylint: disable=R0913
     def __init__(
         self,
         beta: float = 0.01,

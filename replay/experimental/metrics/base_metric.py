@@ -273,10 +273,9 @@ class Metric(ABC):
             return recs.select("user_idx", metric_value_col)
 
         cur_class = self.__class__
-        distribution = recs.rdd.flatMap(
-            # pylint: disable=protected-access
-            lambda x: [(x[0], float(cur_class._get_metric_value_by_user(k, *x[1:])))]
-        ).toDF(f"user_idx {recs.schema['user_idx'].dataType.typeName()}, value double")
+        distribution = recs.rdd.flatMap(lambda x: [(x[0], float(cur_class._get_metric_value_by_user(k, *x[1:])))]).toDF(
+            f"user_idx {recs.schema['user_idx'].dataType.typeName()}, value double"
+        )
         return distribution
 
     @staticmethod
@@ -291,7 +290,6 @@ class Metric(ABC):
         :return: metric value for current user
         """
 
-    # pylint: disable=too-many-arguments
     def user_distribution(
         self,
         log: DataFrameLike,
@@ -351,20 +349,18 @@ class Metric(ABC):
         :param params: list of UDF params in right order
         :return: column expression
         """
-        sc = State().session.sparkContext  # pylint: disable=invalid-name
+        sc = State().session.sparkContext
         scala_udf = getattr(sc._jvm.org.apache.spark.replay.utils.ScalaPySparkUDFs, udf_name)()
         return Column(scala_udf.apply(_to_seq(sc, params, _to_java_column)))
 
 
-# pylint: disable=too-few-public-methods
 class RecOnlyMetric(Metric):
     """Base class for metrics that do not need holdout data"""
 
     @abstractmethod
-    def __init__(self, log: DataFrameLike, *args, **kwargs):  # pylint: disable=super-init-not-called
+    def __init__(self, log: DataFrameLike, *args, **kwargs):
         pass
 
-    # pylint: disable=no-self-use
     @abstractmethod
     def _get_enriched_recommendations(
         self,
@@ -467,7 +463,7 @@ class NCISMetric(Metric):
         threshold: float = 10.0,
         activation: Optional[str] = None,
         use_scala_udf: bool = False,
-    ):  # pylint: disable=super-init-not-called
+    ):
         """
         :param prev_policy_weights: historical item of user-item relevance (previous policy values)
         :threshold: capping threshold, applied after activation,

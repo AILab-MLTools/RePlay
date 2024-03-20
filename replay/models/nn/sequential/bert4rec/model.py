@@ -8,13 +8,11 @@ import torch
 from replay.data.nn import TensorFeatureInfo, TensorMap, TensorSchema
 
 
-# pylint: disable=too-many-instance-attributes
 class Bert4RecModel(torch.nn.Module):
     """
     BERT model
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         schema: TensorSchema,
@@ -160,7 +158,6 @@ class Bert4RecModel(torch.nn.Module):
                 torch.nn.init.xavier_normal_(param.data)
 
 
-# pylint: disable=too-many-instance-attributes
 class BertEmbedding(torch.nn.Module):
     """
     BERT Embedding which is consisted with under features
@@ -169,7 +166,6 @@ class BertEmbedding(torch.nn.Module):
         sum of all these features are output of BertEmbedding
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         schema: TensorSchema,
@@ -329,7 +325,6 @@ class PositionalEmbedding(torch.nn.Module):
     Positional embedding.
     """
 
-    # pylint: disable=invalid-name
     def __init__(self, max_len: int, d_model: int) -> None:
         """
         :param max_len: Max sequence length.
@@ -471,7 +466,6 @@ class TransformerBlock(torch.nn.Module):
 
         self.dropout = torch.nn.Dropout(p=dropout)
 
-    # pylint: disable=invalid-name
     def forward(
         self,
         x: torch.Tensor,
@@ -531,7 +525,6 @@ class MultiHeadedAttention(torch.nn.Module):
     Take in model size and number of heads.
     """
 
-    # pylint: disable=invalid-name
     def __init__(self, h: int, d_model: int, dropout: float = 0.1) -> None:
         """
         :param h: Head sizes of multi-head attention.

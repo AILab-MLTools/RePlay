@@ -14,7 +14,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-few-public-methods
 class Surprisal(RecOnlyMetric):
     """
     Measures how many surprising rare items are present in recommendations.
@@ -46,7 +45,7 @@ class Surprisal(RecOnlyMetric):
 
     _scala_udf_name = "getSurprisalMetricValue"
 
-    def __init__(self, log: DataFrameLike, use_scala_udf: bool = False):  # pylint: disable=super-init-not-called
+    def __init__(self, log: DataFrameLike, use_scala_udf: bool = False):
         """
         Here we calculate self-information for each item
 

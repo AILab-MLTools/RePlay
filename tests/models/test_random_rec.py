@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name, missing-function-docstring, unused-import
 import pytest
 
 from replay.models import RandomRec
@@ -34,9 +33,7 @@ def test_popularity_matrix(log, fitted_model):
     if fitted_model.distribution == "uniform":
         true_matrix = log.select("item_idx").distinct().withColumn("relevance", sf.lit(1.0))
     elif fitted_model.distribution == "popular_based":
-        true_matrix = log.groupby("item_idx").agg(  # pylint: disable=not-callable
-            sf.countDistinct("user_idx").astype("double").alias("relevance")
-        )
+        true_matrix = log.groupby("item_idx").agg(sf.countDistinct("user_idx").astype("double").alias("relevance"))
     elif fitted_model.distribution == "relevance":
         true_matrix = log.groupby("item_idx").agg(sf.sum("relevance").alias("relevance"))
 

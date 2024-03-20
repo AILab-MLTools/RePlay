@@ -15,7 +15,6 @@ if TORCH_AVAILABLE:
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class TrainerConfig:
     """
     Config holder for trainer
@@ -36,7 +35,6 @@ class TrainerConfig:
             setattr(self, key, value)
 
 
-# pylint: disable=too-many-instance-attributes
 class Trainer:
     """
     Trainer for DT4Rec
@@ -44,7 +42,6 @@ class Trainer:
 
     grad_norm_clip = 1.0
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         model,

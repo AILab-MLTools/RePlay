@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -35,7 +34,6 @@ class ReplayBuffer:
     Thereby in this ReplayBuffer we store (user, memory) instead of state.
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(self, device, capacity, memory_size, embedding_dim):
         self.capacity = capacity
 
@@ -82,7 +80,6 @@ class ReplayBuffer:
             self.is_filled = True
         self.pos = new_pos % self.capacity
 
-    # pylint: disable=too-many-locals
     def sample(self, batch_size):
         """Sample transition from buffer."""
         current_buffer_len = len(self)
@@ -104,7 +101,6 @@ class ReplayBuffer:
         return self.capacity if self.is_filled else self.pos + 1
 
 
-# pylint: disable=too-many-instance-attributes,too-many-arguments,not-callable
 class OUNoise:
     """https://github.com/vitchyr/rlkit/blob/master/rlkit/exploration_strategies/ou_strategy.py"""
 
@@ -208,7 +204,6 @@ class ActorDRR(nn.Module):
         state = self.state_repr(user, memory)
         return self.layers(state)
 
-    # pylint: disable=not-callable
     def get_action(self, action_emb, items, items_mask, return_scores=False):
         """
         :param action_emb: output of the .forward() (user_batch_size x emb_dim)
@@ -283,7 +278,6 @@ class CriticDRR(nn.Module):
         return out
 
 
-# pylint: disable=too-many-instance-attributes, not-callable
 class Env:
     """
     RL environment for recommender systems.
@@ -478,7 +472,6 @@ class StateReprModule(nn.Module):
         return torch.cat((user_embedding, user_embedding * drr_ave, drr_ave), 1)
 
 
-# pylint: disable=too-many-arguments
 class DDPG(Recommender):
     """
     `Deep Deterministic Policy Gradient
@@ -519,8 +512,6 @@ class DDPG(Recommender):
     policy_optimizer: Ranger
     value_optimizer: Ranger
 
-    # pylint: disable=too-many-arguments
-    # pylint: disable=too-many-locals
     def __init__(
         self,
         noise_sigma: float = 0.2,
@@ -591,7 +582,6 @@ class DDPG(Recommender):
             "exact_embeddings_size": self.exact_embeddings_size,
         }
 
-    # pylint: disable=too-many-locals
     def _batch_pass(self, batch: dict) -> Dict[str, Any]:
         user = batch["user"]
         memory = batch["memory"]
@@ -619,7 +609,6 @@ class DDPG(Recommender):
         return policy_loss, value_loss
 
     @staticmethod
-    # pylint: disable=not-callable
     def _predict_pairs_inner(
         model,
         user_idx: int,
@@ -640,7 +629,6 @@ class DDPG(Recommender):
                 }
             )
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,
@@ -905,9 +893,7 @@ class DDPG(Recommender):
 
         torch.save(
             {
-                # pylint: disable-next=used-before-assignment
                 "fit_users": fit_users.toPandas() if fit_users is not None else None,
-                # pylint: disable-next=used-before-assignment
                 "fit_items": fit_items.toPandas() if fit_items is not None else None,
                 "actor": self.model.state_dict(),
                 "critic": self.value_net.state_dict(),

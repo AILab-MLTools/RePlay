@@ -15,7 +15,6 @@ if PYSPARK_AVAILABLE:
 StrategyName = Literal["interactions", "timedelta"]
 
 
-# pylint: disable=too-few-public-methods
 class LastNSplitter(Splitter):
     """
     Split interactions by last N interactions/timedelta per user.
@@ -104,7 +103,6 @@ class LastNSplitter(Splitter):
         "session_id_processing_strategy",
     ]
 
-    # pylint: disable=invalid-name, too-many-arguments
     def __init__(
         self,
         n: int,
@@ -237,7 +235,6 @@ class LastNSplitter(Splitter):
 
         return interactions
 
-    # pylint: disable=invalid-name
     def _partial_split_interactions(self, interactions: DataFrameLike, n: int) -> Tuple[DataFrameLike, DataFrameLike]:
         res = self._add_time_partition(interactions)
         if isinstance(interactions, SparkDataFrame):
@@ -286,9 +283,7 @@ class LastNSplitter(Splitter):
         if self.session_id_column:
             interactions = self._recalculate_with_session_id_column(interactions)
 
-        train = interactions.filter(~pl.col("is_test")).drop(
-            "row_num", "count", "is_test"
-        )  # pylint: disable=invalid-unary-operand-type
+        train = interactions.filter(~pl.col("is_test")).drop("row_num", "count", "is_test")
         test = interactions.filter(pl.col("is_test")).drop("row_num", "count", "is_test")
 
         return train, test
@@ -351,9 +346,7 @@ class LastNSplitter(Splitter):
         if self.session_id_column:
             res = self._recalculate_with_session_id_column(res)
 
-        train = res.filter(~pl.col("is_test")).drop(
-            "diff_timestamp", "is_test"
-        )  # pylint: disable=invalid-unary-operand-type
+        train = res.filter(~pl.col("is_test")).drop("diff_timestamp", "is_test")
         test = res.filter(pl.col("is_test")).drop("diff_timestamp", "is_test")
 
         return train, test

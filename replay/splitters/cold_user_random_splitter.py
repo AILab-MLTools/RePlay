@@ -16,7 +16,6 @@ if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
 
 
-# pylint: disable=too-few-public-methods, duplicate-code
 class ColdUserRandomSplitter(Splitter):
     """
     Test set consists of all actions of randomly chosen users.
@@ -30,7 +29,6 @@ class ColdUserRandomSplitter(Splitter):
         "item_column",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         test_size: float,
@@ -103,7 +101,7 @@ class ColdUserRandomSplitter(Splitter):
 
         interactions = interactions.join(train_users, on=self.query_column, how="left").fill_null(True)
 
-        train = interactions.filter(~pl.col("is_test")).drop("is_test")  # pylint: disable=invalid-unary-operand-type
+        train = interactions.filter(~pl.col("is_test")).drop("is_test")
         test = interactions.filter(pl.col("is_test")).drop("is_test")
         return train, test
 

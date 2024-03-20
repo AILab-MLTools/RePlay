@@ -12,7 +12,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-few-public-methods, arguments-differ, unused-argument
 class Coverage(RecOnlyMetric):
     """
     Metric calculation is as follows:

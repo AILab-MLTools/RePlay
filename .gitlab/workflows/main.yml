@@ -78,6 +78,7 @@ ruff:
   <<: *install_experimental_replay_with_spark
   stage: code_quality
   script:
+    - ./poetry_wrapper.sh --generate
     - ruff check .
   tags: 
     - ${RUNNER}
@@ -86,6 +87,7 @@ black:
   <<: *install_experimental_replay_with_spark
   stage: code_quality
   script:
+    - ./poetry_wrapper.sh --generate
     - black --check --diff -- .
   tags: 
     - ${RUNNER}
@@ -111,7 +113,7 @@ sphinx-job:
   image: ${image}
   tags: 
     - ${RUNNER}
-  needs: ["pylint-job", "pycodestyle-job", "sphinx-job"]
+  needs: ["ruff", "black", "poetry-check", "sphinx-job"]
   before_script:
     - export REPLAY_SPARK_CORE_COUNT=8
     - export REPLAY_SPARK_MEMORY=24

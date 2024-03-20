@@ -6,7 +6,6 @@ from replay.utils.spark_utils import convert2spark, get_top_k_recs
 from .base_metric import RecOnlyMetric, fill_na_with_empty_array, filter_sort
 
 
-# pylint: disable=too-few-public-methods
 class Unexpectedness(RecOnlyMetric):
     """
     Fraction of recommended items that are not present in some baseline recommendations.
@@ -35,7 +34,7 @@ class Unexpectedness(RecOnlyMetric):
 
     _scala_udf_name = "getUnexpectednessMetricValue"
 
-    def __init__(self, pred: DataFrameLike, use_scala_udf: bool = False):  # pylint: disable=super-init-not-called
+    def __init__(self, pred: DataFrameLike, use_scala_udf: bool = False):
         """
         :param pred: model predictions
         """

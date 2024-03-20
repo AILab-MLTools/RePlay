@@ -134,7 +134,6 @@ class ANNMixin(BaseRecommender):
 
         """
 
-    # pylint: disable=too-many-arguments, too-many-locals
     def _predict_wrap(
         self,
         dataset: Optional[Dataset],

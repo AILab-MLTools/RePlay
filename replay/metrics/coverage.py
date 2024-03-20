@@ -15,7 +15,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-few-public-methods
 class Coverage(Metric):
     """
     Metric calculation is as follows:
@@ -59,7 +58,6 @@ class Coverage(Metric):
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         topk: Union[List, int],
@@ -84,7 +82,6 @@ class Coverage(Metric):
         )
         self._allow_caching = allow_caching
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations(
         self,
         recommendations: Union[PolarsDataFrame, SparkDataFrame],
@@ -94,7 +91,6 @@ class Coverage(Metric):
         else:
             return self._get_enriched_recommendations_polars(recommendations)
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations_spark(self, recommendations: SparkDataFrame) -> SparkDataFrame:
         window = Window.partitionBy(self.query_column).orderBy(sf.col(self.rating_column).desc())
         sorted_by_score_recommendations = recommendations.withColumn("rank", sf.row_number().over(window))
@@ -105,7 +101,6 @@ class Coverage(Metric):
         )
         return grouped_recs
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations_polars(self, recommendations: PolarsDataFrame) -> PolarsDataFrame:
         sorted_by_score_recommendations = recommendations.select(
             pl.all().sort_by(self.rating_column, descending=True).over(self.query_column)
@@ -122,7 +117,6 @@ class Coverage(Metric):
         )
         return grouped_recs
 
-    # pylint: disable=arguments-differ
     def _spark_compute(self, recs: SparkDataFrame, train: SparkDataFrame) -> MetricsMeanReturnType:
         """
         Calculating metrics for PySpark DataFrame.
@@ -149,7 +143,6 @@ class Coverage(Metric):
 
         return self._aggregate_results(metrics)
 
-    # pylint: disable=arguments-differ
     def _polars_compute(self, recs: PolarsDataFrame, train: PolarsDataFrame) -> MetricsMeanReturnType:
         """
         Calculating metrics for Polars DataFrame.
@@ -170,7 +163,6 @@ class Coverage(Metric):
 
         return self._aggregate_results(metrics)
 
-    # pylint: disable=arguments-renamed
     def _spark_call(self, recommendations: SparkDataFrame, train: SparkDataFrame) -> MetricsReturnType:
         """
         Implementation for Pyspark DataFrame.
@@ -178,7 +170,6 @@ class Coverage(Metric):
         recs = self._get_enriched_recommendations(recommendations)
         return self._spark_compute(recs, train)
 
-    # pylint: disable=arguments-renamed
     def _polars_call(self, recommendations: PolarsDataFrame, train: PolarsDataFrame) -> MetricsReturnType:
         """
         Implementation for Polars DataFrame.

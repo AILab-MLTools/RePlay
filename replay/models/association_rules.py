@@ -13,7 +13,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql.window import Window
 
 
-# pylint: disable=too-many-ancestors, too-many-instance-attributes
 class AssociationRulesItemRec(NeighbourRec):
     """
     Item-to-item recommender based on association rules.
@@ -118,7 +117,6 @@ class AssociationRulesItemRec(NeighbourRec):
         },
     }
 
-    # pylint: disable=too-many-arguments,
     def __init__(
         self,
         session_column: str,

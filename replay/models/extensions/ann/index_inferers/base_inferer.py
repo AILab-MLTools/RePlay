@@ -8,7 +8,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
 
 
-# pylint: disable=too-few-public-methods
 class IndexInferer(ABC):
     """Abstract base class that describes a common interface for index inferers
     and provides common methods for them."""

@@ -21,7 +21,6 @@ from replay.utils import PandasDataFrame, SparkDataFrame
 class VAE(nn.Module):
     """Base variational autoencoder"""
 
-    # pylint: disable=too-many-arguments,too-many-instance-attributes
     def __init__(
         self,
         item_count: int,
@@ -108,7 +107,6 @@ class VAE(nn.Module):
             layer.bias.data.normal_(0.0, 0.001)
 
 
-# pylint: disable=too-many-instance-attributes
 class MultVAE(TorchRecommender):
     """`Variational Autoencoders for Collaborative Filtering
     <https://arxiv.org/pdf/1802.05814.pdf>`_"""
@@ -134,7 +132,6 @@ class MultVAE(TorchRecommender):
         "patience": {"type": "int", "args": [3, 3]},
     }
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         learning_rate: float = 0.01,
@@ -205,7 +202,6 @@ class MultVAE(TorchRecommender):
 
         return user_batch, data_loader, user_idx.categories.values
 
-    # pylint: disable=too-many-locals
     def _fit(
         self,
         log: SparkDataFrame,
@@ -244,7 +240,6 @@ class MultVAE(TorchRecommender):
             "multvae",
         )
 
-    # pylint: disable=arguments-differ
     def _loss(self, y_pred, y_true, mu_latent, logvar_latent):
         log_softmax_var = sf.log_softmax(y_pred, dim=1)
         bce = -(log_softmax_var * y_true).sum(dim=1).mean()

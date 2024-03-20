@@ -9,7 +9,6 @@ from replay.experimental.scenarios.obp_wrapper.utils import get_est_rewards_by_r
 from replay.optimization.optuna_objective import ObjectiveWrapper, suggest_params
 
 
-# pylint: disable=too-many-arguments
 def obp_objective_calculator(
     trial: Trial,
     search_space: Dict[str, List[Optional[Any]]],

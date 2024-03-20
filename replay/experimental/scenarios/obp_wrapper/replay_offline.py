@@ -112,7 +112,6 @@ class OBPOfflinePolicyLearner(BaseOfflinePolicyLearner):
             self._logger = logging.getLogger("replay")
         return self._logger
 
-    # pylint: disable=too-many-arguments, arguments-differ
     def fit(
         self,
         action: np.ndarray,
@@ -157,7 +156,6 @@ class OBPOfflinePolicyLearner(BaseOfflinePolicyLearner):
         )
         self.replay_model._fit_wrap(dataset)
 
-    # pylint: disable=arguments-renamed
     def predict(self, n_rounds: int = 1, context: np.ndarray = None) -> np.ndarray:
         """Predict best actions for new data.
         Action set predicted by this `predict` method can contain duplicate items.
@@ -192,7 +190,6 @@ class OBPOfflinePolicyLearner(BaseOfflinePolicyLearner):
 
         return action_dist
 
-    # pylint: disable=too-many-arguments, too-many-locals, no-member
     def optimize(
         self,
         bandit_feedback: Dict[str, np.ndarray],

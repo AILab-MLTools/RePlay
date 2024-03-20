@@ -18,7 +18,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import Window
 
 
-# pylint: disable=too-few-public-methods
 class TimeSplitter(Splitter):
     """
     Split interactions by time.
@@ -99,7 +98,6 @@ class TimeSplitter(Splitter):
         "time_column_format",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         time_threshold: Union[datetime, str, float],
@@ -222,7 +220,7 @@ class TimeSplitter(Splitter):
 
         if self.session_id_column:
             res = self._recalculate_with_session_id_column(res)
-        train = res.filter(~pl.col("is_test")).drop("is_test")  # pylint: disable=invalid-unary-operand-type
+        train = res.filter(~pl.col("is_test")).drop("is_test")
         test = res.filter("is_test").drop("is_test")
 
         return train, test

@@ -12,7 +12,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql.types import IntegerType
 
 
-# pylint: disable=too-few-public-methods, too-many-instance-attributes
 class RatioSplitter(Splitter):
     """
     Split interactions into train and test by ratio. Split is made for each user separately.
@@ -99,7 +98,6 @@ class RatioSplitter(Splitter):
         "session_id_processing_strategy",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         test_size: float,
@@ -279,9 +277,7 @@ class RatioSplitter(Splitter):
         if self.session_id_column:
             interactions = self._recalculate_with_session_id_column(interactions)
 
-        train = interactions.filter(~pl.col("is_test")).drop(
-            "row_num", "count", "frac", "is_test"
-        )  # pylint: disable=invalid-unary-operand-type
+        train = interactions.filter(~pl.col("is_test")).drop("row_num", "count", "frac", "is_test")
         test = interactions.filter(pl.col("is_test")).drop("row_num", "count", "frac", "is_test")
 
         return train, test
@@ -312,7 +308,7 @@ class RatioSplitter(Splitter):
                 "train_size",
             ] = (
                 interactions["train_size"] - 1
-            )  # pylint: disable=C0325
+            )
 
         interactions["is_test"] = interactions["row_num"] > interactions["train_size"]
         if self.session_id_column:
@@ -384,14 +380,11 @@ class RatioSplitter(Splitter):
         if self.session_id_column:
             interactions = self._recalculate_with_session_id_column(interactions)
 
-        train = interactions.filter(~pl.col("is_test")).drop(
-            "row_num", "count", "train_size", "is_test"
-        )  # pylint: disable=invalid-unary-operand-type
+        train = interactions.filter(~pl.col("is_test")).drop("row_num", "count", "train_size", "is_test")
         test = interactions.filter(pl.col("is_test")).drop("row_num", "count", "train_size", "is_test")
 
         return train, test
 
-    # pylint: disable=invalid-name
     def _core_split(self, interactions: DataFrameLike) -> List[DataFrameLike]:
         if self.split_by_fractions:
             return self._partial_split_fractions(interactions, self.test_size)

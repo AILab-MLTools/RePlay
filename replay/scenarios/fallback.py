@@ -1,4 +1,3 @@
-# pylint: disable=protected-access
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from replay.data import Dataset
@@ -10,7 +9,6 @@ from replay.utils import SparkDataFrame
 from replay.utils.spark_utils import fallback, get_unique_entities
 
 
-# pylint: disable=too-many-instance-attributes
 class Fallback(BaseRecommender):
     """Fill missing recommendations using fallback model.
     Behaves like a recommender and have the same interface."""
@@ -33,10 +31,9 @@ class Fallback(BaseRecommender):
         self.threshold = threshold
         self.hot_queries = None
         self.main_model = main_model
-        # pylint: disable=invalid-name
         self.fb_model = fallback_model
 
-    # TO DO: add save/load for scenarios
+    # TODO: add save/load for scenarios
     @property
     def _init_args(self):
         return {"threshold": self.threshold}
@@ -67,7 +64,6 @@ class Fallback(BaseRecommender):
         self._fit_wrap(hot_dataset)
         self.fb_model._fit_wrap(dataset)
 
-    # pylint: disable=too-many-arguments
     def predict(
         self,
         dataset: Dataset,
@@ -125,7 +121,6 @@ class Fallback(BaseRecommender):
         pred = fallback(hot_pred, cold_pred, k)
         return pred
 
-    # pylint: disable=too-many-arguments, too-many-locals
     def optimize(
         self,
         train_dataset: Dataset,

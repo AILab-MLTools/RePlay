@@ -1,7 +1,6 @@
 from .base_metric import Metric
 
 
-# pylint: disable=too-few-public-methods
 class MAP(Metric):
     """
     Mean Average Precision -- average the ``Precision`` at relevant positions for each user,

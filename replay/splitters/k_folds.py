@@ -13,7 +13,6 @@ if PYSPARK_AVAILABLE:
 StrategyName = Literal["query"]
 
 
-# pylint: disable=too-few-public-methods
 class KFolds(Splitter):
     """
     Splits interactions inside each query into folds at random.
@@ -32,7 +31,6 @@ class KFolds(Splitter):
         "session_id_processing_strategy",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         n_folds: Optional[int] = 5,
@@ -129,15 +127,12 @@ class KFolds(Splitter):
             if self.session_id_column:
                 dataframe = self._recalculate_with_session_id_column(dataframe)
 
-            train = dataframe.filter(~pl.col("is_test")).drop(
-                "is_test", "fold"
-            )  # pylint: disable=invalid-unary-operand-type
+            train = dataframe.filter(~pl.col("is_test")).drop("is_test", "fold")
             test = dataframe.filter(pl.col("is_test")).drop("is_test", "fold")
 
             test = self._drop_cold_items_and_users(train, test)
             yield train, test
 
-    # pylint: disable=inconsistent-return-statements
     def _core_split(self, interactions: DataFrameLike) -> SplitterReturnType:
         if self.strategy == "query":
             if isinstance(interactions, SparkDataFrame):

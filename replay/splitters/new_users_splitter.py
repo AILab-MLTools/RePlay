@@ -11,7 +11,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import Window
 
 
-# pylint: disable=too-few-public-methods, duplicate-code
 class NewUsersSplitter(Splitter):
     """
     Only new users will be assigned to test set.
@@ -65,7 +64,6 @@ class NewUsersSplitter(Splitter):
         "session_id_processing_strategy",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         test_size: float,
@@ -198,9 +196,7 @@ class NewUsersSplitter(Splitter):
                 pl.when(pl.col(self.timestamp_column) < test_start_date).then(False).otherwise(True).alias("is_test")
             )
             interactions = self._recalculate_with_session_id_column(interactions)
-            train = interactions.filter(~pl.col("is_test")).drop(
-                "is_test"
-            )  # pylint: disable=invalid-unary-operand-type
+            train = interactions.filter(~pl.col("is_test")).drop("is_test")
             test = interactions.filter(pl.col("is_test")).drop("is_test")
 
         return train, test

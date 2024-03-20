@@ -101,7 +101,6 @@ class ClusterRec(QueryRecommender):
             .withColumnRenamed("prediction", "cluster")
         )
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         dataset: Dataset,
@@ -115,7 +114,6 @@ class ClusterRec(QueryRecommender):
         pred = query_clusters.join(filtered_items, on="cluster").drop("cluster")
         return pred
 
-    # pylint: disable=signature-differs
     def _predict_pairs(
         self,
         pairs: SparkDataFrame,

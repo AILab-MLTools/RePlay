@@ -11,7 +11,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql.pandas.functions import pandas_udf
 
 
-# pylint: disable=too-few-public-methods
 class NmslibFilterIndexInferer(IndexInferer):
     """Nmslib index inferer with filter seen items. Infers nmslib hnsw index."""
 
@@ -22,7 +21,7 @@ class NmslibFilterIndexInferer(IndexInferer):
         index_store_broadcast = State().session.sparkContext.broadcast(_index_store)
 
         @pandas_udf(self.udf_return_type)
-        def infer_index_udf(  # pylint: disable=too-many-locals
+        def infer_index_udf(
             user_idx: pd.Series,
             vector_items: pd.Series,
             vector_ratings: pd.Series,

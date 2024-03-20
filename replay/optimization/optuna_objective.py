@@ -31,8 +31,6 @@ class ObjectiveWrapper:
     other arguments are passed into ``__init__``.
     """
 
-    # pylint: disable=too-many-arguments,too-many-instance-attributes
-
     def __init__(self, objective_calculator: Callable[..., float], **kwargs: Any):
         self.objective_calculator = objective_calculator
         self.kwargs = kwargs
@@ -108,7 +106,6 @@ def eval_quality(
     """
     logger = logging.getLogger("replay")
     logger.debug("Fitting model inside optimization")
-    # pylint: disable=protected-access
     recommender._fit_wrap(
         split_data.train_dataset,
     )
@@ -125,7 +122,6 @@ def eval_quality(
     return criterion_value
 
 
-# pylint: disable=too-many-arguments
 def scenario_objective_calculator(
     trial: Trial,
     search_space: Dict[str, List[Optional[Any]]],
@@ -152,7 +148,6 @@ def scenario_objective_calculator(
 MainObjective = partial(ObjectiveWrapper, objective_calculator=scenario_objective_calculator)
 
 
-# pylint: disable=too-few-public-methods
 class ItemKNNObjective:
     """
     This class is implemented according to
@@ -162,8 +157,6 @@ class ItemKNNObjective:
     Criterion is calculated with ``__call__``,
     other arguments are passed into ``__init__``.
     """
-
-    # pylint: disable=too-many-arguments,too-many-instance-attributes
 
     def __init__(self, **kwargs: Any):
         self.kwargs = kwargs

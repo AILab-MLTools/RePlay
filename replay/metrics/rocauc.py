@@ -3,7 +3,6 @@ from typing import List
 from .base_metric import Metric
 
 
-# pylint: disable=too-few-public-methods
 class RocAuc(Metric):
     """
     Receiver Operating Characteristic/Area Under the Curve is the aggregated performance measure,
@@ -75,9 +74,7 @@ class RocAuc(Metric):
     """
 
     @staticmethod
-    def _get_metric_value_by_user(  # pylint: disable=arguments-differ
-        ks: List[int], ground_truth: List, pred: List
-    ) -> List[float]:
+    def _get_metric_value_by_user(ks: List[int], ground_truth: List, pred: List) -> List[float]:
         if not ground_truth or not pred:
             return [0.0 for _ in ks]
         set_gt = set(ground_truth)

@@ -1,4 +1,3 @@
-# pylint: disable-all
 import numpy as np
 import pytest
 

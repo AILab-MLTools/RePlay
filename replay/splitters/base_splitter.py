@@ -21,7 +21,6 @@ if PYSPARK_AVAILABLE:
 SplitterReturnType = Tuple[DataFrameLike, DataFrameLike]
 
 
-# pylint: disable=too-few-public-methods, too-many-instance-attributes
 class Splitter(ABC):
     """Base class"""
 
@@ -35,7 +34,6 @@ class Splitter(ABC):
         "session_id_processing_strategy",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         drop_cold_items: bool = False,
@@ -73,7 +71,6 @@ class Splitter(ABC):
     def __str__(self):
         return type(self).__name__
 
-    # pylint: disable=too-many-arguments
     def _drop_cold_items_and_users(
         self,
         train: DataFrameLike,

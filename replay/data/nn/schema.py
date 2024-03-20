@@ -23,7 +23,6 @@ TensorMap = Mapping[str, torch.Tensor]
 MutableTensorMap = Dict[str, torch.Tensor]
 
 
-# pylint: disable=too-many-instance-attributes
 class TensorFeatureSource:
     """
     Describes source of a feature
@@ -72,7 +71,6 @@ class TensorFeatureInfo:
     Information about a tensor feature.
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         name: str,
@@ -209,7 +207,6 @@ class TensorFeatureInfo:
             self._set_cardinality(self._cardinality_callback(self._name))
         return self._cardinality
 
-    # pylint: disable=attribute-defined-outside-init
     def _set_cardinality_callback(self, callback: Callable) -> None:
         self._cardinality_callback = callback
 

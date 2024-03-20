@@ -11,13 +11,11 @@ from .dataset import Bert4RecPredictionBatch, Bert4RecTrainingBatch, Bert4RecVal
 from .model import Bert4RecModel, CatFeatureEmbedding
 
 
-# pylint: disable=too-many-instance-attributes
 class Bert4Rec(lightning.LightningModule):
     """
     Implements BERT training-validation loop
     """
 
-    # pylint: disable=too-many-arguments, too-many-locals
     def __init__(
         self,
         tensor_schema: TensorSchema,
@@ -98,7 +96,6 @@ class Bert4Rec(lightning.LightningModule):
         assert item_count
         self._vocab_size = item_count
 
-    # pylint: disable=unused-argument, arguments-differ
     def training_step(self, batch: Bert4RecTrainingBatch, batch_idx: int) -> torch.Tensor:  # noqa: ARG002
         """
         :param batch: Batch of training data.

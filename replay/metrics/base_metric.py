@@ -27,7 +27,7 @@ class MetricDuplicatesWarning(Warning):
 class Metric(ABC):
     """Base metric class"""
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         topk: Union[List[int], int],
         query_column: str = "query_id",
@@ -64,7 +64,6 @@ class Metric(ABC):
         mode_name = self._mode.__name__
         return str(type(self).__name__) + (f"-{mode_name}" if mode_name != "Mean" else "")
 
-    # pylint: disable=no-self-use
     def _check_dataframes_equal_types(
         self,
         recommendations: MetricsDataFrameLike,
@@ -152,7 +151,6 @@ class Metric(ABC):
             .to_dict()
         )
 
-    # pylint: disable=no-self-use
     def _convert_dict_to_dict_with_score(self, data: Dict) -> Dict:
         converted_data = {}
         for user, items in data.items():
@@ -179,9 +177,7 @@ class Metric(ABC):
         distribution_per_user = {}
         for user in users:
             args = [kwargs[key].get(user, None) for key in keys_list]
-            distribution_per_user[user] = self._get_metric_value_by_user(
-                self.topk, *args
-            )  # pylint: disable=protected-access
+            distribution_per_user[user] = self._get_metric_value_by_user(self.topk, *args)
         if self._mode.__name__ == "PerUser":
             return self._aggregate_results_per_user(distribution_per_user)
         distribution = np.stack(list(distribution_per_user.values()))
@@ -378,9 +374,7 @@ class Metric(ABC):
 
     @staticmethod
     @abstractmethod
-    def _get_metric_value_by_user(  # pylint: disable=invalid-name
-        ks: List[int], *args: List
-    ) -> List[float]:  # pragma: no cover
+    def _get_metric_value_by_user(ks: List[int], *args: List) -> List[float]:  # pragma: no cover
         """
         Metric calculation for one user.
 

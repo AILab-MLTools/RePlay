@@ -12,7 +12,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql.window import Window
 
 
-# pylint: disable=too-many-ancestors, too-many-instance-attributes
 class ItemKNN(NeighbourRec):
     """Item-based ItemKNN with modified cosine similarity measure."""
 
@@ -33,7 +32,7 @@ class ItemKNN(NeighbourRec):
         "weighting": {"type": "categorical", "args": [None, "tf_idf", "bm25"]},
     }
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(
         self,
         num_neighbours: int = 10,
         use_rating: bool = False,

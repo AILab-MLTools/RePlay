@@ -1,4 +1,3 @@
-# pylint: disable=wildcard-import,invalid-name,unused-wildcard-import,unspecified-encoding
 import json
 from inspect import getfullargspec
 from os.path import join
@@ -74,7 +73,6 @@ def save(model: BaseRecommender, path: Union[str, Path], overwrite: bool = False
         save_picklable_to_parquet(model.study, join(path, "study"))
 
 
-# pylint: disable=too-many-locals
 def load(path: str, model_type=None) -> BaseRecommender:
     """
     Load saved model from disk

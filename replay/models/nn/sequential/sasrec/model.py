@@ -7,13 +7,11 @@ import torch
 from replay.data.nn import TensorMap, TensorSchema
 
 
-# pylint: disable=too-many-instance-attributes
 class SasRecModel(torch.nn.Module):
     """
     SasRec model
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         schema: TensorSchema,
@@ -194,7 +192,6 @@ class SasRecModel(torch.nn.Module):
                 torch.nn.init.xavier_normal_(param.data)
 
 
-# pylint: disable=too-few-public-methods
 class SasRecMasks:
     """
     SasRec Masks
@@ -315,7 +312,6 @@ class SasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
     Link: https://arxiv.org/pdf/1808.09781.pdf
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         schema: TensorSchema,
@@ -508,7 +504,6 @@ class SasRecPositionalEmbedding(torch.nn.Module):
     Positional embedding.
     """
 
-    # pylint: disable=invalid-name
     def __init__(self, max_len: int, d_model: int) -> None:
         """
         :param max_len: Max sequence length.
@@ -537,7 +532,6 @@ class TiSasRecEmbeddings(torch.nn.Module, BaseSasRecEmbeddings):
     Link: https://cseweb.ucsd.edu/~jmcauley/pdfs/wsdm20b.pdf
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         schema: TensorSchema,
@@ -673,7 +667,6 @@ class TiSasRecLayers(torch.nn.Module):
         self.attention_layernorms = self._layers_stacker(num_blocks, torch.nn.LayerNorm, hidden_size, eps=1e-8)
         self.forward_layernorms = self._layers_stacker(num_blocks, torch.nn.LayerNorm, hidden_size, eps=1e-8)
 
-    # pylint: disable=too-many-arguments
     def forward(
         self,
         seqs: torch.Tensor,
@@ -733,7 +726,6 @@ class TiSasRecAttention(torch.nn.Module):
         self.head_size = hidden_size // head_num
         self.dropout_rate = dropout_rate
 
-    # pylint: disable=too-many-arguments, invalid-name, too-many-locals
     def forward(
         self,
         queries: torch.LongTensor,

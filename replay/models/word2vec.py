@@ -19,7 +19,6 @@ if PYSPARK_AVAILABLE:
     from replay.utils.spark_utils import join_with_col_renaming, multiply_scala_udf, vector_dot
 
 
-# pylint: disable=too-many-instance-attributes, too-many-ancestors
 class Word2VecRec(Recommender, ItemVectorModel, ANNMixin):
     """
     Trains word2vec model where items are treated as words and queries as sentences.
@@ -58,7 +57,6 @@ class Word2VecRec(Recommender, ItemVectorModel, ANNMixin):
         "use_idf": {"type": "categorical", "args": [True, False]},
     }
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         rank: int = 100,
@@ -224,7 +222,6 @@ class Word2VecRec(Recommender, ItemVectorModel, ANNMixin):
             (vector_dot(sf.col("vector"), sf.col("query_vector")) + sf.lit(self.rank)).alias(self.rating_column),
         )
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         dataset: Dataset,

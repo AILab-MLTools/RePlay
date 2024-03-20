@@ -16,7 +16,6 @@ else:
     SparkSession = MissingImportType
 
 
-# pylint: disable=too-few-public-methods
 class PredictionBatch(Protocol):
     """
     Prediction callback batch
@@ -28,13 +27,11 @@ class PredictionBatch(Protocol):
 _T = TypeVar("_T")
 
 
-# pylint: disable=too-many-instance-attributes
 class BasePredictionCallback(lightning.Callback, Generic[_T]):
     """
     Base callback for prediction stage
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         top_k: int,
@@ -158,7 +155,6 @@ class SparkPredictionCallback(BasePredictionCallback[SparkDataFrame]):
     Callback for prediction stage with spark data frame
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         top_k: int,

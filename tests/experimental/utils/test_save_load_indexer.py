@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name, missing-function-docstring, unused-import, wildcard-import, unused-wildcard-import
 from os.path import dirname, join
 
 import pandas as pd

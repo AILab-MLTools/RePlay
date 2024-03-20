@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 """
 Base abstract classes:
 - BaseRecommender - the simplest base class
@@ -55,7 +54,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-few-public-methods
 class IsSavable(ABC):
     """
     Common methods and attributes for saving and loading RePlay models
@@ -154,7 +152,6 @@ class RecommenderCommons:
             self.cached_dfs.discard(full_name)
 
 
-# pylint: disable=too-many-instance-attributes
 class BaseRecommender(RecommenderCommons, IsSavable, ABC):
     """Base recommender"""
 
@@ -172,7 +169,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
     _query_dim_size: int
     _item_dim_size: int
 
-    # pylint: disable=too-many-arguments, too-many-locals, no-member
     def optimize(
         self,
         train_dataset: Dataset,
@@ -237,7 +233,7 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
 
     def _init_params_in_search_space(self, search_space):
         """Check if model params are inside search space"""
-        params = self._init_args  # pylint: disable=no-member
+        params = self._init_args
         outside_search_space = {}
         for param, value in params.items():
             if param not in search_space:
@@ -517,7 +513,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
             )
         return dataset, queries, items
 
-    # pylint: disable=too-many-arguments
     def _predict_wrap(
         self,
         dataset: Optional[Dataset],
@@ -599,7 +594,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         _, interactions_df = filter_cold(interactions_df, fit_entities, col_name=column)
         return main_df, interactions_df
 
-    # pylint: disable=too-many-arguments
     @abstractmethod
     def _predict(
         self,
@@ -857,7 +851,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         vectors, rank = self._get_features(ids, features)
         return vectors, rank
 
-    # pylint: disable=unused-argument
     def _get_features(
         self, ids: SparkDataFrame, features: Optional[SparkDataFrame]  # noqa: ARG002
     ) -> Tuple[Optional[SparkDataFrame], Optional[int]]:
@@ -1047,7 +1040,6 @@ class ItemVectorModel(BaseRecommender):
         return similarity_matrix
 
 
-# pylint: disable=abstract-method
 class HybridRecommender(BaseRecommender, ABC):
     """Base class for models that can use extra features"""
 
@@ -1064,7 +1056,6 @@ class HybridRecommender(BaseRecommender, ABC):
         """
         self._fit_wrap(dataset=dataset)
 
-    # pylint: disable=too-many-arguments
     def predict(
         self,
         dataset: Dataset,
@@ -1181,7 +1172,6 @@ class HybridRecommender(BaseRecommender, ABC):
         return self._get_features_wrap(ids, features)
 
 
-# pylint: disable=abstract-method
 class Recommender(BaseRecommender, ABC):
     """Usual recommender class for models without features."""
 
@@ -1195,7 +1185,6 @@ class Recommender(BaseRecommender, ABC):
         """
         self._fit_wrap(dataset=dataset)
 
-    # pylint: disable=too-many-arguments
     def predict(
         self,
         dataset: Dataset,
@@ -1261,7 +1250,6 @@ class Recommender(BaseRecommender, ABC):
             k=k,
         )
 
-    # pylint: disable=too-many-arguments
     def fit_predict(
         self,
         dataset: Dataset,
@@ -1327,7 +1315,6 @@ class QueryRecommender(BaseRecommender, ABC):
         """
         self._fit_wrap(dataset=dataset)
 
-    # pylint: disable=too-many-arguments
     def predict(
         self,
         dataset: Dataset,
@@ -1481,7 +1468,6 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
         return max_hist_len
 
-    # pylint: disable=too-many-arguments
     def _predict_without_sampling(
         self,
         dataset: Dataset,
@@ -1539,7 +1525,6 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
         return items_pd
 
-    # pylint: disable=too-many-locals
     def _predict_with_sampling(
         self,
         dataset: Dataset,
@@ -1621,7 +1606,6 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
         return recs.groupby(self.query_column).applyInPandas(grouped_map, rec_schema)
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         dataset: Dataset,

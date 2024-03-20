@@ -11,7 +11,6 @@ from replay.models.extensions.ann.index_builders.base_index_builder import Index
 from replay.utils import SparkDataFrame
 
 
-# pylint: disable=too-many-arguments, too-many-locals
 @nb.njit(parallel=True)
 def _main_iteration(
     inv_matrix,
@@ -63,7 +62,6 @@ def _main_iteration(
     )
 
 
-# pylint: disable=too-many-instance-attributes, too-many-ancestors
 class ADMMSLIM(NeighbourRec):
     """`ADMM SLIM: Sparse Recommendations for Many Users
     <http://www.cs.columbia.edu/~jebara/papers/wsdm20_ADMM.pdf>`_
@@ -125,7 +123,6 @@ class ADMMSLIM(NeighbourRec):
             "seed": self.seed,
         }
 
-    # pylint: disable=too-many-locals
     def _fit(
         self,
         log: SparkDataFrame,

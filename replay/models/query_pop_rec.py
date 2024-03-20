@@ -102,7 +102,6 @@ class QueryPopRec(Recommender):
         if hasattr(self, "query_item_popularity"):
             self.query_item_popularity.unpersist()
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         dataset: Dataset,  # noqa: ARG002

@@ -16,13 +16,11 @@ if PYSPARK_AVAILABLE:
     from pyspark.storagelevel import StorageLevel
 
 
-# pylint: disable=too-many-instance-attributes
 class Dataset:
     """
     Universal dataset for feeding data to models.
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         feature_schema: FeatureSchema,
@@ -297,7 +295,6 @@ class Dataset:
     def _set_cardinality(self, features_list: Sequence[FeatureInfo]) -> None:
         for feature in features_list:
             if feature.feature_type == FeatureType.CATEGORICAL:
-                # pylint: disable=protected-access
                 feature._set_cardinality_callback(self._get_cardinality(feature))
 
     def _fill_feature_schema(self, feature_schema: FeatureSchema) -> FeatureSchema:
@@ -363,10 +360,8 @@ class Dataset:
         self._set_cardinality(features_list=unlabeled_columns)
         return unlabeled_columns
 
-    # pylint: disable=no-self-use
     def _set_features_source(self, feature_list: List[FeatureInfo], source: FeatureSource) -> None:
         for feature in feature_list:
-            # pylint: disable=protected-access
             feature._set_feature_source(source)
 
     def _check_ids_consistency(self, hint: FeatureHint) -> None:

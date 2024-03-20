@@ -27,7 +27,6 @@ if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
 
 
-# pylint: disable=too-many-locals, too-many-arguments
 def get_first_level_model_features(
     model: SparkDataFrame,
     pairs: SparkDataFrame,
@@ -110,7 +109,6 @@ def get_first_level_model_features(
     return pairs_with_features
 
 
-# pylint: disable=too-many-instance-attributes
 class TwoStagesScenario(HybridRecommender):
     """
     *train*:
@@ -145,7 +143,6 @@ class TwoStagesScenario(HybridRecommender):
     can_predict_cold_users: bool = True
     can_predict_cold_items: bool = True
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         train_splitter: Splitter = RatioSplitter(test_size=0.5),
@@ -234,7 +231,6 @@ class TwoStagesScenario(HybridRecommender):
     def _init_args(self):
         return {}
 
-    # pylint: disable=too-many-locals
     def _add_features_for_second_level(
         self,
         log_to_add_features: SparkDataFrame,
@@ -445,7 +441,6 @@ class TwoStagesScenario(HybridRecommender):
             item_features=item_features,
         )
 
-    # pylint: disable=unused-argument
     def _get_first_level_candidates(
         self,
         model: BaseRecommender,
@@ -476,7 +471,6 @@ class TwoStagesScenario(HybridRecommender):
             )
         return candidates
 
-    # pylint: disable=too-many-locals,too-many-statements
     def _fit(
         self,
         log: SparkDataFrame,
@@ -574,7 +568,6 @@ class TwoStagesScenario(HybridRecommender):
         for dataframe in self.cached_list:
             unpersist_if_exists(dataframe)
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,
@@ -677,7 +670,6 @@ class TwoStagesScenario(HybridRecommender):
         )
         return params
 
-    # pylint: disable=too-many-arguments, too-many-locals
     def optimize(
         self,
         train: DataFrameLike,

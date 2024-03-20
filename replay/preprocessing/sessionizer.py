@@ -10,7 +10,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql.window import Window
 
 
-# pylint: disable=too-many-instance-attributes, too-few-public-methods
 class Sessionizer:
     """
     Create and filter sessions from given interactions.
@@ -51,7 +50,6 @@ class Sessionizer:
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         user_column: str = "user_id",

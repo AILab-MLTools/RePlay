@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name, missing-function-docstring, unused-import, pointless-statement
 import logging
 
 import numpy as np
@@ -15,7 +14,6 @@ from tests.utils import (
 )
 
 
-# pylint: disable=missing-class-docstring, too-many-arguments
 class DerivedRec(Recommender):
     @property
     def _init_args(self):

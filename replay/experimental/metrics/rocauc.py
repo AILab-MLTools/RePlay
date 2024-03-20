@@ -1,7 +1,6 @@
 from .base_metric import Metric
 
 
-# pylint: disable=too-few-public-methods
 class RocAuc(Metric):
     """
     Receiver Operating Characteristic/Area Under the Curve is the aggregated performance measure,

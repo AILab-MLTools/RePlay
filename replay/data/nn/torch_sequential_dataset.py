@@ -170,7 +170,6 @@ class TorchSequentialValidationDataset(TorchDataset):
     Torch dataset for sequential recommender models that additionally stores ground truth
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         sequential: SequentialDataset,

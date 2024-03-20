@@ -11,7 +11,6 @@ from .dataset import SasRecPredictionBatch, SasRecTrainingBatch, SasRecValidatio
 from .model import SasRecModel
 
 
-# pylint: disable=too-many-instance-attributes
 class SasRec(lightning.LightningModule):
     """
     SASRec Lightning module.
@@ -20,7 +19,6 @@ class SasRec(lightning.LightningModule):
     for object of SasRec instance.
     """
 
-    # pylint: disable=too-many-arguments, too-many-locals
     def __init__(
         self,
         tensor_schema: TensorSchema,
@@ -95,7 +93,6 @@ class SasRec(lightning.LightningModule):
         assert item_count
         self._vocab_size = item_count
 
-    # pylint: disable=unused-argument, arguments-differ
     def training_step(self, batch: SasRecTrainingBatch, batch_idx: int) -> torch.Tensor:
         """
         :param batch (SasRecTrainingBatch): Batch of training data.
@@ -109,7 +106,6 @@ class SasRec(lightning.LightningModule):
         self.log("train_loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
         return loss
 
-    # pylint: disable=arguments-differ
     def forward(self, feature_tensors: TensorMap, padding_mask: torch.BoolTensor) -> torch.Tensor:  # pragma: no cover
         """
         :param feature_tensors: Batch of features.
@@ -119,7 +115,6 @@ class SasRec(lightning.LightningModule):
         """
         return self._model_predict(feature_tensors, padding_mask)
 
-    # pylint: disable=unused-argument
     def predict_step(
         self, batch: SasRecPredictionBatch, batch_idx: int, dataloader_idx: int = 0  # noqa: ARG002
     ) -> torch.Tensor:
@@ -313,7 +308,6 @@ class SasRec(lightning.LightningModule):
         loss = self._loss(logits, labels_flat)
         return loss
 
-    # pylint: disable=too-many-locals
     def _get_sampled_logits(
         self,
         feature_tensors: TensorMap,

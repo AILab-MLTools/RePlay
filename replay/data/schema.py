@@ -45,7 +45,6 @@ class FeatureInfo:
     Information about a feature.
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         column: str,
@@ -119,7 +118,6 @@ class FeatureInfo:
             self._cardinality = self._cardinality_callback(self._column)
         return self._cardinality
 
-    # pylint: disable=attribute-defined-outside-init
     def _set_cardinality_callback(self, callback: Callable) -> None:
         self._cardinality_callback = callback
 
@@ -130,7 +128,6 @@ class FeatureInfo:
         self._cardinality = None
 
 
-# pylint: disable=too-many-public-methods
 class FeatureSchema(Mapping[str, FeatureInfo]):
     """
     Key-value like collection with information about all dataset features.
@@ -427,7 +424,6 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     def _type_drop(value: FeatureInfo, feature_type: FeatureType) -> bool:
         return value.feature_type != feature_type if feature_type else True
 
-    # pylint: disable=no-self-use
     @staticmethod
     def _hint_drop(value: FeatureInfo, feature_hint: FeatureHint) -> bool:
         return value.feature_hint != feature_hint if feature_hint else True

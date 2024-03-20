@@ -3,7 +3,6 @@ import numpy as np
 from .base_metric import NCISMetric
 
 
-# pylint: disable=too-few-public-methods
 class NCISPrecision(NCISMetric):
     """
     Share of relevant items among top ``K`` recommendations with NCIS weighting.

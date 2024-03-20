@@ -5,7 +5,6 @@ from replay.utils import DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkD
 from .base_splitter import Splitter, SplitterReturnType
 
 
-# pylint: disable=too-few-public-methods, duplicate-code
 class RandomSplitter(Splitter):
     """Assign records into train and test at random."""
 
@@ -18,7 +17,6 @@ class RandomSplitter(Splitter):
         "item_column",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         test_size: float,

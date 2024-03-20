@@ -18,7 +18,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql.types import TimestampType
 
 
-# pylint: disable=too-few-public-methods
 class _BaseFilter(ABC):
     def transform(self, interactions: DataFrameLike) -> DataFrameLike:
         r"""Filter interactions.
@@ -50,7 +49,6 @@ class _BaseFilter(ABC):
         pass
 
 
-# pylint: disable=too-few-public-methods, too-many-instance-attributes
 class InteractionEntriesFilter(_BaseFilter):
     """
     Remove interactions less than minimum constraint value and greater
@@ -84,7 +82,6 @@ class InteractionEntriesFilter(_BaseFilter):
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         query_column: str = "user_id",
@@ -173,7 +170,6 @@ class InteractionEntriesFilter(_BaseFilter):
 
         return interactions
 
-    # pylint: disable=no-self-use
     def _filter_column_pandas(
         self,
         interactions: PandasDataFrame,
@@ -199,7 +195,6 @@ class InteractionEntriesFilter(_BaseFilter):
 
         return filtered_interactions, different_len, end_len_dataframe
 
-    # pylint: disable=no-self-use
     def _filter_column_spark(
         self,
         interactions: SparkDataFrame,
@@ -226,7 +221,6 @@ class InteractionEntriesFilter(_BaseFilter):
 
         return filtered_interactions, different_len, end_len_dataframe
 
-    # pylint: disable=no-self-use
     def _filter_column_polars(
         self,
         interactions: PolarsDataFrame,
@@ -413,7 +407,6 @@ class NumInteractionsFilter(_BaseFilter):
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         num_interactions: int = 10,

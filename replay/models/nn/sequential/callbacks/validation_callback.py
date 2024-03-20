@@ -18,7 +18,6 @@ CallbackMetricName = Literal[
 ]
 
 
-# pylint: disable=too-few-public-methods
 class ValidationBatch(Protocol):
     """
     Validation callback batch
@@ -37,7 +36,6 @@ class ValidationMetricsCallback(lightning.Callback):
     the suffix of the metric name will contain the serial number of the dataloader.
     """
 
-    # pylint: disable=invalid-name
     def __init__(
         self,
         metrics: Optional[List[CallbackMetricName]] = None,
@@ -73,7 +71,6 @@ class ValidationMetricsCallback(lightning.Callback):
         for builder in self._metrics_builders:
             builder.reset()
 
-    # pylint: disable=unused-argument
     def on_test_epoch_start(
         self,
         trainer: lightning.Trainer,
@@ -93,7 +90,6 @@ class ValidationMetricsCallback(lightning.Callback):
             query_ids, scores, ground_truth = postprocessor.on_validation(query_ids, scores, ground_truth)
         return query_ids, scores, ground_truth
 
-    # pylint: disable=too-many-arguments
     def on_validation_batch_end(
         self,
         trainer: lightning.Trainer,
@@ -105,7 +101,6 @@ class ValidationMetricsCallback(lightning.Callback):
     ) -> None:
         self._batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
 
-    # pylint: disable=unused-argument, too-many-arguments
     def on_test_batch_end(
         self,
         trainer: lightning.Trainer,
@@ -117,7 +112,6 @@ class ValidationMetricsCallback(lightning.Callback):
     ) -> None:  # pragma: no cover
         self._batch_end(trainer, pl_module, outputs, batch, batch_idx, dataloader_idx)
 
-    # pylint: disable=too-many-arguments
     def _batch_end(
         self,
         trainer: lightning.Trainer,  # noqa: ARG002
@@ -148,7 +142,6 @@ class ValidationMetricsCallback(lightning.Callback):
         self._epoch_end(trainer, pl_module)
 
     def _epoch_end(self, trainer: lightning.Trainer, pl_module: lightning.LightningModule) -> None:  # noqa: ARG002
-        # pylint: disable=W0212
         @rank_zero_only
         def print_metrics() -> None:
             metrics = {}

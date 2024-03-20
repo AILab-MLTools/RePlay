@@ -6,8 +6,6 @@ from .base_metric import Metric, MetricsDataFrameLike
 from .offline_metrics import OfflineMetrics
 
 
-# pylint: disable=too-many-instance-attributes
-# pylint: disable=too-few-public-methods
 class Experiment:
     """
     The class is designed for calculating, storing and comparing metrics
@@ -102,7 +100,6 @@ class Experiment:
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         metrics: List[Metric],
@@ -180,7 +177,6 @@ class Experiment:
         for metric, value in cur_metrics.items():
             self.results.at[name, metric] = value
 
-    # pylint: disable=not-an-iterable
     def compare(self, name: str) -> pd.DataFrame:
         """
         Show results as a percentage difference to record ``name``.

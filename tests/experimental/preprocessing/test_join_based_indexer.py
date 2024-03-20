@@ -1,5 +1,3 @@
-# pylint: disable=redefined-outer-name, missing-function-docstring, unused-import, wildcard-import, unused-wildcard-import
-
 import pytest
 
 pyspark = pytest.importorskip("pyspark")

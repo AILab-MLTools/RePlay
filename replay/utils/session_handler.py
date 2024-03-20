@@ -36,7 +36,6 @@ def get_spark_session(
         Default: ``None``.
     """
     if os.environ.get("SCRIPT_ENV", None) == "cluster":  # pragma: no cover
-        # pylint: disable=no-member
         return SparkSession.builder.getOrCreate()
 
     os.environ["PYSPARK_PYTHON"] = sys.executable
@@ -72,7 +71,6 @@ def get_spark_session(
         shuffle_partitions = os.cpu_count() * 3
     driver_memory = f"{spark_memory}g"
     user_home = os.environ["HOME"]
-    # pylint: disable=no-member
     spark = (
         SparkSession.builder.config("spark.driver.memory", driver_memory)
         .config(
@@ -111,7 +109,6 @@ def logger_with_settings() -> logging.Logger:
     return logger
 
 
-# pylint: disable=too-few-public-methods
 class Borg:
     """
     This class allows to share objects between instances.
@@ -123,7 +120,6 @@ class Borg:
         self.__dict__ = self._shared_state
 
 
-# pylint: disable=too-few-public-methods
 class State(Borg):
     """
     All modules look for Spark session via this class. You can put your own session here.

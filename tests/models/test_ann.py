@@ -1,4 +1,3 @@
-# pylint: disable-all
 import pytest
 
 from replay.models.extensions.ann.entities.hnswlib_param import HnswlibParam

@@ -86,7 +86,6 @@ class SampleItems(BasePostProcessor):
     Generates negative samples to compute sampled metrics
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         grouped_validation_items: pd.DataFrame,

@@ -1,5 +1,3 @@
-# pylint: disable=invalid-name
-
 import logging
 import math
 
@@ -13,13 +11,11 @@ if TORCH_AVAILABLE:
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-few-public-methods
 class GELU(nn.Module):
     """
     GELU callable class
     """
 
-    # pylint: disable=no-self-use
     def forward(self, x):
         """
         Apply GELU
@@ -27,7 +23,6 @@ class GELU(nn.Module):
         return func.gelu(x)
 
 
-# pylint: disable=too-few-public-methods
 class GPTConfig:
     """base GPT config, params common to all GPT versions"""
 
@@ -192,7 +187,6 @@ class StateReprModule(nn.Module):
         return output
 
 
-# pylint: disable=too-many-instance-attributes
 class GPT(nn.Module):
     """the full GPT language model, with a context size of block_size"""
 
@@ -266,9 +260,7 @@ class GPT(nn.Module):
             torch.nn.Conv1d,
         )
         blacklist_weight_modules = (torch.nn.LayerNorm, torch.nn.Embedding)
-        # pylint: disable=invalid-name
         for mn, m in self.named_modules():
-            # pylint: disable=invalid-name
             for pn, _ in m.named_parameters():
                 fpn = f"{mn}.{pn}" if mn else pn  # full param name
 
@@ -308,8 +300,6 @@ class GPT(nn.Module):
         return optim_groups
 
     # state, action, and return
-    # pylint: disable=too-many-locals
-    # pylint: disable=too-many-arguments
     def forward(
         self,
         states,
@@ -390,7 +380,6 @@ class GPT(nn.Module):
 
         return logits
 
-    # pylint: disable=too-many-arguments
     def predict(self, states, actions, rtgs, timesteps, users):
         """
         :states: states batch, (batch, block_size, 3)

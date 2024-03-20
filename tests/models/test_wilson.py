@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name, missing-function-docstring, unused-import
 import numpy as np
 import pytest
 from statsmodels.stats.proportion import proportion_confint

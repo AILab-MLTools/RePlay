@@ -9,7 +9,7 @@ if PYSPARK_AVAILABLE:
     from replay.utils.session_handler import State
 
 
-class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReadable):  # pylint: disable=R0901
+class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReadable):
     """
     Buckets the input dataframe, dumps it to spark warehouse directory,
     and returns a bucketed dataframe.
@@ -76,7 +76,7 @@ class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReada
         spark = State().session
         spark_warehouse_dir = self.getOrDefault(self.sparkWarehouseDir)
         table_name = self.getOrDefault(self.tableName)
-        fs = get_fs(spark)  # pylint: disable=invalid-name
+        fs = get_fs(spark)
         fs_path = spark._jvm.org.apache.hadoop.fs.Path(f"{spark_warehouse_dir}/{table_name}")
         is_exists = fs.exists(fs_path)
         if is_exists:

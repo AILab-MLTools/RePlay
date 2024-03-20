@@ -19,7 +19,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-many-instance-attributes
 class CatPopRec(IsSavable, RecommenderCommons):
     """
     CatPopRec generate recommendation for item categories.
@@ -160,7 +159,6 @@ class CatPopRec(IsSavable, RecommenderCommons):
         if hasattr(self, "leaf_cat_mapping"):
             self.leaf_cat_mapping.unpersist()
 
-    # pylint: disable=arguments-differ
     def predict(
         self,
         categories: Union[SparkDataFrame, Iterable],

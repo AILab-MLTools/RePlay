@@ -30,7 +30,6 @@ class SasRecTrainingDataset(TorchDataset):
     Dataset that generates samples to train SasRec-like model
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         sequential: SequentialDataset,
@@ -168,7 +167,6 @@ class SasRecValidationDataset(TorchDataset):
     Dataset that generates samples to infer and validate SasRec-like model
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         sequential: SequentialDataset,

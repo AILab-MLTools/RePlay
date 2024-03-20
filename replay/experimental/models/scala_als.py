@@ -22,7 +22,6 @@ class ALSWrap(Recommender, ItemVectorModel):
         "rank": {"type": "loguniform_int", "args": [8, 256]},
     }
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         rank: int = 10,
@@ -96,7 +95,6 @@ class ALSWrap(Recommender, ItemVectorModel):
             self.model.itemFactors.unpersist()
             self.model.userFactors.unpersist()
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: Optional[SparkDataFrame],
@@ -170,7 +168,6 @@ class ALSWrap(Recommender, ItemVectorModel):
         )
 
 
-# pylint: disable=too-many-instance-attributes, too-many-ancestors
 class ScalaALSWrap(ALSWrap, ANNMixin):
     """Wrapper for `Spark ALS
     <https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#pyspark.mllib.recommendation.ALS>`_.
@@ -200,7 +197,6 @@ class ScalaALSWrap(ALSWrap, ANNMixin):
         item_vectors, _ = self.get_features(interactions.select("item_idx").distinct())
         return item_vectors
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         rank: int = 10,
@@ -267,7 +263,6 @@ class ScalaALSWrap(ALSWrap, ANNMixin):
         if self._use_ann:
             self._load_index(path)
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: Optional[SparkDataFrame],

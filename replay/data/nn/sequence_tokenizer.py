@@ -84,7 +84,6 @@ class SequenceTokenizer:
         :param dataset: input dataset to transform
         :returns: SequentialDataset
         """
-        # pylint: disable=protected-access
         return self.fit(dataset)._transform_unchecked(dataset)
 
     @property
@@ -208,7 +207,6 @@ class SequenceTokenizer:
 
         return grouped_interactions_pd, query_features_pd, item_features_pd
 
-    # pylint: disable=too-many-arguments
     def _make_sequence_features(
         self,
         schema: TensorSchema,
@@ -419,7 +417,6 @@ class _SequenceProcessor:
         with passing all tensor features one by one.
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         tensor_schema: TensorSchema,

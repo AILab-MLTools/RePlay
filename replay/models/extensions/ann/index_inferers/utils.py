@@ -12,12 +12,12 @@ def get_csr_matrix(
         (
             vector_ratings.explode().values.astype(float),
             (
-                user_idx.repeat(vector_items.apply(lambda x: len(x))).values,  # pylint: disable=unnecessary-lambda
+                user_idx.repeat(vector_items.apply(lambda x: len(x))).values,
                 vector_items.explode().values.astype(int),
             ),
         ),
         shape=(
             user_idx.max() + 1,
-            vector_items.apply(lambda x: max(x)).max() + 1,  # pylint: disable=unnecessary-lambda
+            vector_items.apply(lambda x: max(x)).max() + 1,
         ),
     )

@@ -18,7 +18,6 @@ if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
 
 
-# pylint: disable=too-many-locals, too-many-instance-attributes
 class LightFMWrap(HybridRecommender):
     """Wrapper for LightFM."""
 
@@ -38,7 +37,7 @@ class LightFMWrap(HybridRecommender):
         no_components: int = 128,
         loss: str = "warp",
         random_state: Optional[int] = None,
-    ):  # pylint: disable=too-many-arguments
+    ):
         np.random.seed(42)
         self.no_components = no_components
         self.loss = loss
@@ -233,7 +232,6 @@ class LightFMWrap(HybridRecommender):
         )
         return pairs.groupby("user_idx").applyInPandas(predict_by_user, rec_schema)
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,  # noqa: ARG002

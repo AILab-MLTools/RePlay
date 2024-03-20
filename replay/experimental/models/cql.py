@@ -155,7 +155,6 @@ class CQL(Recommender):
         "n_critics": {"type": "int", "args": [2, 4]},
     }
 
-    # pylint: disable=too-many-arguments, too-many-locals
     def __init__(
         self,
         mdp_dataset_builder: "MdpDatasetBuilder",
@@ -274,7 +273,6 @@ class CQL(Recommender):
 
         return user_item_pairs
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,  # noqa: ARG002
@@ -447,7 +445,6 @@ class MdpDatasetBuilder:
         self.logger.info("-- Building MDP dataset took %.2f seconds", prepare_time)
         return train_dataset
 
-    # pylint: disable=missing-function-docstring
     def init_args(self):
         return {
             "top_k": self.top_k,

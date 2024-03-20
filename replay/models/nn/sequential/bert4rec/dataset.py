@@ -27,7 +27,6 @@ class Bert4RecTrainingBatch(NamedTuple):
     labels: torch.LongTensor
 
 
-# pylint: disable=too-few-public-methods
 class Bert4RecMasker(abc.ABC):
     """
     Interface for a token masking strategy during BERT model training
@@ -44,7 +43,6 @@ class Bert4RecMasker(abc.ABC):
         """
 
 
-# pylint: disable=too-few-public-methods
 class Bert4RecUniformMasker(Bert4RecMasker):
     """
     Token masking strategy that mask random token with uniform distribution.
@@ -90,7 +88,6 @@ class Bert4RecTrainingDataset(TorchDataset):
     Dataset that generates samples to train BERT-like model
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         sequential: SequentialDataset,
@@ -233,7 +230,6 @@ class Bert4RecValidationDataset(TorchDataset):
     Dataset that generates samples to infer and validate BERT-like model
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         sequential: SequentialDataset,

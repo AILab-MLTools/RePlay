@@ -1,7 +1,6 @@
 from .base_metric import Metric
 
 
-# pylint: disable=too-few-public-methods
 class HitRate(Metric):
     """
     Percentage of users that have at least one

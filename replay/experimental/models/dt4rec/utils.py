@@ -1,5 +1,3 @@
-# pylint: disable=invalid-name
-
 import bisect
 import random
 from typing import List, Union
@@ -119,7 +117,6 @@ def pad_sequence(
     return padded_sequence
 
 
-# pylint: disable=too-few-public-methods
 class Collator:
     """
     Callable class to merge several items to one batch
@@ -169,7 +166,6 @@ class WarmUpScheduler(_LRScheduler):
     Implementation of WarmUp
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         optimizer: Optimizer,
@@ -196,7 +192,6 @@ def calc_lr(step, dim_embed, warmup_steps):
     return dim_embed ** (-0.5) * min(step ** (-0.5), step * warmup_steps ** (-1.5))
 
 
-# pylint: disable=too-many-arguments
 def create_dataset(
     df, user_num, item_pad, time_col="timestamp", user_col="user_idx", item_col="item_idx", relevance_col="relevance"
 ):
@@ -230,7 +225,6 @@ def create_dataset(
 
 
 # For debug
-# pylint: disable=too-many-locals
 def fast_create_dataset(
     df,
     user_num,

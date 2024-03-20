@@ -51,7 +51,6 @@ def spark_to_pandas(data: SparkDataFrame, allow_collect_to_master: bool = False)
     return data.toPandas()
 
 
-# pylint: disable=invalid-name
 def convert2spark(data_frame: Optional[DataFrameLike]) -> Optional[SparkDataFrame]:
     """
     Converts Pandas DataFrame to Spark DataFrame
@@ -430,7 +429,6 @@ def join_or_return(first, second, on, how):
     return first.join(second, on=on, how=how)
 
 
-# pylint: disable=too-many-arguments
 def fallback(
     base: SparkDataFrame,
     fill: SparkDataFrame,

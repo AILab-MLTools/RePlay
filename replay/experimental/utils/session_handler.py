@@ -11,7 +11,6 @@ else:
     SparkSession = MissingImportType
 
 
-# pylint: disable=too-few-public-methods
 class State(Borg):
     """
     All modules look for Spark session via this class. You can put your own session here.

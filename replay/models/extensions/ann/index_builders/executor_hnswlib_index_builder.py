@@ -55,7 +55,7 @@ class ExecutorHnswlibIndexBuilder(IndexBuilder):
                     # ids will be from [0, ..., len(vectors_np)]
                     index.add_items(np.stack(vectors_np))
 
-            _index_store.save_to_store(lambda path: index.save_index(path))  # pylint: disable=unnecessary-lambda)
+            _index_store.save_to_store(lambda path: index.save_index(path))
 
             yield PandasDataFrame(data={"_success": 1}, index=[0])
 

@@ -14,7 +14,6 @@ if PYSPARK_AVAILABLE:
     from replay.utils.spark_utils import list_to_vector_udf
 
 
-# pylint: disable=too-many-instance-attributes
 class ALSWrap(Recommender, ItemVectorModel):
     """Wrapper for `Spark ALS
     <https://spark.apache.org/docs/latest/api/python/pyspark.mllib.html#pyspark.mllib.recommendation.ALS>`_.
@@ -25,7 +24,6 @@ class ALSWrap(Recommender, ItemVectorModel):
         "rank": {"type": "loguniform_int", "args": [8, 256]},
     }
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         rank: int = 10,
@@ -99,7 +97,6 @@ class ALSWrap(Recommender, ItemVectorModel):
             self.model.itemFactors.unpersist()
             self.model.userFactors.unpersist()
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         dataset: Optional[Dataset],

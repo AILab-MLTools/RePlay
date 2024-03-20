@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 """
 Base abstract classes:
 - BaseRecommender - the simplest base class
@@ -44,7 +43,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-many-instance-attributes
 class BaseRecommender(RecommenderCommons, IsSavable, ABC):
     """Base recommender"""
 
@@ -151,7 +149,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
 
         return recs
 
-    # pylint: disable=too-many-arguments
     def _filter_log_users_items_dataframes(
         self,
         log: Optional[SparkDataFrame],
@@ -195,7 +192,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
             self.logger.debug(message)
         return log, users, items
 
-    # pylint: disable=too-many-arguments
     def _predict_wrap(
         self,
         log: Optional[SparkDataFrame],
@@ -278,7 +274,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         _, log_df = filter_cold(log_df, fit_entities, col_name=f"{entity}_{suffix}")
         return main_df, log_df
 
-    # pylint: disable=too-many-arguments
     @abstractmethod
     def _predict(
         self,
@@ -488,7 +483,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         vectors, rank = self._get_features(ids, features)
         return vectors, rank
 
-    # pylint: disable=unused-argument
     def _get_features(
         self, ids: SparkDataFrame, features: Optional[SparkDataFrame]  # noqa: ARG002
     ) -> Tuple[Optional[SparkDataFrame], Optional[int]]:
@@ -557,8 +551,6 @@ class BaseRecommender(RecommenderCommons, IsSavable, ABC):
         pass
 
 
-# pylint: disable=abstract-method
-# pylint: disable=duplicate-code
 class ItemVectorModel(BaseRecommender):
     """Parent for models generating items' vector representations"""
 
@@ -662,7 +654,6 @@ class ItemVectorModel(BaseRecommender):
         return similarity_matrix
 
 
-# pylint: disable=abstract-method
 class HybridRecommender(BaseRecommender, ABC):
     """Base class for models that can use extra features"""
 
@@ -689,7 +680,6 @@ class HybridRecommender(BaseRecommender, ABC):
             item_features=item_features,
         )
 
-    # pylint: disable=too-many-arguments
     def predict(
         self,
         log: SparkDataFrame,
@@ -830,7 +820,6 @@ class HybridRecommender(BaseRecommender, ABC):
         return self._get_features_wrap(ids, features)
 
 
-# pylint: disable=abstract-method
 class Recommender(BaseRecommender, ABC):
     """Usual recommender class for models without features."""
 
@@ -848,7 +837,6 @@ class Recommender(BaseRecommender, ABC):
             item_features=None,
         )
 
-    # pylint: disable=too-many-arguments
     def predict(
         self,
         log: SparkDataFrame,
@@ -916,7 +904,6 @@ class Recommender(BaseRecommender, ABC):
             k=k,
         )
 
-    # pylint: disable=too-many-arguments
     def fit_predict(
         self,
         log: SparkDataFrame,
@@ -987,7 +974,6 @@ class UserRecommender(BaseRecommender, ABC):
         """
         self._fit_wrap(log=log, user_features=user_features)
 
-    # pylint: disable=too-many-arguments
     def predict(
         self,
         user_features: SparkDataFrame,
@@ -1135,7 +1121,6 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
         return max_hist_len
 
-    # pylint: disable=too-many-arguments
     def _predict_without_sampling(
         self,
         log: SparkDataFrame,
@@ -1247,7 +1232,6 @@ class NonPersonalizedRecommender(Recommender, ABC):
 
         return recs.groupby("user_idx").applyInPandas(grouped_map, rec_schema)
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,

@@ -1,4 +1,3 @@
-# pylint: disable=too-many-lines
 """
 NeighbourRec - base class that requires log at prediction time.
 Part of set of abstract classes (from base_rec.py)
@@ -34,7 +33,6 @@ class NeighbourRec(Recommender, ANNMixin, ABC):
         if hasattr(self, "similarity"):
             self.similarity.unpersist()
 
-    # pylint: disable=missing-function-docstring
     @property
     def similarity_metric(self):
         return self._similarity_metric
@@ -91,7 +89,6 @@ class NeighbourRec(Recommender, ANNMixin, ABC):
         )
         return recs
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,

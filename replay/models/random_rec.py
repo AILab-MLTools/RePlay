@@ -131,7 +131,6 @@ class RandomRec(NonPersonalizedRecommender):
     }
     sample: bool = True
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         distribution: str = "uniform",

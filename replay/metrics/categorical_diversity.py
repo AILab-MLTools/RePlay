@@ -22,7 +22,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-few-public-methods
 class CategoricalDiversity(Metric):
     """
     Metric calculation is as follows:
@@ -61,7 +60,6 @@ class CategoricalDiversity(Metric):
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         topk: Union[List, int],
@@ -110,7 +108,6 @@ class CategoricalDiversity(Metric):
         precalculated_answer = self._precalculate_unique_cats(recommendations)
         return self._dict_call(precalculated_answer)
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations(
         self,
         recommendations: Union[PolarsDataFrame, SparkDataFrame],
@@ -120,13 +117,11 @@ class CategoricalDiversity(Metric):
         else:
             return self._get_enriched_recommendations_polars(recommendations)
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations_spark(self, recommendations: SparkDataFrame) -> SparkDataFrame:
         window = Window.partitionBy(self.query_column).orderBy(sf.col(self.rating_column).desc())
         sorted_by_score_recommendations = recommendations.withColumn("rank", sf.row_number().over(window))
         return sorted_by_score_recommendations
 
-    # pylint: disable=arguments-differ
     def _get_enriched_recommendations_polars(self, recommendations: PolarsDataFrame) -> PolarsDataFrame:
         sorted_by_score_recommendations = recommendations.select(
             pl.all().sort_by(self.rating_column, descending=True).over(self.query_column)
@@ -182,7 +177,6 @@ class CategoricalDiversity(Metric):
             metrics.append(self._mode.cpu(aggregated_by_user) / k)
         return self._aggregate_results(metrics)
 
-    # pylint: disable=arguments-differ
     def _spark_call(self, recommendations: SparkDataFrame) -> MetricsReturnType:
         """
         Implementation for Pyspark DataFrame.
@@ -192,7 +186,6 @@ class CategoricalDiversity(Metric):
             return self._spark_compute_per_user(recs)
         return self._spark_compute_agg(recs)
 
-    # pylint: disable=arguments-differ
     def _polars_call(self, recommendations: PolarsDataFrame) -> MetricsReturnType:
         """
         Implementation for Polars DataFrame.
@@ -210,7 +203,6 @@ class CategoricalDiversity(Metric):
             .to_dict()
         )
 
-    # pylint: disable=no-self-use
     def _precalculate_unique_cats(self, recommendations: Dict) -> Dict:
         """
         Precalculate unique categories for each prefix for each user.
@@ -225,7 +217,6 @@ class CategoricalDiversity(Metric):
             answer[user] = unique_len
         return answer
 
-    # pylint: disable=arguments-renamed,arguments-differ
     def _dict_compute_per_user(self, precalculated_answer: Dict) -> MetricsPerUserReturnType:
         distribution_per_user = defaultdict(list)
         for k in self.topk:
@@ -233,7 +224,6 @@ class CategoricalDiversity(Metric):
                 distribution_per_user[user].append(unique_cats[min(len(unique_cats), k) - 1] / k)
         return self._aggregate_results_per_user(distribution_per_user)
 
-    # pylint: disable=arguments-renamed
     def _dict_compute_mean(self, precalculated_answer: Dict) -> MetricsMeanReturnType:
         distribution_list = []
         for unique_cats in precalculated_answer.values():
@@ -248,7 +238,6 @@ class CategoricalDiversity(Metric):
         metrics = [self._mode.cpu(distribution[:, k]) for k in range(distribution.shape[1])]
         return self._aggregate_results(metrics)
 
-    # pylint: disable=arguments-differ
     def _dict_call(self, precalculated_answer: Dict) -> MetricsReturnType:
         """
         Calculating metrics in dict format.

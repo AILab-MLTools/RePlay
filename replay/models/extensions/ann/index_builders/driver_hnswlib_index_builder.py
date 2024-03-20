@@ -26,7 +26,6 @@ class DriverHnswlibIndexBuilder(IndexBuilder):
         else:
             return HnswlibIndexInferer(self.index_params, self.index_store)
 
-    # pylint: disable=no-member
     def build_index(
         self,
         vectors: SparkDataFrame,
@@ -42,4 +41,4 @@ class DriverHnswlibIndexBuilder(IndexBuilder):
         else:
             index.add_items(np.stack(vectors_np))
 
-        self.index_store.save_to_store(lambda path: index.save_index(path))  # pylint: disable=unnecessary-lambda)
+        self.index_store.save_to_store(lambda path: index.save_index(path))

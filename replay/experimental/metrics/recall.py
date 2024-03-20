@@ -1,7 +1,6 @@
 from .base_metric import Metric
 
 
-# pylint: disable=too-few-public-methods
 class Recall(Metric):
     """
     Mean percentage of relevant items, that was shown among top ``K`` recommendations.

@@ -1,4 +1,3 @@
-# pylint: disable=redefined-outer-name, missing-function-docstring, unused-import
 import pytest
 
 from replay.models import AssociationRulesItemRec

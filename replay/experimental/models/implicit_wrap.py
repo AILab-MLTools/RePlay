@@ -79,7 +79,6 @@ class ImplicitWrap(Recommender):
 
         return predict_by_user_item
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,

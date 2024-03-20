@@ -9,7 +9,6 @@ if PYSPARK_AVAILABLE:
     from replay.utils.spark_utils import spark_to_pandas
 
 
-# pylint: disable=too-few-public-methods
 class CSRConverter:
     """
     Convert input data to csr sparse matrix.
@@ -47,7 +46,6 @@ class CSRConverter:
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         first_dim_column: str,

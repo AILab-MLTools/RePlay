@@ -12,7 +12,6 @@ if PYSPARK_AVAILABLE:
     )
 
 
-# pylint: disable=too-many-instance-attributes, too-few-public-methods
 class SequenceGenerator:
     """
     Creating sequences for sequential models.
@@ -66,7 +65,6 @@ class SequenceGenerator:
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         groupby_column: Union[str, List[str]],

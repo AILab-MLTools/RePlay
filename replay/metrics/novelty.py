@@ -8,7 +8,6 @@ if TYPE_CHECKING:  # pragma: no cover
     __class__: Type
 
 
-# pylint: disable=too-few-public-methods
 class Novelty(Metric):
     """
     Measure the fraction of shown items in recommendation list, that users\
@@ -123,7 +122,6 @@ class Novelty(Metric):
             train=train,
         )
 
-    # pylint: disable=arguments-renamed
     def _spark_call(self, recommendations: SparkDataFrame, train: SparkDataFrame) -> MetricsReturnType:
         """
         Implementation for Pyspark DataFrame.
@@ -132,7 +130,6 @@ class Novelty(Metric):
         recs = self._rearrange_columns(recs)
         return self._spark_compute(recs)
 
-    # pylint: disable=arguments-renamed
     def _polars_call(self, recommendations: PolarsDataFrame, train: PolarsDataFrame) -> MetricsReturnType:
         """
         Implementation for Polars DataFrame.
@@ -141,7 +138,6 @@ class Novelty(Metric):
         recs = self._rearrange_columns(recs)
         return self._polars_compute(recs)
 
-    # pylint: disable=arguments-differ
     @staticmethod
     def _get_metric_value_by_user(ks: List[int], pred: List, train: List) -> List[float]:
         if not train or not pred:

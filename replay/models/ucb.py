@@ -86,7 +86,6 @@ class UCB(NonPersonalizedRecommender):
             Could be changed after model training by setting the `sample` attribute.
         :param seed: random seed. Provides reproducibility if fixed
         """
-        # pylint: disable=super-init-not-called
         self.coef = exploration_coef
         self.sample = sample
         self.seed = seed
@@ -100,7 +99,6 @@ class UCB(NonPersonalizedRecommender):
             "seed": self.seed,
         }
 
-    # pylint: disable=too-many-arguments
     def optimize(
         self,
         train_dataset: Dataset,  # noqa: ARG002

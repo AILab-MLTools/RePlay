@@ -12,7 +12,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
 
 
-# pylint: disable=too-few-public-methods
 class Surprisal(Metric):
     """
     Measures how many surprising rare items are present in recommendations.
@@ -83,7 +82,6 @@ class Surprisal(Metric):
     <BLANKLINE>
     """
 
-    # pylint: disable=no-self-use
     def _get_weights(self, train: Dict) -> Dict:
         n_users = len(train.keys())
         items_counter = defaultdict(set)
@@ -102,7 +100,6 @@ class Surprisal(Metric):
             recs_with_weights[user] = [weights.get(i, 1) for i in items]
         return recs_with_weights
 
-    # pylint: disable=arguments-renamed
     def _get_enriched_recommendations(
         self,
         recommendations: Union[PolarsDataFrame, SparkDataFrame],
@@ -113,7 +110,7 @@ class Surprisal(Metric):
         else:
             return self._get_enriched_recommendations_polars(recommendations, train)
 
-    def _get_enriched_recommendations_spark(  # pylint: disable=arguments-renamed
+    def _get_enriched_recommendations_spark(
         self, recommendations: SparkDataFrame, train: SparkDataFrame
     ) -> SparkDataFrame:
         n_users = train.select(self.query_column).distinct().count()
@@ -125,7 +122,7 @@ class Surprisal(Metric):
         sorted_by_score_recommendations = self._get_items_list_per_user(recommendations, "weight")
         return self._rearrange_columns(sorted_by_score_recommendations)
 
-    def _get_enriched_recommendations_polars(  # pylint: disable=arguments-renamed
+    def _get_enriched_recommendations_polars(
         self, recommendations: PolarsDataFrame, train: PolarsDataFrame
     ) -> PolarsDataFrame:
         n_users = train.select(self.query_column).n_unique()
@@ -184,9 +181,7 @@ class Surprisal(Metric):
         )
 
     @staticmethod
-    def _get_metric_value_by_user(  # pylint: disable=arguments-differ
-        ks: List[int], pred_item_ids: List, pred_weights: List
-    ) -> List[float]:
+    def _get_metric_value_by_user(ks: List[int], pred_item_ids: List, pred_weights: List) -> List[float]:
         if not pred_item_ids:
             return [0.0 for _ in ks]
         res = []

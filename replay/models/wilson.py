@@ -51,7 +51,6 @@ class Wilson(PopRec):
 
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         alpha=0.05,

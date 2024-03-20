@@ -5,7 +5,6 @@ from replay.utils import PandasDataFrame, PolarsDataFrame, SparkDataFrame
 from .base_metric import Metric, MetricsDataFrameLike, MetricsReturnType
 
 
-# pylint: disable=too-few-public-methods
 class Unexpectedness(Metric):
     """
     Fraction of recommended items that are not present in some baseline\
@@ -63,7 +62,6 @@ class Unexpectedness(Metric):
     <BLANKLINE>
     """
 
-    # pylint: disable=arguments-renamed
     def _get_enriched_recommendations(
         self,
         recommendations: Union[PolarsDataFrame, SparkDataFrame],
@@ -74,7 +72,7 @@ class Unexpectedness(Metric):
         else:
             return self._get_enriched_recommendations_polars(recommendations, base_recommendations)
 
-    def _get_enriched_recommendations_spark(  # pylint: disable=arguments-renamed
+    def _get_enriched_recommendations_spark(
         self, recommendations: SparkDataFrame, base_recommendations: SparkDataFrame
     ) -> SparkDataFrame:
         sorted_by_score_recommendations = self._get_items_list_per_user(recommendations)
@@ -89,7 +87,7 @@ class Unexpectedness(Metric):
 
         return self._rearrange_columns(enriched_recommendations)
 
-    def _get_enriched_recommendations_polars(  # pylint: disable=arguments-renamed
+    def _get_enriched_recommendations_polars(
         self, recommendations: PolarsDataFrame, base_recommendations: PolarsDataFrame
     ) -> PolarsDataFrame:
         sorted_by_score_recommendations = self._get_items_list_per_user(recommendations)
@@ -154,9 +152,7 @@ class Unexpectedness(Metric):
         )
 
     @staticmethod
-    def _get_metric_value_by_user(  # pylint: disable=arguments-differ
-        ks: List[int], base_recs: Optional[List], recs: Optional[List]
-    ) -> List[float]:
+    def _get_metric_value_by_user(ks: List[int], base_recs: Optional[List], recs: Optional[List]) -> List[float]:
         if not base_recs or not recs:
             return [0.0 for _ in ks]
         return [1.0 - len(set(recs[:k]) & set(base_recs[:k])) / k for k in ks]

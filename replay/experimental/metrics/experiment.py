@@ -6,7 +6,6 @@ from replay.utils.spark_utils import convert2spark
 from .base_metric import Metric, NCISMetric, RecOnlyMetric, get_enriched_recommendations
 
 
-# pylint: disable=too-few-public-methods
 class Experiment:
     """
     This class calculates and stores metric values.
@@ -52,7 +51,6 @@ class Experiment:
     model            1.0                1.0                            0.0
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         test: Any,
@@ -130,7 +128,6 @@ class Experiment:
             conf_interval = metric._conf_interval(enriched, k_list, self.calc_conf_interval)
         return values, median, conf_interval
 
-    # pylint: disable=too-many-arguments
     def _add_metric(
         self,
         name: str,
@@ -156,7 +153,6 @@ class Experiment:
         if conf_interval is not None:
             self.results.at[name, f"{metric}@{k}_{self.calc_conf_interval}_conf_interval"] = conf_interval
 
-    # pylint: disable=not-an-iterable
     def compare(self, name: str) -> PandasDataFrame:
         """
         Show results as a percentage difference to record ``name``.

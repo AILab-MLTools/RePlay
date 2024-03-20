@@ -33,7 +33,6 @@ def xavier_init_(layer: nn.Module):
         layer.bias.data.normal_(0.0, 0.001)
 
 
-# pylint: disable=too-few-public-methods
 class GMF(nn.Module):
     """Generalized Matrix Factorization"""
 
@@ -54,7 +53,6 @@ class GMF(nn.Module):
         self.user_biases.weight.data.zero_()
         self.item_biases.weight.data.zero_()
 
-    # pylint: disable=arguments-differ
     def forward(self, user: Tensor, item: Tensor) -> Tensor:
         """
         :param user: user id batch
@@ -68,7 +66,6 @@ class GMF(nn.Module):
         return element_product
 
 
-# pylint: disable=too-few-public-methods
 class MLP(nn.Module):
     """Multi-Layer Perceptron"""
 
@@ -109,7 +106,6 @@ class MLP(nn.Module):
         for layer in self.hidden_layers:
             xavier_init_(layer)
 
-    # pylint: disable=arguments-differ
     def forward(self, user: Tensor, item: Tensor) -> Tensor:
         """
         :param user: user id batch
@@ -125,11 +121,9 @@ class MLP(nn.Module):
         return hidden
 
 
-# pylint: disable=too-few-public-methods
 class NMF(nn.Module):
     """NMF = MLP + GMF"""
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         user_count: int,
@@ -161,7 +155,6 @@ class NMF(nn.Module):
         self.last_layer = nn.Linear(merged_dim, 1)
         xavier_init_(self.last_layer)
 
-    # pylint: disable=arguments-differ
     def forward(self, user: Tensor, item: Tensor) -> Tensor:
         """
         :param user: user id batch
@@ -179,7 +172,6 @@ class NMF(nn.Module):
         return merged_vector
 
 
-# pylint: disable=too-many-instance-attributes
 class NeuroMF(TorchRecommender):
     """
     Neural Matrix Factorization model (NeuMF, NCF).
@@ -203,7 +195,6 @@ class NeuroMF(TorchRecommender):
         "patience": {"type": "int", "args": [3, 3]},
     }
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         learning_rate: float = 0.05,
@@ -297,7 +288,6 @@ class NeuroMF(TorchRecommender):
         )
         train_data_loader = self._data_loader(train_tensor_data)
         valid_data_loader = self._data_loader(valid_tensor_data)
-        # pylint: disable=attribute-defined-outside-init
         self._fit_items_np = self.fit_items.toPandas().to_numpy().ravel()
 
         self.logger.debug("Training NeuroMF")
@@ -326,7 +316,6 @@ class NeuroMF(TorchRecommender):
 
         del self._fit_items_np
 
-    # pylint: disable=arguments-differ
     @staticmethod
     def _loss(y_pred, y_true):
         return sf.binary_cross_entropy(y_pred, y_true).mean()

@@ -9,7 +9,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
 
 
-# pylint: disable=too-few-public-methods
 class Padder:
     """
     Pad array columns in dataframe.
@@ -56,7 +55,6 @@ class Padder:
     <BLANKLINE>
     """
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         pad_columns: Union[str, List[str]],

@@ -11,7 +11,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql.pandas.functions import pandas_udf
 
 
-# pylint: disable=too-few-public-methods
 class HnswlibFilterIndexInferer(IndexInferer):
     """Hnswlib index inferer with filter seen items. Infers hnswlib index."""
 

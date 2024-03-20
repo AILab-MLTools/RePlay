@@ -12,8 +12,6 @@ from .association_rules import AssociationRulesItemRec
 from .base_rec import Recommender
 from .cat_pop_rec import CatPopRec
 from .cluster import ClusterRec
-
-# pylint: disable=cyclic-import
 from .kl_ucb import KLUCB
 from .knn import ItemKNN
 from .pop_rec import PopRec

@@ -14,7 +14,6 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import Window
 
 
-# pylint: disable=too-few-public-methods
 class TwoStageSplitter(Splitter):
     """
     Split data by two columns.
@@ -75,7 +74,6 @@ class TwoStageSplitter(Splitter):
         "timestamp_column",
     ]
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         first_divide_size: float,
@@ -241,10 +239,9 @@ class TwoStageSplitter(Splitter):
         res = res.with_columns((pl.col("_row_num") / pl.col("count")).alias("_frac"))
         res = res.fill_null(False)
 
-        train = res.filter(
-            (pl.col("_frac") > self.second_divide_size)
-            | (~pl.col("is_test"))  # pylint: disable=invalid-unary-operand-type
-        ).drop("_rand", "_row_num", "count", "_frac", "is_test")
+        train = res.filter((pl.col("_frac") > self.second_divide_size) | (~pl.col("is_test"))).drop(
+            "_rand", "_row_num", "count", "_frac", "is_test"
+        )
         test = res.filter((pl.col("_frac") <= self.second_divide_size) & pl.col("is_test")).drop(
             "_rand", "_row_num", "count", "_frac", "is_test"
         )
@@ -330,10 +327,9 @@ class TwoStageSplitter(Splitter):
             )
 
         res = res.fill_null(False)
-        train = res.filter(
-            (pl.col("_row_num") > self.second_divide_size)
-            | (~pl.col("is_test"))  # pylint: disable=invalid-unary-operand-type
-        ).drop("_row_num", "is_test")
+        train = res.filter((pl.col("_row_num") > self.second_divide_size) | (~pl.col("is_test"))).drop(
+            "_row_num", "is_test"
+        )
         test = res.filter((pl.col("_row_num") <= self.second_divide_size) & pl.col("is_test")).drop(
             "_row_num", "is_test"
         )

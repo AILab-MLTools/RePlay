@@ -26,7 +26,6 @@ if TORCH_AVAILABLE:
     )
 
 
-# pylint: disable=too-many-instance-attributes
 class DT4Rec(Recommender):
     """
     Decision Transformer for Recommendations
@@ -47,7 +46,6 @@ class DT4Rec(Recommender):
     val_batch_size = 128
     lr_scheduler = None
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         item_num,
@@ -78,7 +76,6 @@ class DT4Rec(Recommender):
         self.use_cuda = use_cuda
         set_seed(self.seed)
 
-    # pylint: disable=invalid-overridden-method
     def _init_args(self):
         pass
 
@@ -163,7 +160,6 @@ class DT4Rec(Recommender):
     ) -> None:
         self.train(log)
 
-    # pylint: disable=too-many-arguments
     def _predict(
         self,
         log: SparkDataFrame,  # noqa: ARG002

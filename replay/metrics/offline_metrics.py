@@ -10,7 +10,6 @@ from .recall import Recall
 from .surprisal import Surprisal
 
 
-# pylint: disable=too-few-public-methods
 class OfflineMetrics:
     """
     Designed for efficient calculation of offline metrics provided by the RePlay.
@@ -146,7 +145,6 @@ class OfflineMetrics:
         "Recall": ["ground_truth"],
     }
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         metrics: List[Metric],
@@ -220,13 +218,11 @@ class OfflineMetrics:
             default_metric._check_duplicates_polars(recommendations)
         unchanged_recs = recommendations
 
-        # pylint: disable=too-many-function-args
         result_dict["default"] = default_metric._get_enriched_recommendations(recommendations, ground_truth)
 
         for metric in self.metrics:
             # find Coverage
             if metric.__class__.__name__ == "Coverage":
-                # pylint: disable=protected-access
                 result_dict["Coverage"] = Coverage(
                     topk=2,
                     query_column=query_column,
@@ -261,12 +257,10 @@ class OfflineMetrics:
 
         return result_dict, train
 
-    # pylint: disable=no-self-use
     def _cache_dataframes(self, dataframes: Dict[str, SparkDataFrame]) -> None:
         for data in dataframes.values():
             data.cache()
 
-    # pylint: disable=no-self-use
     def _unpersist_dataframes(self, dataframes: Dict[str, SparkDataFrame]) -> None:
         for data in dataframes.values():
             data.unpersist()
@@ -290,14 +284,12 @@ class OfflineMetrics:
             else:
                 metric_args["recs"] = enriched_recs_dict["default"]
 
-            # pylint: disable=protected-access
             if is_spark:
                 result.update(metric._spark_compute(**metric_args))
             else:
                 result.update(metric._polars_compute(**metric_args))
         return result
 
-    # pylint: disable=no-self-use
     def _check_dataframes_types(
         self,
         recommendations: MetricsDataFrameLike,

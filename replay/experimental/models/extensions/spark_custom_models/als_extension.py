@@ -19,8 +19,6 @@
 # Modifications copyright (c) 2023 Azamat G.
 #
 
-# pylint: skip-file
-
 import contextlib
 import sys
 

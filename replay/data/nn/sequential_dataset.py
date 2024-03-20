@@ -11,7 +11,6 @@ from replay.data.schema import FeatureType
 from .schema import TensorSchema
 
 
-# pylint: disable=missing-function-docstring
 class SequentialDataset(abc.ABC):
     """
     Abstract base class for sequential dataset
@@ -135,7 +134,6 @@ class PandasSequentialDataset(SequentialDataset):
 
         for feature in tensor_schema.all_features:
             if feature.feature_type == FeatureType.CATEGORICAL:
-                # pylint: disable=protected-access
                 feature._set_cardinality_callback(self.cardinality_callback)
 
     def __len__(self) -> int:
@@ -188,7 +186,6 @@ class PandasSequentialDataset(SequentialDataset):
                 raise ValueError(msg)
 
 
-# pylint:disable=super-init-not-called
 class PolarsSequentialDataset(PandasSequentialDataset):
     """
     Sequential dataset that stores sequences in PolarsDataFrame format.
@@ -219,7 +216,6 @@ class PolarsSequentialDataset(PandasSequentialDataset):
 
         for feature in tensor_schema.all_features:
             if feature.feature_type == FeatureType.CATEGORICAL:
-                # pylint: disable=protected-access
                 feature._set_cardinality_callback(self.cardinality_callback)
 
     def filter_by_query_id(self, query_ids_to_keep: np.ndarray) -> "PolarsSequentialDataset":

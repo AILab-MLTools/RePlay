@@ -1,4 +1,3 @@
-# pylint: disable=wildcard-import,invalid-name,unused-wildcard-import,unspecified-encoding
 import json
 import os
 import pickle
