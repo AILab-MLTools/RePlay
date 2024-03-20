@@ -6,8 +6,9 @@ from pathlib import Path
 from typing import Union
 
 from replay.data.dataset_utils import DatasetLabelEncoder
+from replay.models import *
 from replay.models.base_rec import BaseRecommender
-from replay.splitters import Splitter
+from replay.splitters import *
 
 from .session_handler import State
 from .types import PYSPARK_AVAILABLE

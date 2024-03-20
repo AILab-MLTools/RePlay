@@ -17,29 +17,29 @@ class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReada
 
     bucketing_key = Param(
         Params._dummy(),
-        "bucketingKey",
+        "bucketing_key",
         "bucketing key (also used as sort key)",
         typeConverter=TypeConverters.toString,
     )
 
     partition_num = Param(
         Params._dummy(),
-        "partitionNum",
+        "partition_num",
         "number of buckets",
         typeConverter=TypeConverters.toInt,
     )
 
     table_name = Param(
         Params._dummy(),
-        "tableName",
+        "table_name",
         "parquet file name (for storage  in 'spark-warehouse') and spark table name",
         typeConverter=TypeConverters.toString,
     )
 
     spark_warehouse_dir = Param(
         Params._dummy(),
-        "sparkWarehouseDir",
-        "sparkWarehouseDir",
+        "spark_warehouse_dir",
+        "spark_warehouse_dir",
         typeConverter=TypeConverters.toString,
     )
 
@@ -60,10 +60,10 @@ class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReada
                 i.e. value of 'spark.sql.warehouse.dir' property
         """
         super().__init__()
-        self.set(self.bucketingKey, bucketing_key)
-        self.set(self.partitionNum, partition_num)
-        self.set(self.tableName, table_name)
-        self.set(self.sparkWarehouseDir, spark_warehouse_dir)
+        self.set(self.bucketing_key, bucketing_key)
+        self.set(self.partition_num, partition_num)
+        self.set(self.table_name, table_name)
+        self.set(self.spark_warehouse_dir, spark_warehouse_dir)
 
     def __enter__(self):
         return self
@@ -74,8 +74,8 @@ class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReada
     def remove_parquet(self):
         """Removes parquets where bucketed dataset is stored"""
         spark = State().session
-        spark_warehouse_dir = self.getOrDefault(self.sparkWarehouseDir)
-        table_name = self.getOrDefault(self.tableName)
+        spark_warehouse_dir = self.getOrDefault(self.spark_warehouse_dir)
+        table_name = self.getOrDefault(self.table_name)
         fs = get_fs(spark)
         fs_path = spark._jvm.org.apache.hadoop.fs.Path(f"{spark_warehouse_dir}/{table_name}")
         is_exists = fs.exists(fs_path)
@@ -84,13 +84,13 @@ class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReada
 
     def set_table_name(self, table_name: str):
         """Sets table name"""
-        self.set(self.tableName, table_name)
+        self.set(self.table_name, table_name)
 
     def _transform(self, dataset: SparkDataFrame):
-        bucketing_key = self.getOrDefault(self.bucketingKey)
-        partition_num = self.getOrDefault(self.partitionNum)
-        table_name = self.getOrDefault(self.tableName)
-        spark_warehouse_dir = self.getOrDefault(self.sparkWarehouseDir)
+        bucketing_key = self.getOrDefault(self.bucketing_key)
+        partition_num = self.getOrDefault(self.partition_num)
+        table_name = self.getOrDefault(self.table_name)
+        spark_warehouse_dir = self.getOrDefault(self.spark_warehouse_dir)
 
         if not table_name:
             msg = "Parameter 'table_name' is not set! Please set it via method 'set_table_name'."

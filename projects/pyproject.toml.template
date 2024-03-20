@@ -130,8 +130,9 @@ force-wrap-aliases = true
 max-complexity = 13
 
 [tool.ruff.per-file-ignores]
-"*/" = ['PERF203', 'RUF001', 'RUF012', 'E402']
-"__init__.py" = ['F401']
+"*/" = ["PERF203", "RUF001", "RUF012", "E402"]
+"__init__.py" = ["F401"]
+"replay/utils/model_handler.py" = ["F403", "F405"]
 "tests/*" = ["ARG", "E402", "INP", "ISC", "N", "S", "SIM", "F811"]
 "tests/experimental/*" = ["F401", "F811"]
-"replay/experimental/models/extensions/spark_custom_models/als_extension.py" = ['ARG002', 'N802', 'N803', 'N815']
+"replay/experimental/models/extensions/spark_custom_models/als_extension.py" = ["ARG002", "N802", "N803", "N815"]

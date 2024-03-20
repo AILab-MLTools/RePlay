@@ -194,7 +194,7 @@ class LogStatFeaturesProcessor(EmptyFeatureProcessor):
 
         return abnormality_df.groupBy("user_idx").agg(*abnormality_aggs)
 
-    def fit(self, log: SparkDataFrame) -> None:
+    def fit(self, log: SparkDataFrame, features: Optional[SparkDataFrame] = None) -> None:  # noqa: ARG002
         """
         Calculate log-based features for users and items
 

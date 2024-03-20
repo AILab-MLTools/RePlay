@@ -30,6 +30,8 @@ from replay.preprocessing.label_encoder import LabelEncoder, LabelEncodingRule
 from replay.utils import PYSPARK_AVAILABLE
 from tests.utils import create_dataset, sparkDataFrameEqual
 
+from .test_cat_pop_rec import cat_log, cat_tree, requested_cats  # noqa: F401
+
 if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
 
