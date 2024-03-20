@@ -90,7 +90,7 @@ class Experiment:
     model     0.333333  0.489760     0.719587
     >>> ex.compare("baseline")
               NDCG@2   NDCG@3 Surprisal@3
-    baseline       –        –           –
+    baseline       -        -           -
     model     63.09%  108.73%      18.26%
     >>> ex = Experiment([Precision(3, mode=Median()), Precision(3, mode=ConfidenceInterval(0.95))], groundtruth)
     >>> ex.add_result("baseline", base_rec)
@@ -108,9 +108,7 @@ class Experiment:
         metrics: List[Metric],
         ground_truth: MetricsDataFrameLike,
         train: Optional[MetricsDataFrameLike] = None,
-        base_recommendations: Optional[
-            Union[MetricsDataFrameLike, Dict[str, MetricsDataFrameLike]]
-        ] = None,
+        base_recommendations: Optional[Union[MetricsDataFrameLike, Dict[str, MetricsDataFrameLike]]] = None,
         query_column: str = "query_id",
         item_column: str = "item_id",
         rating_column: str = "rating",
@@ -191,7 +189,8 @@ class Experiment:
         :return: results table in a percentage format
         """
         if name not in self.results.index:
-            raise ValueError(f"No results for model {name}")
+            msg = f"No results for model {name}"
+            raise ValueError(msg)
         columns = [column for column in self.results.columns if column[-1].isdigit()]
         data_frame = self.results[columns].copy()
         baseline = data_frame.loc[name]

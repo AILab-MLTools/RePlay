@@ -7,6 +7,7 @@ from pandas import DataFrame as PandasDataFrame
 from polars import DataFrame as PolarsDataFrame
 
 from replay.data.schema import FeatureType
+
 from .schema import TensorSchema
 
 
@@ -181,9 +182,10 @@ class PandasSequentialDataset(SequentialDataset):
 
     @classmethod
     def _check_if_schema_matches_data(cls, tensor_schema: TensorSchema, data: PandasDataFrame) -> None:
-        for tensor_feature_name in tensor_schema.keys():
+        for tensor_feature_name in tensor_schema:
             if tensor_feature_name not in data:
-                raise ValueError("Tensor schema does not match with provided data frame")
+                msg = "Tensor schema does not match with provided data frame"
+                raise ValueError(msg)
 
 
 # pylint:disable=super-init-not-called
@@ -233,6 +235,7 @@ class PolarsSequentialDataset(PandasSequentialDataset):
 
     @classmethod
     def _check_if_schema_matches_data(cls, tensor_schema: TensorSchema, data: PolarsDataFrame) -> None:
-        for tensor_feature_name in tensor_schema.keys():
+        for tensor_feature_name in tensor_schema:
             if tensor_feature_name not in data:
-                raise ValueError("Tensor schema does not match with provided data frame")
+                msg = "Tensor schema does not match with provided data frame"
+                raise ValueError(msg)

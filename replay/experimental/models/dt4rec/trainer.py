@@ -1,13 +1,15 @@
 import logging
 
-from .utils import matrix2df
 import pandas as pd
 from tqdm import tqdm
 
 from replay.utils import TORCH_AVAILABLE
+
+from .utils import matrix2df
+
 if TORCH_AVAILABLE:
     import torch
-    from torch.nn import functional as F
+    from torch.nn import functional as func
 
 
 logger = logging.getLogger(__name__)
@@ -87,7 +89,7 @@ class Trainer:
             # forward the model
             logits = self.model(states, actions, rtgs, timesteps, users)
 
-            loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1)).mean()
+            loss = func.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1)).mean()
             losses.append(loss.item())
 
             # backprop and update the parametersx

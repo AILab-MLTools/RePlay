@@ -33,7 +33,7 @@ class Experiment:
     model              0.386853  0.530721     0.666667
     >>> ex.compare("baseline")
                        NDCG@2  NDCG@3 Surprisal@3
-    baseline                –       –           –
+    baseline                -       -           -
     baseline_gt_users  -50.0%  -50.0%      -50.0%
     model                0.0%  79.25%     -33.33%
     >>> ex = Experiment(test, {Precision(): [3]}, calc_median=True, calc_conf_interval=0.95)
@@ -90,35 +90,23 @@ class Experiment:
         """
         max_k = 0
         for current_k in self.metrics.values():
-            max_k = max(
-                (*current_k, max_k)
-                if isinstance(current_k, list)
-                else (current_k, max_k)
-            )
+            max_k = max((*current_k, max_k) if isinstance(current_k, list) else (current_k, max_k))
 
-        recs = get_enriched_recommendations(
-            pred, self.test, max_k, ground_truth_users
-        ).cache()
-        for metric, k_list in sorted(
-            self.metrics.items(), key=lambda x: str(x[0])
-        ):
+        recs = get_enriched_recommendations(pred, self.test, max_k, ground_truth_users).cache()
+        for metric, k_list in sorted(self.metrics.items(), key=lambda x: str(x[0])):
             enriched = None
             if isinstance(metric, (RecOnlyMetric, NCISMetric)):
-                enriched = metric._get_enriched_recommendations(
-                    pred, self.test, max_k, ground_truth_users
-                )
-            values, median, conf_interval = self._calculate(
-                metric, enriched or recs, k_list
-            )
+                enriched = metric._get_enriched_recommendations(pred, self.test, max_k, ground_truth_users)
+            values, median, conf_interval = self._calculate(metric, enriched or recs, k_list)
 
             if isinstance(k_list, int):
-                self._add_metric(  # type: ignore
+                self._add_metric(
                     name,
                     metric,
                     k_list,
-                    values,  # type: ignore
-                    median,  # type: ignore
-                    conf_interval,  # type: ignore
+                    values,
+                    median,
+                    conf_interval,
                 )
             else:
                 for k, val in sorted(values.items(), key=lambda x: x[0]):
@@ -139,9 +127,7 @@ class Experiment:
         if self.calc_median:
             median = metric._median(enriched, k_list)
         if self.calc_conf_interval is not None:
-            conf_interval = metric._conf_interval(
-                enriched, k_list, self.calc_conf_interval
-            )
+            conf_interval = metric._conf_interval(enriched, k_list, self.calc_conf_interval)
         return values, median, conf_interval
 
     # pylint: disable=too-many-arguments
@@ -164,15 +150,11 @@ class Experiment:
         :param median: median value
         :param conf_interval: confidence interval value
         """
-        self.results.at[name, f"{metric}@{k}"] = value  # type: ignore
+        self.results.at[name, f"{metric}@{k}"] = value
         if median is not None:
-            self.results.at[
-                name, f"{metric}@{k}_median"
-            ] = median  # type: ignore
+            self.results.at[name, f"{metric}@{k}_median"] = median
         if conf_interval is not None:
-            self.results.at[
-                name, f"{metric}@{k}_{self.calc_conf_interval}_conf_interval"
-            ] = conf_interval
+            self.results.at[name, f"{metric}@{k}_{self.calc_conf_interval}_conf_interval"] = conf_interval
 
     # pylint: disable=not-an-iterable
     def compare(self, name: str) -> PandasDataFrame:
@@ -183,18 +165,15 @@ class Experiment:
         :return: results table in a percentage format
         """
         if name not in self.results.index:
-            raise ValueError(f"No results for model {name}")
-        columns = [
-            column for column in self.results.columns if column[-1].isdigit()
-        ]
+            msg = f"No results for model {name}"
+            raise ValueError(msg)
+        columns = [column for column in self.results.columns if column[-1].isdigit()]
         data_frame = self.results[columns].copy()
         baseline = data_frame.loc[name]
         for idx in data_frame.index:
             if idx != name:
                 diff = data_frame.loc[idx] / baseline - 1
-                data_frame.loc[idx] = [
-                    str(round(v * 100, 2)) + "%" for v in diff
-                ]
+                data_frame.loc[idx] = [str(round(v * 100, 2)) + "%" for v in diff]
             else:
                 data_frame.loc[name] = ["–"] * len(baseline)
         return data_frame

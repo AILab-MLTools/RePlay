@@ -2,10 +2,10 @@
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from replay.data import Dataset
-from replay.preprocessing.filters import MinCountFilter
 from replay.metrics import NDCG, Metric
 from replay.models import PopRec
 from replay.models.base_rec import BaseRecommender
+from replay.preprocessing.filters import MinCountFilter
 from replay.utils import SparkDataFrame
 from replay.utils.spark_utils import fallback, get_unique_entities
 
@@ -42,7 +42,7 @@ class Fallback(BaseRecommender):
         return {"threshold": self.threshold}
 
     def __str__(self):
-        return f"Fallback_{str(self.main_model)}_{str(self.fb_model)}"
+        return f"Fallback_{self.main_model!s}_{self.fb_model!s}"
 
     def fit(
         self,

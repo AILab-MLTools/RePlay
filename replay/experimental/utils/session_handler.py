@@ -38,9 +38,7 @@ class State(Borg):
         if device is None:
             if not hasattr(self, "device"):
                 if torch.cuda.is_available():
-                    self.device = torch.device(
-                        f"cuda:{torch.cuda.current_device()}"
-                    )
+                    self.device = torch.device(f"cuda:{torch.cuda.current_device()}")
                 else:
                     self.device = torch.device("cpu")
         else:

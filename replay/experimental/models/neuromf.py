@@ -7,7 +7,7 @@ from typing import List, Optional
 
 import numpy as np
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as sf
 from sklearn.model_selection import train_test_split
 from torch import LongTensor, Tensor, nn
 from torch.optim import Adam
@@ -44,18 +44,10 @@ class GMF(nn.Module):
         :param embedding_dim: embedding size
         """
         super().__init__()
-        self.user_embedding = nn.Embedding(
-            num_embeddings=user_count, embedding_dim=embedding_dim
-        )
-        self.item_embedding = nn.Embedding(
-            num_embeddings=item_count, embedding_dim=embedding_dim
-        )
-        self.item_biases = nn.Embedding(
-            num_embeddings=item_count, embedding_dim=1
-        )
-        self.user_biases = nn.Embedding(
-            num_embeddings=user_count, embedding_dim=1
-        )
+        self.user_embedding = nn.Embedding(num_embeddings=user_count, embedding_dim=embedding_dim)
+        self.item_embedding = nn.Embedding(num_embeddings=item_count, embedding_dim=embedding_dim)
+        self.item_biases = nn.Embedding(num_embeddings=item_count, embedding_dim=1)
+        self.user_biases = nn.Embedding(num_embeddings=user_count, embedding_dim=1)
 
         xavier_init_(self.user_embedding)
         xavier_init_(self.item_embedding)
@@ -63,7 +55,7 @@ class GMF(nn.Module):
         self.item_biases.weight.data.zero_()
 
     # pylint: disable=arguments-differ
-    def forward(self, user: Tensor, item: Tensor) -> Tensor:  # type: ignore
+    def forward(self, user: Tensor, item: Tensor) -> Tensor:
         """
         :param user: user id batch
         :param item: item id batch
@@ -94,28 +86,15 @@ class MLP(nn.Module):
         :param hidden_dims: list of hidden dimension sizes
         """
         super().__init__()
-        self.user_embedding = nn.Embedding(
-            num_embeddings=user_count, embedding_dim=embedding_dim
-        )
-        self.item_embedding = nn.Embedding(
-            num_embeddings=item_count, embedding_dim=embedding_dim
-        )
-        self.item_biases = nn.Embedding(
-            num_embeddings=item_count, embedding_dim=1
-        )
-        self.user_biases = nn.Embedding(
-            num_embeddings=user_count, embedding_dim=1
-        )
+        self.user_embedding = nn.Embedding(num_embeddings=user_count, embedding_dim=embedding_dim)
+        self.item_embedding = nn.Embedding(num_embeddings=item_count, embedding_dim=embedding_dim)
+        self.item_biases = nn.Embedding(num_embeddings=item_count, embedding_dim=1)
+        self.user_biases = nn.Embedding(num_embeddings=user_count, embedding_dim=1)
 
         if hidden_dims:
-            full_hidden_dims = [2 * embedding_dim] + hidden_dims
+            full_hidden_dims = [2 * embedding_dim, *hidden_dims]
             self.hidden_layers = nn.ModuleList(
-                [
-                    nn.Linear(d_in, d_out)
-                    for d_in, d_out in zip(
-                        full_hidden_dims[:-1], full_hidden_dims[1:]
-                    )
-                ]
+                [nn.Linear(d_in, d_out) for d_in, d_out in zip(full_hidden_dims[:-1], full_hidden_dims[1:])]
             )
 
         else:
@@ -131,7 +110,7 @@ class MLP(nn.Module):
             xavier_init_(layer)
 
     # pylint: disable=arguments-differ
-    def forward(self, user: Tensor, item: Tensor) -> Tensor:  # type: ignore
+    def forward(self, user: Tensor, item: Tensor) -> Tensor:
         """
         :param user: user id batch
         :param item: item id batch
@@ -176,35 +155,22 @@ class NMF(nn.Module):
             merged_dim += embedding_gmf_dim
 
         if embedding_mlp_dim:
-            self.mlp = MLP(
-                user_count, item_count, embedding_mlp_dim, hidden_mlp_dims
-            )
-            merged_dim += (
-                hidden_mlp_dims[-1]
-                if hidden_mlp_dims
-                else 2 * embedding_mlp_dim
-            )
+            self.mlp = MLP(user_count, item_count, embedding_mlp_dim, hidden_mlp_dims)
+            merged_dim += hidden_mlp_dims[-1] if hidden_mlp_dims else 2 * embedding_mlp_dim
 
         self.last_layer = nn.Linear(merged_dim, 1)
         xavier_init_(self.last_layer)
 
     # pylint: disable=arguments-differ
-    def forward(self, user: Tensor, item: Tensor) -> Tensor:  # type: ignore
+    def forward(self, user: Tensor, item: Tensor) -> Tensor:
         """
         :param user: user id batch
         :param item: item id batch
         :return: output
         """
         batch_size = len(user)
-        if self.gmf:
-            gmf_vector = self.gmf(user, item)
-        else:
-            gmf_vector = torch.zeros(batch_size, 0).to(user.device)
-
-        if self.mlp:
-            mlp_vector = self.mlp(user, item)
-        else:
-            mlp_vector = torch.zeros(batch_size, 0).to(user.device)
+        gmf_vector = self.gmf(user, item) if self.gmf else torch.zeros(batch_size, 0).to(user.device)
+        mlp_vector = self.mlp(user, item) if self.mlp else torch.zeros(batch_size, 0).to(user.device)
 
         merged_vector = torch.cat([gmf_vector, mlp_vector], dim=1)
         merged_vector = self.last_layer(merged_vector).squeeze(dim=1)
@@ -272,9 +238,8 @@ class NeuroMF(TorchRecommender):
         if (embedding_gmf_dim is None or embedding_gmf_dim < 0) and (
             embedding_mlp_dim is None or embedding_mlp_dim < 0
         ):
-            raise ValueError(
-                "embedding_gmf_dim and embedding_mlp_dim must be positive"
-            )
+            msg = "embedding_gmf_dim and embedding_mlp_dim must be positive"
+            raise ValueError(msg)
 
         self.learning_rate = learning_rate
         self.epochs = epochs
@@ -300,12 +265,9 @@ class NeuroMF(TorchRecommender):
             "patience": self.patience,
         }
 
-    def _data_loader(
-        self, data: PandasDataFrame, shuffle: bool = True
-    ) -> DataLoader:
-
-        user_batch = LongTensor(data["user_idx"].values)  # type: ignore
-        item_batch = LongTensor(data["item_idx"].values)  # type: ignore
+    def _data_loader(self, data: PandasDataFrame, shuffle: bool = True) -> DataLoader:
+        user_batch = LongTensor(data["user_idx"].values)
+        item_batch = LongTensor(data["item_idx"].values)
 
         dataset = TensorDataset(user_batch, item_batch)
 
@@ -318,17 +280,13 @@ class NeuroMF(TorchRecommender):
         return loader
 
     def _get_neg_batch(self, batch: Tensor) -> Tensor:
-        return torch.from_numpy(
-            np.random.choice(
-                self._fit_items_np, batch.shape[0] * self.count_negative_sample
-            )
-        )
+        return torch.from_numpy(np.random.choice(self._fit_items_np, batch.shape[0] * self.count_negative_sample))
 
     def _fit(
         self,
         log: SparkDataFrame,
-        user_features: Optional[SparkDataFrame] = None,
-        item_features: Optional[SparkDataFrame] = None,
+        user_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        item_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
     ) -> None:
         self.logger.debug("Create DataLoaders")
         tensor_data = log.select("user_idx", "item_idx").toPandas()
@@ -355,9 +313,7 @@ class NeuroMF(TorchRecommender):
             lr=self.learning_rate,
             weight_decay=self.l2_reg / self.batch_size_users,
         )
-        lr_scheduler = ReduceLROnPlateau(
-            optimizer, factor=self.factor, patience=self.patience
-        )
+        lr_scheduler = ReduceLROnPlateau(optimizer, factor=self.factor, patience=self.patience)
 
         self.train(
             train_data_loader,
@@ -373,14 +329,12 @@ class NeuroMF(TorchRecommender):
     # pylint: disable=arguments-differ
     @staticmethod
     def _loss(y_pred, y_true):
-        return F.binary_cross_entropy(y_pred, y_true).mean()
+        return sf.binary_cross_entropy(y_pred, y_true).mean()
 
     def _batch_pass(self, batch, model):
         user_batch, pos_item_batch = batch
         neg_item_batch = self._get_neg_batch(user_batch)
-        pos_relevance = model(
-            user_batch.to(self.device), pos_item_batch.to(self.device)
-        )
+        pos_relevance = model(user_batch.to(self.device), pos_item_batch.to(self.device))
         neg_relevance = model(
             user_batch.repeat([self.count_negative_sample]).to(self.device),
             neg_item_batch.to(self.device),
@@ -410,9 +364,7 @@ class NeuroMF(TorchRecommender):
                 ],
             )
             if cnt is not None:
-                best_item_idx = (
-                    torch.argsort(user_recs, descending=True)[:cnt]
-                ).numpy()
+                best_item_idx = (torch.argsort(user_recs, descending=True)[:cnt]).numpy()
                 user_recs = user_recs[best_item_idx]
                 items_np = items_np[best_item_idx]
 
@@ -430,7 +382,7 @@ class NeuroMF(TorchRecommender):
         model: nn.Module,
         items_np: np.ndarray,
         k: int,
-        item_count: int,
+        item_count: int,  # noqa: ARG004
     ) -> PandasDataFrame:
         return NeuroMF._predict_pairs_inner(
             model=model,
@@ -441,7 +393,9 @@ class NeuroMF(TorchRecommender):
 
     @staticmethod
     def _predict_by_user_pairs(
-        pandas_df: PandasDataFrame, model: nn.Module, item_count: int
+        pandas_df: PandasDataFrame,
+        model: nn.Module,
+        item_count: int,  # noqa: ARG004
     ) -> PandasDataFrame:
         return NeuroMF._predict_pairs_inner(
             model=model,

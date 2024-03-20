@@ -9,36 +9,34 @@ if PYSPARK_AVAILABLE:
     from replay.utils.session_handler import State
 
 
-class DataframeBucketizer(
-    Transformer, DefaultParamsWritable, DefaultParamsReadable
-):  # pylint: disable=R0901
+class DataframeBucketizer(Transformer, DefaultParamsWritable, DefaultParamsReadable):  # pylint: disable=R0901
     """
     Buckets the input dataframe, dumps it to spark warehouse directory,
     and returns a bucketed dataframe.
     """
 
-    bucketingKey = Param(
+    bucketing_key = Param(
         Params._dummy(),
         "bucketingKey",
         "bucketing key (also used as sort key)",
         typeConverter=TypeConverters.toString,
     )
 
-    partitionNum = Param(
+    partition_num = Param(
         Params._dummy(),
         "partitionNum",
         "number of buckets",
         typeConverter=TypeConverters.toInt,
     )
 
-    tableName = Param(
+    table_name = Param(
         Params._dummy(),
         "tableName",
         "parquet file name (for storage  in 'spark-warehouse') and spark table name",
         typeConverter=TypeConverters.toString,
     )
 
-    sparkWarehouseDir = Param(
+    spark_warehouse_dir = Param(
         Params._dummy(),
         "sparkWarehouseDir",
         "sparkWarehouseDir",
@@ -79,9 +77,7 @@ class DataframeBucketizer(
         spark_warehouse_dir = self.getOrDefault(self.sparkWarehouseDir)
         table_name = self.getOrDefault(self.tableName)
         fs = get_fs(spark)  # pylint: disable=invalid-name
-        fs_path = spark._jvm.org.apache.hadoop.fs.Path(
-            f"{spark_warehouse_dir}/{table_name}"
-        )
+        fs_path = spark._jvm.org.apache.hadoop.fs.Path(f"{spark_warehouse_dir}/{table_name}")
         is_exists = fs.exists(fs_path)
         if is_exists:
             fs.delete(fs_path, True)
@@ -97,10 +93,8 @@ class DataframeBucketizer(
         spark_warehouse_dir = self.getOrDefault(self.sparkWarehouseDir)
 
         if not table_name:
-            raise ValueError(
-                "Parameter 'table_name' is not set! "
-                "Please set it via method 'set_table_name'."
-            )
+            msg = "Parameter 'table_name' is not set! Please set it via method 'set_table_name'."
+            raise ValueError(msg)
 
         (
             dataset.repartition(partition_num, bucketing_key)

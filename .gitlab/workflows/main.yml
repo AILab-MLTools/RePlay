@@ -74,19 +74,28 @@ resolve-job:
   tags: 
     - ${RUNNER}
 
-pylint-job:
+ruff:
   <<: *install_experimental_replay_with_spark
   stage: code_quality
   script:
-    - pylint replay
+    - ruff check .
   tags: 
     - ${RUNNER}
 
-pycodestyle-job:
+black:
   <<: *install_experimental_replay_with_spark
   stage: code_quality
   script:
-    - pycodestyle replay tests
+    - black --check --diff -- .
+  tags: 
+    - ${RUNNER}
+
+poetry-check:
+  <<: *install_experimental_replay_with_spark
+  stage: code_quality
+  script:
+    - ./poetry_wrapper.sh check
+    - ./poetry_wrapper.sh --experimental check
   tags: 
     - ${RUNNER}
 

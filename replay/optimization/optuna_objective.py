@@ -15,13 +15,12 @@ if PYSPARK_AVAILABLE:
     from pyspark.sql import functions as sf
 
 
-SplitData = collections.namedtuple(
+SplitData = collections.namedtuple(  # noqa: PYI024
     "SplitData",
     "train_dataset test_dataset queries items",
 )
 
 
-# pylint: disable=too-few-public-methods
 class ObjectiveWrapper:
     """
     This class is implemented according to
@@ -34,9 +33,7 @@ class ObjectiveWrapper:
 
     # pylint: disable=too-many-arguments,too-many-instance-attributes
 
-    def __init__(
-        self, objective_calculator: Callable[..., float], **kwargs: Any
-    ):
+    def __init__(self, objective_calculator: Callable[..., float], **kwargs: Any):
         self.objective_calculator = objective_calculator
         self.kwargs = kwargs
 
@@ -51,7 +48,8 @@ class ObjectiveWrapper:
 
 
 def suggest_params(
-    trial: Trial, search_space: Dict[str, Dict[str, Union[str, List[Any]]]],
+    trial: Trial,
+    search_space: Dict[str, Dict[str, Union[str, List[Any]]]],
 ) -> Dict[str, Any]:
     """
     This function suggests params to try.
@@ -81,9 +79,7 @@ def suggest_params(
 
 
 def calculate_criterion_value(
-    criterion: Metric,
-    recommendations: SparkDataFrame,
-    ground_truth: SparkDataFrame
+    criterion: Metric, recommendations: SparkDataFrame, ground_truth: SparkDataFrame
 ) -> float:
     """
     Calculate criterion value for given parameters
@@ -93,11 +89,14 @@ def calculate_criterion_value(
     :return: criterion value
     """
     result_dict = criterion(recommendations, ground_truth)
-    return list(result_dict.values())[0]
+    return next(iter(result_dict.values()))
 
 
 def eval_quality(
-    split_data: SplitData, recommender, criterion: Metric, k: int,
+    split_data: SplitData,
+    recommender,
+    criterion: Metric,
+    k: int,
 ) -> float:
     """
     Calculate criterion value using model, data and criterion parameters
@@ -150,9 +149,7 @@ def scenario_objective_calculator(
     return eval_quality(split_data, recommender, criterion, k)
 
 
-MainObjective = partial(
-    ObjectiveWrapper, objective_calculator=scenario_objective_calculator
-)
+MainObjective = partial(ObjectiveWrapper, objective_calculator=scenario_objective_calculator)
 
 
 # pylint: disable=too-few-public-methods
@@ -170,9 +167,7 @@ class ItemKNNObjective:
 
     def __init__(self, **kwargs: Any):
         self.kwargs = kwargs
-        max_neighbours = self.kwargs["search_space"]["num_neighbours"]["args"][
-            1
-        ]
+        max_neighbours = self.kwargs["search_space"]["num_neighbours"]["args"][1]
         model = self.kwargs["recommender"]
         split_data = self.kwargs["split_data"]
         train_dataset = split_data.train_dataset
@@ -213,9 +208,7 @@ class ItemKNNObjective:
         recommender.fit_queries = split_data.train_dataset.interactions.select(self.query_column).distinct()
         recommender.fit_items = split_data.train_dataset.interactions.select(self.item_column).distinct()
         similarity = recommender._shrink(self.dot_products, recommender.shrink)
-        recommender.similarity = recommender._get_k_most_similar(
-            similarity
-        ).cache()
+        recommender.similarity = recommender._get_k_most_similar(similarity).cache()
         recs = recommender._predict_wrap(
             dataset=split_data.train_dataset,
             k=k,

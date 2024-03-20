@@ -46,28 +46,28 @@ def get_spark_session(
         path_to_replay_jar = os.environ.get("REPLAY_JAR_PATH")
     else:
         if pyspark_version.startswith("3.1"):  # pragma: no cover
-            path_to_replay_jar = "https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.1.3/replay_2.12-3.1.3.jar"
-        elif pyspark_version.startswith("3.2") or pyspark_version.startswith(
-            "3.3"
-        ):
+            path_to_replay_jar = (
+                "https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.1.3/replay_2.12-3.1.3.jar"
+            )
+        elif pyspark_version.startswith(("3.2", "3.3")):
             path_to_replay_jar = "https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.2.0_als_metrics/replay_2.12-3.2.0_als_metrics.jar"
         elif pyspark_version.startswith("3.4"):  # pragma: no cover
             path_to_replay_jar = "https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.4.0_als_metrics/replay_2.12-3.4.0_als_metrics.jar"
         else:  # pragma: no cover
-            path_to_replay_jar = "https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.1.3/replay_2.12-3.1.3.jar"
+            path_to_replay_jar = (
+                "https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.1.3/replay_2.12-3.1.3.jar"
+            )
             logging.warning(
-                "Replay ALS model support only spark 3.1-3.4 versions! "
-                "Replay will use 'https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.1.3/replay_2.12-3.1.3.jar' in 'spark.jars' property."
+                "Replay ALS model support only spark 3.1-3.4 versions! Replay will use "
+                "'https://repo1.maven.org/maven2/io/github/sb-ai-lab/replay_2.12/3.1.3/replay_2.12-3.1.3.jar' "
+                "in 'spark.jars' property."
             )
 
     if core_count is None:  # checking out env variable
         core_count = int(os.environ.get("REPLAY_SPARK_CORE_COUNT", "-1"))
     if spark_memory is None:
         env_var = os.environ.get("REPLAY_SPARK_MEMORY")
-        if env_var is not None:  # pragma: no cover
-            spark_memory = int(env_var)
-        else:  # pragma: no cover
-            spark_memory = floor(psutil.virtual_memory().total / 1024**3 * 0.7)
+        spark_memory = int(env_var) if env_var is not None else floor(psutil.virtual_memory().total / 1024**3 * 0.7)
     if shuffle_partitions is None:
         shuffle_partitions = os.cpu_count() * 3
     driver_memory = f"{spark_memory}g"

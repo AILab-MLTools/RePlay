@@ -1,8 +1,10 @@
-import polars as pl
 from typing import List, Optional, Tuple
 
-from .base_splitter import Splitter
+import polars as pl
+
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
+
+from .base_splitter import Splitter
 
 if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
@@ -82,6 +84,7 @@ class RatioSplitter(Splitter):
     14        3        2 2020-01-05
     <BLANKLINE>
     """
+
     _init_arg_names = [
         "test_size",
         "divide_column",
@@ -160,7 +163,8 @@ class RatioSplitter(Splitter):
         self.min_interactions_per_group = min_interactions_per_group
         self.split_by_fractions = split_by_fractions
         if test_size < 0 or test_size > 1:
-            raise ValueError("test_size must between 0 and 1")
+            msg = "test_size must between 0 and 1"
+            raise ValueError(msg)
         self.test_size = test_size
 
     def _add_time_partition(self, interactions: DataFrameLike) -> DataFrameLike:
@@ -171,7 +175,8 @@ class RatioSplitter(Splitter):
         if isinstance(interactions, PolarsDataFrame):
             return self._add_time_partition_to_polars(interactions)
 
-        raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
+        msg = f"{self} is not implemented for {type(interactions)}"
+        raise NotImplementedError(msg)
 
     def _add_time_partition_to_pandas(self, interactions: PandasDataFrame) -> PandasDataFrame:
         res = interactions.copy(deep=True)
@@ -189,14 +194,8 @@ class RatioSplitter(Splitter):
         return res
 
     def _add_time_partition_to_polars(self, interactions: PolarsDataFrame) -> PolarsDataFrame:
-        res = (
-            interactions
-            .sort(self.timestamp_column)
-            .with_columns(
-                pl.cum_count(self.divide_column)
-                .over(self.divide_column)
-                .alias("row_num")
-            )
+        res = interactions.sort(self.timestamp_column).with_columns(
+            pl.cum_count(self.divide_column).over(self.divide_column).alias("row_num")
         )
 
         return res
@@ -262,8 +261,7 @@ class RatioSplitter(Splitter):
         self, interactions: PolarsDataFrame, train_size: float
     ) -> Tuple[PolarsDataFrame, PolarsDataFrame]:
         interactions = interactions.with_columns(
-            pl.count(self.timestamp_column).over(pl.col(self.divide_column))
-            .alias("count")
+            pl.count(self.timestamp_column).over(pl.col(self.divide_column)).alias("count")
         )
         if self.min_interactions_per_group is not None:
             interactions = interactions.with_columns(
@@ -274,18 +272,16 @@ class RatioSplitter(Splitter):
             )
         else:
             interactions = interactions.with_columns(
-                (pl.col("row_num") / pl.col("count")).round(self._precision)
-                .alias("frac")
+                (pl.col("row_num") / pl.col("count")).round(self._precision).alias("frac")
             )
 
-        interactions = interactions.with_columns(
-            (pl.col("frac") > train_size)
-            .alias("is_test")
-        )
+        interactions = interactions.with_columns((pl.col("frac") > train_size).alias("is_test"))
         if self.session_id_column:
             interactions = self._recalculate_with_session_id_column(interactions)
 
-        train = interactions.filter(~pl.col("is_test")).drop("row_num", "count", "frac", "is_test")  # pylint: disable=invalid-unary-operand-type
+        train = interactions.filter(~pl.col("is_test")).drop(
+            "row_num", "count", "frac", "is_test"
+        )  # pylint: disable=invalid-unary-operand-type
         test = interactions.filter(pl.col("is_test")).drop("row_num", "count", "frac", "is_test")
 
         return train, test
@@ -327,9 +323,7 @@ class RatioSplitter(Splitter):
 
         return train, test
 
-    def _partial_split_spark(
-        self, interactions: SparkDataFrame, ratio: float
-    ) -> Tuple[SparkDataFrame, SparkDataFrame]:
+    def _partial_split_spark(self, interactions: SparkDataFrame, ratio: float) -> Tuple[SparkDataFrame, SparkDataFrame]:
         interactions = interactions.withColumn(
             "count", sf.count(self.timestamp_column).over(Window.partitionBy(self.divide_column))
         )
@@ -364,46 +358,35 @@ class RatioSplitter(Splitter):
         self, interactions: PolarsDataFrame, ratio: float
     ) -> Tuple[PolarsDataFrame, PolarsDataFrame]:
         interactions = interactions.with_columns(
-            pl.count(self.timestamp_column).over(self.divide_column)
-            .alias("count")
+            pl.count(self.timestamp_column).over(self.divide_column).alias("count")
         )
         if self.min_interactions_per_group is not None:
             interactions = interactions.with_columns(
-                pl.when(
-                    pl.col("count") >= self.min_interactions_per_group
-                )
-                .then(
-                    pl.col("count") - (pl.col("count") * ratio).cast(interactions.get_column("count").dtype)
-                )
+                pl.when(pl.col("count") >= self.min_interactions_per_group)
+                .then(pl.col("count") - (pl.col("count") * ratio).cast(interactions.get_column("count").dtype))
                 .otherwise(pl.col("count"))
                 .alias("train_size")
             )
         else:
-            interactions = (
-                interactions
-                .with_columns(
-                    (pl.col("count") - (pl.col("count") * ratio).cast(interactions.get_column("count").dtype))
-                    .alias("train_size")
+            interactions = interactions.with_columns(
+                (pl.col("count") - (pl.col("count") * ratio).cast(interactions.get_column("count").dtype)).alias(
+                    "train_size"
                 )
-                .with_columns(
-                    pl.when(
-                        (pl.col("count") * ratio > 0) & (pl.col("count") * ratio < 1) & (pl.col("train_size") > 1)
-                    )
-                    .then(pl.col("train_size") - 1)
-                    .otherwise(pl.col("train_size"))
-                    .alias("train_size")
-                )
+            ).with_columns(
+                pl.when((pl.col("count") * ratio > 0) & (pl.col("count") * ratio < 1) & (pl.col("train_size") > 1))
+                .then(pl.col("train_size") - 1)
+                .otherwise(pl.col("train_size"))
+                .alias("train_size")
             )
 
-        interactions = interactions.with_columns(
-            (pl.col("row_num") > pl.col("train_size"))
-            .alias("is_test")
-        )
+        interactions = interactions.with_columns((pl.col("row_num") > pl.col("train_size")).alias("is_test"))
 
         if self.session_id_column:
             interactions = self._recalculate_with_session_id_column(interactions)
 
-        train = interactions.filter(~pl.col("is_test")).drop("row_num", "count", "train_size", "is_test")  # pylint: disable=invalid-unary-operand-type
+        train = interactions.filter(~pl.col("is_test")).drop(
+            "row_num", "count", "train_size", "is_test"
+        )  # pylint: disable=invalid-unary-operand-type
         test = interactions.filter(pl.col("is_test")).drop("row_num", "count", "train_size", "is_test")
 
         return train, test

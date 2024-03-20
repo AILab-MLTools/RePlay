@@ -5,7 +5,6 @@ import polars as pl
 import pytest
 
 from replay.splitters import ColdUserRandomSplitter
-from tests.utils import spark
 
 
 @pytest.fixture()
@@ -42,7 +41,7 @@ def log_not_implemented(log):
         pytest.param("log_spark", marks=pytest.mark.spark),
         pytest.param("log", marks=pytest.mark.core),
         pytest.param("log_polars", marks=pytest.mark.core),
-    ]
+    ],
 )
 def test_splitting(dataset_type, request):
     ratio = 0.25
@@ -65,9 +64,7 @@ def test_splitting(dataset_type, request):
         real_ratio = len(test_users) / log.count()
 
     assert not np.isin(test_users, train_users).any()
-    assert np.isclose(
-        real_ratio, ratio, atol=0.01
-    )  # Spark weights are random ¯\_(ツ)_/¯
+    assert np.isclose(real_ratio, ratio, atol=0.01)  # Spark weights are random ¯\_(ツ)_/¯
 
 
 @pytest.mark.core

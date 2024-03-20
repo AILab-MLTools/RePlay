@@ -21,9 +21,7 @@ class IndexInferer(ABC):
         self.index_store = index_store
 
     @abstractmethod
-    def infer(
-        self, vectors: SparkDataFrame, features_col: str, k: int
-    ) -> SparkDataFrame:
+    def infer(self, vectors: SparkDataFrame, features_col: str, k: int) -> SparkDataFrame:
         """Infers index"""
 
     @staticmethod
@@ -51,9 +49,7 @@ class IndexInferer(ABC):
         """
         res = inference_result.select(
             "user_idx",
-            sf.explode(
-                sf.arrays_zip("neighbours.item_idx", "neighbours.distance")
-            ).alias("zip_exp"),
+            sf.explode(sf.arrays_zip("neighbours.item_idx", "neighbours.distance")).alias("zip_exp"),
         )
 
         # Fix arrays_zip random behavior.
@@ -65,8 +61,6 @@ class IndexInferer(ABC):
         res = res.select(
             "user_idx",
             sf.col(f"zip_exp.{item_idx_field_name}").alias("item_idx"),
-            (sf.lit(-1.0) * sf.col(f"zip_exp.{distance_field_name}")).alias(
-                "relevance"
-            ),
+            (sf.lit(-1.0) * sf.col(f"zip_exp.{distance_field_name}")).alias("relevance"),
         )
         return res

@@ -73,13 +73,9 @@ class ReplayBuffer:
         self.buffer["action"][self.pos : self.pos + batch_size] = action
         self.buffer["reward"][self.pos : self.pos + batch_size] = reward
         self.buffer["next_user"][self.pos : self.pos + batch_size] = next_user
-        self.buffer["next_memory"][
-            self.pos : self.pos + batch_size
-        ] = next_memory
+        self.buffer["next_memory"][self.pos : self.pos + batch_size] = next_memory
         self.buffer["done"][self.pos : self.pos + batch_size] = done
-        self.buffer["sample_weight"][
-            self.pos : self.pos + batch_size
-        ] = sample_weight
+        self.buffer["sample_weight"][self.pos : self.pos + batch_size] = sample_weight
 
         new_pos = self.pos + batch_size
         if new_pos >= self.capacity:
@@ -137,33 +133,26 @@ class OUNoise:
         if self.state.shape[0] == user_batch_size:
             self.state.fill_(0)
         else:
-            self.state = torch.zeros(
-                (user_batch_size, self.action_dim), device=self.device
-            )
+            self.state = torch.zeros((user_batch_size, self.action_dim), device=self.device)
 
     def evolve_state(self):
         """Perform OU discrete approximation step"""
         x = self.state
-        d_x = -self.theta * x + self.sigma * torch.randn(
-            x.shape, device=self.device
-        )
+        d_x = -self.theta * x + self.sigma * torch.randn(x.shape, device=self.device)
         self.state = x + d_x
         return self.state
 
     def get_action(self, action, step=0):
         """Get state after applying noise."""
-        self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(
-            1.0, step / self.decay_period
-        )
+        self.sigma = self.max_sigma - (self.max_sigma - self.min_sigma) * min(1.0, step / self.decay_period)
         if self.noise_type == "ou":
             ou_state = self.evolve_state()
             return action + ou_state
         elif self.noise_type == "gauss":
-            return action + self.sigma * torch.randn(
-                action.shape, device=self.device
-            )
+            return action + self.sigma * torch.randn(action.shape, device=self.device)
         else:
-            raise ValueError("noise_type must be one of ['ou', 'gauss']")
+            msg = "noise_type must be one of ['ou', 'gauss']"
+            raise ValueError(msg)
 
 
 class ActorDRR(nn.Module):
@@ -191,9 +180,7 @@ class ActorDRR(nn.Module):
             nn.Linear(hidden_dim, embedding_dim),
         )
 
-        self.state_repr = StateReprModule(
-            user_num, item_num, embedding_dim, memory_size
-        )
+        self.state_repr = StateReprModule(user_num, item_num, embedding_dim, memory_size)
 
         self.initialize()
 
@@ -256,9 +243,7 @@ class CriticDRR(nn.Module):
     and `Bayes-UCBDQN <https://arxiv.org/pdf/2205.07704.pdf>`).
     """
 
-    def __init__(
-        self, state_repr_dim, action_emb_dim, hidden_dim, heads_num, heads_q
-    ):
+    def __init__(self, state_repr_dim, action_emb_dim, hidden_dim, heads_num, heads_q):
         """
         :param heads_num: number of heads (samples of Q funtion)
         :param heads_q: quantile of Q function distribution
@@ -270,9 +255,7 @@ class CriticDRR(nn.Module):
             nn.ReLU(),
         )
 
-        self.heads = nn.ModuleList(
-            [nn.Linear(hidden_dim, 1) for _ in range(heads_num)]
-        )
+        self.heads = nn.ModuleList([nn.Linear(hidden_dim, 1) for _ in range(heads_num)])
         self.heads_q = heads_q
 
         self.initialize()
@@ -353,9 +336,7 @@ class Env:
             torch.tensor([float(gamma_alpha)]),
             torch.tensor([1 / float(gamma_alpha)]),
         )
-        self.memory = torch.full(
-            (user_count, memory_size), item_count, device=device
-        )
+        self.memory = torch.full((user_count, memory_size), item_count, device=device)
         self.min_trajectory_len = min_trajectory_len
         self.max_num_rele = None
         self.user_batch_size = None
@@ -375,21 +356,15 @@ class Env:
         """
         self.user_batch_size = len(user_ids)
 
-        self.user_ids = torch.tensor(
-            user_ids, dtype=torch.int64, device=self.device
-        )
+        self.user_ids = torch.tensor(user_ids, dtype=torch.int64, device=self.device)
 
-        self.max_num_rele = max(
-            (self.matrix[user_ids] > 0).sum(1).max(), self.min_trajectory_len
-        )
+        self.max_num_rele = max((self.matrix[user_ids] > 0).sum(1).max(), self.min_trajectory_len)
         self.available_items = torch.zeros(
             (self.user_batch_size, 2 * self.max_num_rele),
             dtype=torch.int64,
             device=self.device,
         )
-        self.available_items_mask = torch.ones_like(
-            self.available_items, device=self.device
-        )
+        self.available_items_mask = torch.ones_like(self.available_items, device=self.device)
 
         # padding with non-existent items
         self.related_items = torch.full(
@@ -399,9 +374,7 @@ class Env:
         )
 
         for idx, user_id in enumerate(user_ids):
-            user_related_items = torch.tensor(
-                np.argwhere(self.matrix[user_id] > 0)[:, 1], device=self.device
-            )
+            user_related_items = torch.tensor(np.argwhere(self.matrix[user_id] > 0)[:, 1], device=self.device)
 
             user_num_rele = len(user_related_items)
 
@@ -411,10 +384,7 @@ class Env:
 
             nonrelated_items = torch.tensor(
                 np.random.choice(
-                    list(
-                        set(range(self.item_count + 1))
-                        - set(user_related_items.tolist())
-                    ),
+                    list(set(range(self.item_count + 1)) - set(user_related_items.tolist())),
                     replace=replace,
                     size=2 * self.max_num_rele - user_num_rele,
                 )
@@ -433,28 +403,17 @@ class Env:
         initial_users = self.user_ids
         initial_memory = self.memory[self.user_ids].clone()
 
-        global_actions = self.available_items[
-            torch.arange(self.available_items.shape[0]), actions
-        ]
+        global_actions = self.available_items[torch.arange(self.available_items.shape[0]), actions]
         rewards = (global_actions.reshape(-1, 1) == self.related_items).sum(1)
         for idx, reward in enumerate(rewards):
             if reward:
                 user_id = self.user_ids[idx]
-                self.memory[user_id] = torch.tensor(
-                    list(self.memory[user_id][1:]) + [global_actions[idx]]
-                )
+                self.memory[user_id] = torch.tensor([*self.memory[user_id][1:], global_actions[idx]])
 
-        self.available_items_mask[
-            torch.arange(self.available_items_mask.shape[0]), actions
-        ] = 0
+        self.available_items_mask[torch.arange(self.available_items_mask.shape[0]), actions] = 0
 
         if buffer is not None:
-            sample_weight = (
-                self.gamma.sample((self.user_batch_size,))
-                .squeeze()
-                .detach()
-                .to(self.device)
-            )
+            sample_weight = self.gamma.sample((self.user_batch_size,)).squeeze().detach().to(self.device)
             buffer.push(
                 initial_users.detach(),
                 initial_memory.detach(),
@@ -489,13 +448,9 @@ class StateReprModule(nn.Module):
         super().__init__()
         self.user_embeddings = nn.Embedding(user_num, embedding_dim)
 
-        self.item_embeddings = nn.Embedding(
-            item_num + 1, embedding_dim, padding_idx=int(item_num)
-        )
+        self.item_embeddings = nn.Embedding(item_num + 1, embedding_dim, padding_idx=int(item_num))
 
-        self.drr_ave = torch.nn.Conv1d(
-            in_channels=memory_size, out_channels=1, kernel_size=1
-        )
+        self.drr_ave = torch.nn.Conv1d(in_channels=memory_size, out_channels=1, kernel_size=1)
 
         self.initialize()
 
@@ -520,9 +475,7 @@ class StateReprModule(nn.Module):
         item_embeddings = self.item_embeddings(memory.long())
         drr_ave = self.drr_ave(item_embeddings).squeeze(1)
 
-        return torch.cat(
-            (user_embedding, user_embedding * drr_ave, drr_ave), 1
-        )
+        return torch.cat((user_embedding, user_embedding * drr_ave, drr_ave), 1)
 
 
 # pylint: disable=too-many-arguments
@@ -656,22 +609,12 @@ class DDPG(Recommender):
         next_state = self.model.state_repr(next_user, next_memory)
         next_action = self.target_model(next_user, next_memory)
         target_value = self.target_value_net(next_state, next_action.detach())
-        expected_value = reward + (
-            1.0 - done
-        ) * self.gamma * target_value.squeeze(
-            1
-        )  # smth strange, check article
+        expected_value = reward + (1.0 - done) * self.gamma * target_value.squeeze(1)  # smth strange, check article
 
-        expected_value = torch.clamp(
-            expected_value, self.min_value, self.max_value
-        )
+        expected_value = torch.clamp(expected_value, self.min_value, self.max_value)
 
         value = self.value_net(state, action)
-        value_loss = (
-            (((value - expected_value.detach())).pow(2) * sample_weight)
-            .squeeze(1)
-            .mean()
-        )
+        value_loss = (((value - expected_value.detach())).pow(2) * sample_weight).squeeze(1).mean()
 
         return policy_loss, value_loss
 
@@ -683,14 +626,11 @@ class DDPG(Recommender):
         items_np: np.ndarray,
     ) -> SparkDataFrame:
         with torch.no_grad():
-            # user_batch, memory = model.environment.reset([user_idx])
             user_batch = torch.tensor([user_idx], dtype=torch.int64)
             memory = model.environment.memory[user_batch]
             action_emb = model(user_batch, memory)
             items = torch.tensor(items_np, dtype=torch.int64).unsqueeze(0)
-            scores, _ = model.get_action(
-                action_emb, items, torch.full_like(items, True), True
-            )
+            scores, _ = model.get_action(action_emb, items, torch.full_like(items, True), True)
             scores = scores.squeeze()
             return PandasDataFrame(
                 {
@@ -704,12 +644,12 @@ class DDPG(Recommender):
     def _predict(
         self,
         log: SparkDataFrame,
-        k: int,
+        k: int,  # noqa: ARG002
         users: SparkDataFrame,
         items: SparkDataFrame,
-        user_features: Optional[SparkDataFrame] = None,
-        item_features: Optional[SparkDataFrame] = None,
-        filter_seen_items: bool = True,
+        user_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        item_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        filter_seen_items: bool = True,  # noqa: ARG002
     ) -> SparkDataFrame:
         items_consider_in_pred = items.toPandas()["item_idx"].values
         model = self.model.cpu()
@@ -740,8 +680,8 @@ class DDPG(Recommender):
         self,
         pairs: SparkDataFrame,
         log: Optional[SparkDataFrame] = None,
-        user_features: Optional[SparkDataFrame] = None,
-        item_features: Optional[SparkDataFrame] = None,
+        user_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        item_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
     ) -> SparkDataFrame:
         model = self.model.cpu()
 
@@ -763,9 +703,7 @@ class DDPG(Recommender):
         recs = (
             pairs.groupBy("user_idx")
             .agg(sf.collect_list("item_idx").alias("item_idx_to_pred"))
-            .join(
-                log.select("user_idx").distinct(), on="user_idx", how="inner"
-            )
+            .join(log.select("user_idx").distinct(), on="user_idx", how="inner")
             .groupby("user_idx")
             .applyInPandas(grouped_map, rec_schema)
         )
@@ -816,12 +754,8 @@ class DDPG(Recommender):
 
     @staticmethod
     def _target_update(target_net, net, soft_tau=1e-3):
-        for target_param, param in zip(
-            target_net.parameters(), net.parameters()
-        ):
-            target_param.data.copy_(
-                target_param.data * (1.0 - soft_tau) + param.data * soft_tau
-            )
+        for target_param, param in zip(target_net.parameters(), net.parameters()):
+            target_param.data.copy_(target_param.data * (1.0 - soft_tau) + param.data * soft_tau)
 
     def _init_inner(self):
         self.replay_buffer = ReplayBuffer(
@@ -895,8 +829,8 @@ class DDPG(Recommender):
     def _fit(
         self,
         log: SparkDataFrame,
-        user_features: Optional[SparkDataFrame] = None,
-        item_features: Optional[SparkDataFrame] = None,
+        user_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        item_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
     ) -> None:
         data = log.toPandas()
         self._fit_df(data)
@@ -947,9 +881,7 @@ class DDPG(Recommender):
                     self.model.environment.available_items_mask,
                 )
 
-                _, memory, _, _ = self.model.environment.step(
-                    actions, actions_emb, self.replay_buffer
-                )
+                _, memory, _, _ = self.model.environment.step(actions, actions_emb, self.replay_buffer)
 
                 if len(self.replay_buffer) > self.batch_size:
                     batch = self._get_batch()
@@ -974,13 +906,9 @@ class DDPG(Recommender):
         torch.save(
             {
                 # pylint: disable-next=used-before-assignment
-                "fit_users": fit_users.toPandas()
-                if fit_users is not None
-                else None,
+                "fit_users": fit_users.toPandas() if fit_users is not None else None,
                 # pylint: disable-next=used-before-assignment
-                "fit_items": fit_items.toPandas()
-                if fit_items is not None
-                else None,
+                "fit_items": fit_items.toPandas() if fit_items is not None else None,
                 "actor": self.model.state_dict(),
                 "critic": self.value_net.state_dict(),
                 "memory": self.model.environment.memory,

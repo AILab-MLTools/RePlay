@@ -5,6 +5,7 @@ import pandas as pd
 import torch
 
 from replay.data.nn import SequentialDataset
+
 from ._base import BasePostProcessor
 
 

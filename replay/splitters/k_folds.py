@@ -1,8 +1,10 @@
 from typing import Literal, Optional, Tuple
+
 import polars as pl
 
-from .base_splitter import Splitter, SplitterReturnType
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
+
+from .base_splitter import Splitter, SplitterReturnType
 
 if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
@@ -16,6 +18,7 @@ class KFolds(Splitter):
     """
     Splits interactions inside each query into folds at random.
     """
+
     _init_arg_names = [
         "n_folds",
         "strategy",
@@ -64,11 +67,12 @@ class KFolds(Splitter):
             item_column=item_column,
             timestamp_column=timestamp_column,
             session_id_column=session_id_column,
-            session_id_processing_strategy=session_id_processing_strategy
+            session_id_processing_strategy=session_id_processing_strategy,
         )
         self.n_folds = n_folds
         if strategy not in {"query"}:
-            raise ValueError(f"Wrong splitter parameter: {strategy}")
+            msg = f"Wrong splitter parameter: {strategy}"
+            raise ValueError(msg)
         self.strategy = strategy
         self.seed = seed
 
@@ -85,16 +89,10 @@ class KFolds(Splitter):
         dataframe = interactions.withColumn("_rand", sf.rand(self.seed))
         dataframe = dataframe.withColumn(
             "fold",
-            sf.row_number().over(
-                Window.partitionBy(self.query_column).orderBy("_rand")
-            )
-            % self.n_folds,
+            sf.row_number().over(Window.partitionBy(self.query_column).orderBy("_rand")) % self.n_folds,
         ).drop("_rand")
         for i in range(self.n_folds):
-            dataframe = dataframe.withColumn(
-                "is_test",
-                sf.when(sf.col("fold") == i, True).otherwise(False)
-            )
+            dataframe = dataframe.withColumn("is_test", sf.when(sf.col("fold") == i, True).otherwise(False))
             if self.session_id_column:
                 dataframe = self._recalculate_with_session_id_column(dataframe)
 
@@ -122,22 +120,18 @@ class KFolds(Splitter):
     def _query_split_polars(self, interactions: PolarsDataFrame) -> Tuple[PolarsDataFrame, PolarsDataFrame]:
         dataframe = interactions.sample(fraction=1, shuffle=True, seed=self.seed).sort(self.query_column)
         dataframe = dataframe.with_columns(
-            (pl.cum_count(self.query_column).over(self.query_column) % self.n_folds)
-            .alias("fold")
+            (pl.cum_count(self.query_column).over(self.query_column) % self.n_folds).alias("fold")
         )
         for i in range(self.n_folds):
             dataframe = dataframe.with_columns(
-                pl.when(
-                    pl.col("fold") == i
-                )
-                .then(True)
-                .otherwise(False)
-                .alias("is_test")
+                pl.when(pl.col("fold") == i).then(True).otherwise(False).alias("is_test")
             )
             if self.session_id_column:
                 dataframe = self._recalculate_with_session_id_column(dataframe)
 
-            train = dataframe.filter(~pl.col("is_test")).drop("is_test", "fold")  # pylint: disable=invalid-unary-operand-type
+            train = dataframe.filter(~pl.col("is_test")).drop(
+                "is_test", "fold"
+            )  # pylint: disable=invalid-unary-operand-type
             test = dataframe.filter(pl.col("is_test")).drop("is_test", "fold")
 
             test = self._drop_cold_items_and_users(train, test)
@@ -153,4 +147,5 @@ class KFolds(Splitter):
             if isinstance(interactions, PolarsDataFrame):
                 return self._query_split_polars(interactions)
 
-            raise NotImplementedError(f"{self} is not implemented for {type(interactions)}")
+            msg = f"{self} is not implemented for {type(interactions)}"
+            raise NotImplementedError(msg)

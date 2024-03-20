@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as sf
 from scipy.sparse import csr_matrix
 from sklearn.model_selection import GroupShuffleSplit
 from torch import nn
@@ -42,20 +42,10 @@ class VAE(nn.Module):
         self.decoder_dims = [latent_dim, hidden_dim, item_count]
 
         self.encoder = nn.ModuleList(
-            [
-                nn.Linear(d_in, d_out)
-                for d_in, d_out in zip(
-                    self.encoder_dims[:-1], self.encoder_dims[1:]
-                )
-            ]
+            [nn.Linear(d_in, d_out) for d_in, d_out in zip(self.encoder_dims[:-1], self.encoder_dims[1:])]
         )
         self.decoder = nn.ModuleList(
-            [
-                nn.Linear(d_in, d_out)
-                for d_in, d_out in zip(
-                    self.decoder_dims[:-1], self.decoder_dims[1:]
-                )
-            ]
+            [nn.Linear(d_in, d_out) for d_in, d_out in zip(self.decoder_dims[:-1], self.decoder_dims[1:])]
         )
         self.dropout = nn.Dropout(dropout)
         self.activation = torch.nn.ReLU()
@@ -68,7 +58,7 @@ class VAE(nn.Module):
 
     def encode(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """Encode"""
-        hidden = F.normalize(batch, p=2, dim=1)
+        hidden = sf.normalize(batch, p=2, dim=1)
         hidden = self.dropout(hidden)
 
         for layer in self.encoder[:-1]:
@@ -80,9 +70,7 @@ class VAE(nn.Module):
         logvar_latent = hidden[:, self.latent_dim :]
         return mu_latent, logvar_latent
 
-    def reparameterize(
-        self, mu_latent: torch.Tensor, logvar_latent: torch.Tensor
-    ) -> torch.Tensor:
+    def reparameterize(self, mu_latent: torch.Tensor, logvar_latent: torch.Tensor) -> torch.Tensor:
         """Reparametrization trick"""
 
         if self.training:
@@ -97,12 +85,9 @@ class VAE(nn.Module):
         for layer in self.decoder[:-1]:
             hidden = layer(hidden)
             hidden = self.activation(hidden)
-        return self.decoder[-1](hidden)  # type: ignore
+        return self.decoder[-1](hidden)
 
-    # pylint: disable=arguments-differ
-    def forward(  # type: ignore
-        self, batch: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, batch: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         :param batch: user batch
         :return: output, expectation and logarithm of variation
@@ -203,7 +188,7 @@ class MultVAE(TorchRecommender):
     ) -> Tuple[csr_matrix, DataLoader, np.ndarray]:
         """get data loader and matrix with data"""
         users_count = data["user_idx"].value_counts().count()
-        user_idx = data["user_idx"].astype("category").cat  # type: ignore
+        user_idx = data["user_idx"].astype("category").cat
         user_batch = csr_matrix(
             (
                 np.ones(len(data["user_idx"])),
@@ -224,25 +209,17 @@ class MultVAE(TorchRecommender):
     def _fit(
         self,
         log: SparkDataFrame,
-        user_features: Optional[SparkDataFrame] = None,
-        item_features: Optional[SparkDataFrame] = None,
+        user_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        item_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
     ) -> None:
         self.logger.debug("Creating batch")
         data = log.select("user_idx", "item_idx").toPandas()
-        splitter = GroupShuffleSplit(
-            n_splits=1, test_size=self.valid_split_size, random_state=self.seed
-        )
-        train_idx, valid_idx = next(
-            splitter.split(data, groups=data["user_idx"])
-        )
+        splitter = GroupShuffleSplit(n_splits=1, test_size=self.valid_split_size, random_state=self.seed)
+        train_idx, valid_idx = next(splitter.split(data, groups=data["user_idx"]))
         train_data, valid_data = data.iloc[train_idx], data.iloc[valid_idx]
 
-        self.train_user_batch, train_data_loader, _ = self._get_data_loader(
-            train_data
-        )
-        self.valid_user_batch, valid_data_loader, _ = self._get_data_loader(
-            valid_data, False
-        )
+        self.train_user_batch, train_data_loader, _ = self._get_data_loader(train_data)
+        self.valid_user_batch, valid_data_loader, _ = self._get_data_loader(valid_data, False)
 
         self.logger.debug("Training VAE")
         self.model = VAE(
@@ -256,9 +233,7 @@ class MultVAE(TorchRecommender):
             lr=self.learning_rate,
             weight_decay=self.l2_reg / self.batch_size_users,
         )
-        lr_scheduler = ReduceLROnPlateau(
-            optimizer, factor=self.factor, patience=self.patience
-        )
+        lr_scheduler = ReduceLROnPlateau(optimizer, factor=self.factor, patience=self.patience)
 
         self.train(
             train_data_loader,
@@ -271,7 +246,7 @@ class MultVAE(TorchRecommender):
 
     # pylint: disable=arguments-differ
     def _loss(self, y_pred, y_true, mu_latent, logvar_latent):
-        log_softmax_var = F.log_softmax(y_pred, dim=1)
+        log_softmax_var = sf.log_softmax(y_pred, dim=1)
         bce = -(log_softmax_var * y_true).sum(dim=1).mean()
         kld = (
             -0.5
@@ -283,16 +258,9 @@ class MultVAE(TorchRecommender):
         return bce + self.anneal * kld
 
     def _batch_pass(self, batch, model):
-        if model.training:
-            full_batch = self.train_user_batch
-        else:
-            full_batch = self.valid_user_batch
-        user_batch = torch.FloatTensor(full_batch[batch[0]].toarray()).to(
-            self.device
-        )
-        pred_user_batch, latent_mu, latent_logvar = self.model.forward(
-            user_batch
-        )
+        full_batch = self.train_user_batch if model.training else self.valid_user_batch
+        user_batch = torch.FloatTensor(full_batch[batch[0]].toarray()).to(self.device)
+        pred_user_batch, latent_mu, latent_logvar = self.model.forward(user_batch)
         return {
             "y_pred": pred_user_batch,
             "y_true": user_batch,
@@ -313,19 +281,13 @@ class MultVAE(TorchRecommender):
         with torch.no_grad():
             user_batch = torch.zeros((1, item_count))
             user_batch[0, items_np_history] = 1
-            user_recs = F.softmax(model(user_batch)[0][0].detach(), dim=0)
+            user_recs = sf.softmax(model(user_batch)[0][0].detach(), dim=0)
             if cnt is not None:
-                best_item_idx = (
-                    torch.argsort(
-                        user_recs[items_np_to_pred], descending=True
-                    )[:cnt]
-                ).numpy()
+                best_item_idx = (torch.argsort(user_recs[items_np_to_pred], descending=True)[:cnt]).numpy()
                 items_np_to_pred = items_np_to_pred[best_item_idx]
             return PandasDataFrame(
                 {
-                    "user_idx": np.array(
-                        items_np_to_pred.shape[0] * [user_idx]
-                    ),
+                    "user_idx": np.array(items_np_to_pred.shape[0] * [user_idx]),
                     "item_idx": items_np_to_pred,
                     "relevance": user_recs[items_np_to_pred],
                 }

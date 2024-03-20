@@ -1,5 +1,6 @@
 import abc
-from typing import Any, Optional, Tuple, Union, cast, Dict
+import contextlib
+from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import torch
 
@@ -189,10 +190,8 @@ class SasRecModel(torch.nn.Module):
 
     def _init(self) -> None:
         for _, param in self.named_parameters():
-            try:
+            with contextlib.suppress(ValueError):
                 torch.nn.init.xavier_normal_(param.data)
-            except ValueError:
-                pass
 
 
 # pylint: disable=too-few-public-methods
@@ -406,11 +405,7 @@ class SasRecLayers(torch.nn.Module):
         """
         super().__init__()
         self.attention_layers = self._layers_stacker(
-            num_blocks,
-            torch.nn.MultiheadAttention,
-            hidden_size,
-            num_heads,
-            dropout
+            num_blocks, torch.nn.MultiheadAttention, hidden_size, num_heads, dropout
         )
         self.attention_layernorms = self._layers_stacker(num_blocks, torch.nn.LayerNorm, hidden_size, eps=1e-8)
         self.forward_layers = self._layers_stacker(num_blocks, SasRecPointWiseFeedForward, hidden_size, dropout)

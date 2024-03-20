@@ -4,7 +4,7 @@ from typing import Dict, List, Union
 import numpy as np
 import polars as pl
 
-from replay.utils import PYSPARK_AVAILABLE, PandasDataFrame, SparkDataFrame, PolarsDataFrame
+from replay.utils import PYSPARK_AVAILABLE, PandasDataFrame, PolarsDataFrame, SparkDataFrame
 
 from .base_metric import Metric, MetricsDataFrameLike, MetricsReturnType
 
@@ -18,7 +18,7 @@ class Surprisal(Metric):
     Measures how many surprising rare items are present in recommendations.
 
     .. math::
-        \\textit{Self-Information}(j)= -\log_2 \\frac {u_j}{N}
+        \\textit{Self-Information}(j)= -\\log_2 \\frac {u_j}{N}
 
     :math:`u_j` -- number of users that interacted with item :math:`j`.
     Cold items are treated as if they were rated by 1 user.
@@ -32,12 +32,12 @@ class Surprisal(Metric):
     Recommendation list surprisal is the average surprisal of items in it.
 
     .. math::
-        Surprisal@K(i) = \\frac {\sum_{j=1}^{K}Surprisal(j)} {K}
+        Surprisal@K(i) = \\frac {\\sum_{j=1}^{K}Surprisal(j)} {K}
 
     Final metric is averaged by users.
 
     .. math::
-        Surprisal@K = \\frac {\sum_{i=1}^{N}Surprisal@K(i)}{N}
+        Surprisal@K = \\frac {\\sum_{i=1}^{N}Surprisal@K(i)}{N}
 
     :math:`N` -- the number of users.
 
@@ -118,17 +118,11 @@ class Surprisal(Metric):
     ) -> SparkDataFrame:
         n_users = train.select(self.query_column).distinct().count()
         item_weights = train.groupby(self.item_column).agg(
-            (
-                sf.log2(n_users / sf.countDistinct(self.query_column)) / np.log2(n_users)
-            ).alias("weight")
+            (sf.log2(n_users / sf.countDistinct(self.query_column)) / np.log2(n_users)).alias("weight")
         )
-        recommendations = recommendations.join(
-            item_weights, on=self.item_column, how="left"
-        ).fillna(1.0)
+        recommendations = recommendations.join(item_weights, on=self.item_column, how="left").fillna(1.0)
 
-        sorted_by_score_recommendations = self._get_items_list_per_user(
-            recommendations, "weight"
-        )
+        sorted_by_score_recommendations = self._get_items_list_per_user(recommendations, "weight")
         return self._rearrange_columns(sorted_by_score_recommendations)
 
     def _get_enriched_recommendations_polars(  # pylint: disable=arguments-renamed
@@ -138,13 +132,9 @@ class Surprisal(Metric):
         item_weights = train.group_by(self.item_column).agg(
             (np.log2(n_users / pl.col(self.query_column).n_unique()) / np.log2(n_users)).alias("weight")
         )
-        recommendations = recommendations.join(
-            item_weights, on=self.item_column, how="left"
-        ).fill_nan(1.0)
+        recommendations = recommendations.join(item_weights, on=self.item_column, how="left").fill_nan(1.0)
 
-        sorted_by_score_recommendations = self._get_items_list_per_user(
-            recommendations, "weight"
-        )
+        sorted_by_score_recommendations = self._get_items_list_per_user(recommendations, "weight")
         return self._rearrange_columns(sorted_by_score_recommendations)
 
     def __call__(
@@ -183,9 +173,7 @@ class Surprisal(Metric):
             else self._convert_dict_to_dict_with_score(recommendations)
         )
         self._check_duplicates_dict(recommendations)
-        train = (
-            self._convert_pandas_to_dict_without_score(train) if is_pandas else train
-        )
+        train = self._convert_pandas_to_dict_without_score(train) if is_pandas else train
         assert isinstance(train, dict)
 
         weights = self._get_recommendation_weights(recommendations, train)

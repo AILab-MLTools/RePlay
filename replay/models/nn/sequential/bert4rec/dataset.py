@@ -121,13 +121,16 @@ class Bert4RecTrainingDataset(TorchDataset):
         super().__init__()
         if label_feature_name:
             if label_feature_name not in sequential.schema:
-                raise ValueError("Label feature name not found in provided schema")
+                msg = "Label feature name not found in provided schema"
+                raise ValueError(msg)
 
             if not sequential.schema[label_feature_name].is_cat:
-                raise ValueError("Label feature must be categorical")
+                msg = "Label feature must be categorical"
+                raise ValueError(msg)
 
             if not sequential.schema[label_feature_name].is_seq:
-                raise ValueError("Label feature must be sequential")
+                msg = "Label feature must be sequential"
+                raise ValueError(msg)
 
         self._max_sequence_length = max_sequence_length
         self._label_feature_name = label_feature_name or sequential.schema.item_id_feature_name

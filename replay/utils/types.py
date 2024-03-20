@@ -17,7 +17,7 @@ try:
     PYSPARK_AVAILABLE = True
 except ImportError:
     PYSPARK_AVAILABLE = False
-    SparkDataFrame = MissingImportType  # type: ignore
+    SparkDataFrame = MissingImportType
 
 try:
     # pylint: disable=unused-import

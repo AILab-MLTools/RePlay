@@ -72,7 +72,8 @@ class FeatureInfo:
         self._feature_hint = feature_hint
 
         if feature_type == FeatureType.NUMERICAL and cardinality:
-            raise ValueError("Cardinality is needed only with categorical feature_type.")
+            msg = "Cardinality is needed only with categorical feature_type."
+            raise ValueError(msg)
         self._cardinality = cardinality
 
     @property
@@ -112,9 +113,8 @@ class FeatureInfo:
         :returns: cardinality of the feature.
         """
         if self.feature_type != FeatureType.CATEGORICAL:
-            raise RuntimeError(
-                f"Can not get cardinality because feature_type of {self.column} column is not categorical."
-            )
+            msg = f"Can not get cardinality because feature_type of {self.column} column is not categorical."
+            raise RuntimeError(msg)
         if hasattr(self, "_cardinality_callback") and self._cardinality is None:
             self._cardinality = self._cardinality_callback(self._column)
         return self._cardinality
@@ -174,8 +174,9 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
         :returns: extract a feature information from a schema.
         """
         if len(self._features_schema) > 1:
-            raise ValueError("Only one element feature schema can be converted to single feature")
-        return list(self._features_schema.values())[0]
+            msg = "Only one element feature schema can be converted to single feature"
+            raise ValueError(msg)
+        return next(iter(self._features_schema.values()))
 
     def items(self) -> ItemsView[str, FeatureInfo]:
         return self._features_schema.items()
@@ -186,7 +187,7 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
     def values(self) -> ValuesView[FeatureInfo]:
         return self._features_schema.values()
 
-    def get(  # type: ignore
+    def get(
         self,
         key: str,
         default: Optional[FeatureInfo] = None,
@@ -358,7 +359,7 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
         for filtration_func, filtration_param in zip(filter_functions, filter_parameters):
             filtered_features = list(
                 filter(
-                    lambda x: filtration_func(x, filtration_param),  # type: ignore  # pylint: disable=W0640
+                    lambda x: filtration_func(x, filtration_param),
                     filtered_features,
                 )
             )
@@ -391,7 +392,7 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
         for filtration_func, filtration_param in zip(filter_functions, filter_parameters):
             filtered_features = list(
                 filter(
-                    lambda x: filtration_func(x, filtration_param),  # type: ignore  # pylint: disable=W0640
+                    lambda x: filtration_func(x, filtration_param),
                     filtered_features,
                 )
             )
@@ -451,13 +452,16 @@ class FeatureSchema(Mapping[str, FeatureInfo]):
                 item_query_names[feature.feature_hint] += [feature.column]
 
         if len(duplicates) > 0:
-            raise ValueError(
+            msg = (
                 "Features column names should be unique, exept ITEM_ID and QUERY_ID columns. "
-                + f"{duplicates} columns are not unique."
+                f"{duplicates} columns are not unique."
             )
+            raise ValueError(msg)
 
         if len(item_query_names[FeatureHint.ITEM_ID]) > 1:
-            raise ValueError(f"ITEM_ID must be present only once. Rename {item_query_names[FeatureHint.ITEM_ID]}")
+            msg = f"ITEM_ID must be present only once. Rename {item_query_names[FeatureHint.ITEM_ID]}"
+            raise ValueError(msg)
 
         if len(item_query_names[FeatureHint.QUERY_ID]) > 1:
-            raise ValueError(f"QUERY_ID must be present only once. Rename {item_query_names[FeatureHint.QUERY_ID]}")
+            msg = f"QUERY_ID must be present only once. Rename {item_query_names[FeatureHint.QUERY_ID]}"
+            raise ValueError(msg)

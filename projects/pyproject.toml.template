@@ -74,10 +74,8 @@ pytest = ">=7.1.0"
 pytest-cov = ">=3.0.0"
 statsmodels = "~0.13.5"
 # style
-black = "^23.3"
-pre-commit = ">=2.21.0"
-pylint = "^2.13"
-pycodestyle = "^2.10"
+black = ">=23.3.0"
+ruff = ">=0.0.261"
 # docs
 sphinx = "5.3.0"
 sphinx-rtd-theme = "1.2.2"
@@ -109,3 +107,31 @@ vcs = "git"
 [tool.black]
 line-length = 120
 target-versions = ["py38", "py39", "py310"]
+
+[tool.ruff]
+exclude = [".git", ".venv", "__pycache__", "env", "venv", "docs", "projects", "examples"]
+extend-select = ["C90", "T10", "T20", "UP004"]
+line-length = 120
+select = ["ARG", "C4", "E", "EM", "ERA", "F", "FLY", "I", "INP", "ISC", "N", "PERF", "PGH", "PIE", "PYI", "Q", "RUF", "SIM", "TID", "W"]
+
+[tool.ruff.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "double"
+multiline-quotes = "double"
+
+[tool.ruff.flake8-unused-arguments]
+ignore-variadic-names = false
+
+[tool.ruff.isort]
+combine-as-imports = true
+force-wrap-aliases = true
+
+[tool.ruff.mccabe]
+max-complexity = 13
+
+[tool.ruff.per-file-ignores]
+"*/" = ['PERF203', 'RUF001', 'RUF012', 'E402']
+"__init__.py" = ['F401']
+"tests/*" = ["ARG", "E402", "INP", "ISC", "N", "S", "SIM", "F811"]
+"tests/experimental/*" = ["F401", "F811"]
+"replay/experimental/models/extensions/spark_custom_models/als_extension.py" = ['ARG002', 'N802', 'N803', 'N815']

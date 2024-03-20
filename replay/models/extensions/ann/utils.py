@@ -15,9 +15,7 @@ def create_hnswlib_index_instance(params: HnswlibParam, init: bool = False):
         If `False` then the index will be used to load index data from a file.
     :return: `hnswlib` index instance
     """
-    index = hnswlib.Index(  # pylint: disable=c-extension-no-member
-        space=params.space, dim=params.dim
-    )
+    index = hnswlib.Index(space=params.space, dim=params.dim)  # pylint: disable=c-extension-no-member
 
     if init:
         # Initializing index - the maximum number of elements should be known beforehand

@@ -191,7 +191,6 @@ class Sessionizer:
                 Window.partitionBy(self.user_column).orderBy(sf.col(self.time_column), sf.col("timestamp_diff").desc())
             ),
         )
-        # data_with_sum_timediff.cache()
 
         grouped_users = data_with_sum_timediff.groupBy(self.user_column).count()
         grouped_users_with_cumsum = grouped_users.withColumn(
@@ -212,11 +211,9 @@ class Sessionizer:
             )
         )
 
-        # data_with_sum_timediff.unpersist()
         return result
 
     def _filter_sessions(self, interactions: DataFrameLike) -> DataFrameLike:
-        # interactions.cache()
         if isinstance(interactions, SparkDataFrame):
             return self._filter_sessions_spark(interactions)
 
@@ -254,8 +251,6 @@ class Sessionizer:
             entries_counter.select(self.session_column), self.session_column, how="right"
         )
 
-        # filtered_interactions.cache()
-
         nunique = filtered_interactions.groupby(self.user_column).agg(
             sf.expr("count(distinct session_id)").alias("nunique")
         )
@@ -284,9 +279,6 @@ class Sessionizer:
         result = self._filter_sessions(result)
         columns_order += [self.session_column]
 
-        if isinstance(result, SparkDataFrame):
-            result = result.select(*columns_order)
-        else:
-            result = result[columns_order]
+        result = result.select(*columns_order) if isinstance(result, SparkDataFrame) else result[columns_order]
 
         return result

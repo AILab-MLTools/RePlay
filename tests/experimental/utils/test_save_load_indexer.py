@@ -10,15 +10,14 @@ torch = pytest.importorskip("torch")
 import replay
 from replay.experimental.preprocessing.data_preparator import Indexer
 from replay.experimental.utils.model_handler import load_indexer, save_indexer
-from replay.splitters import *
 from replay.utils.spark_utils import convert2spark
 
 
 @pytest.fixture
 def user_features(spark):
-    return spark.createDataFrame(
-        [(1, 20.0, -3.0, 1), (2, 30.0, 4.0, 0), (3, 40.0, 0.0, 1)]
-    ).toDF("user_idx", "age", "mood", "gender")
+    return spark.createDataFrame([(1, 20.0, -3.0, 1), (2, 30.0, 4.0, 0), (3, 40.0, 0.0, 1)]).toDF(
+        "user_idx", "age", "mood", "gender"
+    )
 
 
 @pytest.fixture

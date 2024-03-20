@@ -3,8 +3,8 @@ from typing import List, Optional
 import pandas as pd
 from tqdm import tqdm
 
-from ..base_rec import Recommender
-from replay.utils import SparkDataFrame, PYSPARK_AVAILABLE, TORCH_AVAILABLE
+from replay.experimental.models.base_rec import Recommender
+from replay.utils import PYSPARK_AVAILABLE, TORCH_AVAILABLE, SparkDataFrame
 
 if PYSPARK_AVAILABLE:
     from replay.utils.spark_utils import convert2spark
@@ -158,21 +158,21 @@ class DT4Rec(Recommender):
     def _fit(
         self,
         log: SparkDataFrame,
-        user_features: Optional[SparkDataFrame] = None,
-        item_features: Optional[SparkDataFrame] = None,
+        user_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        item_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
     ) -> None:
         self.train(log)
 
     # pylint: disable=too-many-arguments
     def _predict(
         self,
-        log: SparkDataFrame,
-        k: int,
+        log: SparkDataFrame,  # noqa: ARG002
+        k: int,  # noqa: ARG002
         users: SparkDataFrame,
         items: SparkDataFrame,
-        user_features: Optional[SparkDataFrame] = None,
-        item_features: Optional[SparkDataFrame] = None,
-        filter_seen_items: bool = True,
+        user_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        item_features: Optional[SparkDataFrame] = None,  # noqa: ARG002
+        filter_seen_items: bool = True,  # noqa: ARG002
     ) -> SparkDataFrame:
         items_consider_in_pred = items.toPandas()["item_idx"].values
         users_consider_in_pred = users.toPandas()["user_idx"].values

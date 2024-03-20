@@ -12,15 +12,7 @@ from replay.experimental.models import MultVAE
 from replay.experimental.models.base_rec import HybridRecommender, UserRecommender
 from replay.utils.model_handler import load, save
 from tests.utils import (
-    del_files_by_pattern,
-    find_file_by_pattern,
-    log,
-    log2,
-    log_to_pred,
-    long_log_with_features,
-    spark,
     sparkDataFrameEqual,
-    user_features,
 )
 
 SEED = 123
@@ -96,15 +88,11 @@ def test_predict(log, model):
 
 @pytest.mark.experimental
 def test_predict_pairs(log, log2, model):
-    recs = model.predict_pairs(
-        pairs=log2.select("user_idx", "item_idx"), log=log
-    )
+    recs = model.predict_pairs(pairs=log2.select("user_idx", "item_idx"), log=log)
     assert (
         recs.count()
         == (
-            log2.join(
-                log.select("user_idx").distinct(), on="user_idx", how="inner"
-            ).join(
+            log2.join(log.select("user_idx").distinct(), on="user_idx", how="inner").join(
                 log.select("item_idx").distinct(), on="item_idx", how="inner"
             )
         ).count()
@@ -166,21 +154,9 @@ def test_predict_pairs_k(log):
         k=None,
     )
 
-    assert (
-        pairs_pred_k.groupBy("user_idx")
-        .count()
-        .filter(sf.col("count") > 1)
-        .count()
-        == 0
-    )
+    assert pairs_pred_k.groupBy("user_idx").count().filter(sf.col("count") > 1).count() == 0
 
-    assert (
-        pairs_pred.groupBy("user_idx")
-        .count()
-        .filter(sf.col("count") > 1)
-        .count()
-        > 0
-    )
+    assert pairs_pred.groupBy("user_idx").count().filter(sf.col("count") > 1).count() > 0
 
 
 @pytest.mark.experimental

@@ -74,7 +74,9 @@ class FatOptimizerFactory(OptimizerFactory):
             return torch.optim.SGD(
                 parameters, lr=self.learning_rate, weight_decay=self.weight_decay, momentum=self.sgd_momentum
             )
-        raise ValueError("Unexpected optimizer")
+
+        msg = "Unexpected optimizer"
+        raise ValueError(msg)
 
 
 # pylint: disable=too-few-public-methods
