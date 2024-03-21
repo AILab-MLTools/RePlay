@@ -98,7 +98,18 @@ poetry-check:
   script:
     - ./poetry_wrapper.sh check
     - ./poetry_wrapper.sh --experimental check
-  tags: 
+  tags:
+    - ${RUNNER}
+
+toml-sort:
+  <<: *install_experimental_replay_with_spark
+  stage: code_quality
+  script:
+    - ./poetry_wrapper.sh --generate
+    - toml-sort --check pyproject.toml
+    - ./poetry_wrapper.sh --experimental --generate
+    - toml-sort --check pyproject.toml
+  tags:
     - ${RUNNER}
 
 sphinx-job:
