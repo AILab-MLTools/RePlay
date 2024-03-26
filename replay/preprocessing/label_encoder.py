@@ -245,8 +245,8 @@ class LabelEncodingRule(BaseLabelEncodingRule):
         new_unique_values = set(df[self._col].tolist()) - set(self._mapping)
         last_mapping_value = max(self._mapping.values())
         new_data: dict = {value: last_mapping_value + i for i, value in enumerate(new_unique_values, start=1)}
-        self._mapping.update(new_data)  # type: ignore
-        self._inverse_mapping.update({v: k for k, v in new_data.items()})  # type: ignore
+        self._mapping.update(new_data)
+        self._inverse_mapping.update({v: k for k, v in new_data.items()})
         self._inverse_mapping_list.extend(new_data.keys())
 
     def _partial_fit_polars(self, df: PolarsDataFrame) -> None:
