@@ -6,6 +6,8 @@ Contains classes for encoding categorical data
 ``LabelEncoder`` to apply multiple LabelEncodingRule to dataframe.
 """
 import abc
+import warnings
+import polars as pl
 from typing import Dict, List, Literal, Mapping, Optional, Sequence, Union
 
 import polars as pl
