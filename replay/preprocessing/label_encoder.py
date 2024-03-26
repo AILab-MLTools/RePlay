@@ -310,10 +310,9 @@ class LabelEncodingRule(BaseLabelEncodingRule):
                 joined_df.drop(joined_df[unknown_mask].index, inplace=True)
                 if joined_df.empty:
                     warnings.warn(
-                        textwrap.dedent(f"""\
-                            You are trying to transform dataframe with all values are unknown for {self._col},
-                            with `handle_unknown_strategy=drop` leads to empty dataframe"""),
-                        LabelEncoderTransformWarning,
+                        f"You are trying to transform dataframe with all values are unknown for {self._col}, "
+                         "with `handle_unknown_strategy=drop` leads to empty dataframe",
+                        LabelEncoderTransformWarning
                     )
             elif self._handle_unknown == "error":
                 unknown_unique_labels = joined_df[self._col][unknown_mask].unique().tolist()
@@ -340,10 +339,9 @@ class LabelEncodingRule(BaseLabelEncodingRule):
                 transformed_df = transformed_df.filter("unknown_mask == False")
                 if transformed_df.rdd.isEmpty():
                     warnings.warn(
-                        textwrap.dedent(f"""\
-                            You are trying to transform dataframe with all values are unknown for {self._col},
-                            with `handle_unknown_strategy=drop` leads to empty dataframe"""),
-                        LabelEncoderTransformWarning,
+                        f"You are trying to transform dataframe with all values are unknown for {self._col}, "
+                         "with `handle_unknown_strategy=drop` leads to empty dataframe",
+                        LabelEncoderTransformWarning
                     )
             elif self._handle_unknown == "error":
                 collected_list = transformed_df.filter("unknown_mask == True").select(self._col).distinct().collect()
@@ -372,10 +370,9 @@ class LabelEncodingRule(BaseLabelEncodingRule):
                 transformed_df = transformed_df.filter(pl.col("unknown_mask") == "false")
                 if transformed_df.is_empty():
                     warnings.warn(
-                        textwrap.dedent(f"""\
-                            You are trying to transform dataframe with all values are unknown for {self._col},
-                            with `handle_unknown_strategy=drop` leads to empty dataframe"""),
-                        LabelEncoderTransformWarning,
+                        f"You are trying to transform dataframe with all values are unknown for {self._col}, "
+                         "with `handle_unknown_strategy=drop` leads to empty dataframe",
+                        LabelEncoderTransformWarning
                     )
             elif self._handle_unknown == "error":
                 unique_labels = unknown_df.select(self._col).unique().to_series().to_list()
