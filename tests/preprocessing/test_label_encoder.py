@@ -469,7 +469,7 @@ def test_label_encoder_not_implemented_df(dataframe_not_implemented):
     "spark_df_for_labelencoder",
     "pandas_df_for_labelencoder_modified",
     "polars_df_for_labelencoder_modified",
-    "spark_df_for_labelencoder_modified"
+    "spark_df_for_labelencoder_modified",
 )
 @pytest.mark.parametrize(
     "df_for_labelencoder, df_for_labelencoder_modified",
@@ -506,7 +506,7 @@ def test_label_encoder_drop_strategy(request, df_for_labelencoder, df_for_labele
     "spark_df_for_labelencoder",
     "pandas_df_for_labelencoder_new_data",
     "polars_df_for_labelencoder_new_data",
-    "spark_df_for_labelencoder_new_data"
+    "spark_df_for_labelencoder_new_data",
 )
 @pytest.mark.parametrize(
     "df_for_labelencoder, df_for_labelencoder_new_data",
