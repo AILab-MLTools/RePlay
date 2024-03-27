@@ -463,14 +463,6 @@ def test_label_encoder_not_implemented_df(dataframe_not_implemented):
         encoder.inverse_transform(dataframe_not_implemented)
 
 
-@pytest.mark.usefixtures(
-    "pandas_df_for_labelencoder",
-    "polars_df_for_labelencoder",
-    "spark_df_for_labelencoder",
-    "pandas_df_for_labelencoder_modified",
-    "polars_df_for_labelencoder_modified",
-    "spark_df_for_labelencoder_modified",
-)
 @pytest.mark.parametrize(
     "df_for_labelencoder, df_for_labelencoder_modified",
     [
@@ -500,14 +492,6 @@ def test_label_encoder_drop_strategy(request, df_for_labelencoder, df_for_labele
     assert "item_3" not in items
 
 
-@pytest.mark.usefixtures(
-    "pandas_df_for_labelencoder",
-    "polars_df_for_labelencoder",
-    "spark_df_for_labelencoder",
-    "pandas_df_for_labelencoder_new_data",
-    "polars_df_for_labelencoder_new_data",
-    "spark_df_for_labelencoder_new_data",
-)
 @pytest.mark.parametrize(
     "df_for_labelencoder, df_for_labelencoder_new_data",
     [
