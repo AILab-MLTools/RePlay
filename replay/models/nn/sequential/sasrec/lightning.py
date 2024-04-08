@@ -486,3 +486,10 @@ class SasRec(lightning.LightningModule):
         self._model.item_count = new_vocab_size
         self._model.padding_idx = new_vocab_size
         self._model.masking.padding_idx = new_vocab_size
+        self._model.candidates_to_score = torch.LongTensor(
+            list(range(new_embedding.weight.data.shape[0] - 1)),
+                 device=self._model.candidates_to_score.device
+        )
+        self._schema.item_id_features[self._schema.item_id_feature_name]._set_cardinality(
+            new_embedding.weight.data.shape[0] - 1
+        )
