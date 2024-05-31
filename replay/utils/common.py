@@ -4,8 +4,32 @@ import warnings
 from pathlib import Path
 from typing import Any, Callable, Optional, Union
 
+from replay.data.nn import SequenceTokenizer
+from replay.splitters import (
+    ColdUserRandomSplitter,
+    KFolds,
+    LastNSplitter,
+    NewUsersSplitter,
+    RandomSplitter,
+    RatioSplitter,
+    TimeSplitter,
+    TwoStageSplitter,
+)
 
-def save_to_replay(obj: Any, path: Union[str, Path]) -> None:
+SavableObject = Union[
+    ColdUserRandomSplitter,
+    KFolds,
+    LastNSplitter,
+    NewUsersSplitter,
+    RandomSplitter,
+    RatioSplitter,
+    TimeSplitter,
+    TwoStageSplitter,
+    SequenceTokenizer,
+]
+
+
+def save_to_replay(obj: SavableObject, path: Union[str, Path]) -> None:
     """
     General function to save RePlay models, splitters and tokenizer.
 
@@ -14,7 +38,7 @@ def save_to_replay(obj: Any, path: Union[str, Path]) -> None:
     obj.save(path)
 
 
-def load_from_replay(path: Union[str, Path]) -> Any:
+def load_from_replay(path: Union[str, Path]) -> SavableObject:
     """
     General function to load RePlay models, splitters and tokenizer.
 
