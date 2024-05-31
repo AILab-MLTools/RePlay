@@ -13,6 +13,7 @@ from replay.data import Dataset, FeatureHint, FeatureSchema, FeatureSource, Feat
 from replay.data.dataset_utils import DatasetLabelEncoder
 from replay.preprocessing import LabelEncoder, LabelEncodingRule
 from replay.preprocessing.label_encoder import HandleUnknownStrategies
+from replay.utils.common import deprecation_warning
 
 from .schema import TensorFeatureInfo, TensorFeatureSource, TensorSchema
 from .sequential_dataset import PandasSequentialDataset, PolarsSequentialDataset, SequentialDataset
@@ -402,6 +403,7 @@ class SequenceTokenizer:
             tensor_feature._set_cardinality(dataset_feature.cardinality)
 
     @classmethod
+    @deprecation_warning("with `use_pickle` equals to `True` will be deprecated in future versions")
     def load(cls, path: str, use_pickle: bool = False) -> "SequenceTokenizer":
         """
         Load tokenizer object from the given path.
@@ -459,6 +461,7 @@ class SequenceTokenizer:
 
         return tokenizer
 
+    @deprecation_warning("with `use_pickle` equals to `True` will be deprecated in future versions")
     def save(self, path: str, use_pickle: bool = False) -> None:
         """
         Save the tokenizer to the given path.
