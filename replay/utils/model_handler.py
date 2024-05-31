@@ -146,36 +146,3 @@ def load_encoder(path: Union[str, Path]) -> DatasetLabelEncoder:
         encoder = pickle.load(f)
 
     return encoder
-
-
-def save_splitter(splitter: Splitter, path: str, overwrite: bool = False):
-    """
-    Save initialized splitter
-
-    :param splitter: Initialized splitter
-    :param path: destination where splitter files will be stored
-    """
-    init_args = splitter._init_args
-    init_args["_splitter_name"] = str(splitter)
-    spark = State().session
-    sc = spark.sparkContext
-    df = spark.read.json(sc.parallelize([json.dumps(init_args)]))
-    if overwrite:
-        df.coalesce(1).write.mode("overwrite").json(join(path, "init_args.json"))
-    else:
-        df.coalesce(1).write.json(join(path, "init_args.json"))
-
-
-def load_splitter(path: str) -> Splitter:
-    """
-    Load splitter
-
-    :param path: path to folder
-    :return: restored Splitter
-    """
-    spark = State().session
-    args = spark.read.json(join(path, "init_args.json")).first().asDict()
-    name = args["_splitter_name"]
-    del args["_splitter_name"]
-    splitter = globals()[name]
-    return splitter(**args)
