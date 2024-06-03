@@ -13,6 +13,7 @@ from replay.splitters import (
 from replay.utils.common import load_from_replay, save_to_replay
 
 
+@pytest.mark.core
 @pytest.mark.parametrize(
     "splitter",
     [

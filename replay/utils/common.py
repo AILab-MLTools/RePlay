@@ -2,7 +2,6 @@ import json
 from pathlib import Path
 from typing import Union
 
-from replay.data.nn import SequenceTokenizer
 from replay.splitters import (
     ColdUserRandomSplitter,
     KFolds,
@@ -13,6 +12,7 @@ from replay.splitters import (
     TimeSplitter,
     TwoStageSplitter,
 )
+from replay.utils import TORCH_AVAILABLE
 
 SavableObject = Union[
     ColdUserRandomSplitter,
@@ -23,8 +23,13 @@ SavableObject = Union[
     RatioSplitter,
     TimeSplitter,
     TwoStageSplitter,
-    SequenceTokenizer,
 ]
+
+
+if TORCH_AVAILABLE:
+    from replay.data.nn import SequenceTokenizer
+
+    SavableObject += [SequenceTokenizer]
 
 
 def save_to_replay(obj: SavableObject, path: Union[str, Path]) -> None:
