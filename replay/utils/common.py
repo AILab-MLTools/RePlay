@@ -25,11 +25,20 @@ SavableObject = Union[
     TwoStageSplitter,
 ]
 
-
 if TORCH_AVAILABLE:
     from replay.data.nn import SequenceTokenizer
 
-    SavableObject += [SequenceTokenizer]
+    SavableObject = Union[
+        ColdUserRandomSplitter,
+        KFolds,
+        LastNSplitter,
+        NewUsersSplitter,
+        RandomSplitter,
+        RatioSplitter,
+        TimeSplitter,
+        TwoStageSplitter,
+        SequenceTokenizer,
+    ]
 
 
 def save_to_replay(obj: SavableObject, path: Union[str, Path]) -> None:
