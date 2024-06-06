@@ -5673,4 +5673,4 @@ torch = ["lightning", "pytorch-ranger", "torch"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1, <3.11"
-content-hash = "868252f95e30087df3f35a5b2472def40c4dd379bd41249df5729894e2b13eb5"
+content-hash = "e09f5a305b5555f46ea522b39365d079ee799c5bd2d66546809fd9b0d575bca3"
