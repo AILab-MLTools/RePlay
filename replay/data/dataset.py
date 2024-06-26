@@ -3,13 +3,22 @@
 """
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
+
+from polars import read_parquet as pl_read_parquet
+from pandas import read_parquet as pd_read_parquet
+
+from pyspark.sql import SparkSession
 
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
 
 from .schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
+
+from pathlib import Path
+
+import json
 
 if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
@@ -92,7 +101,6 @@ class Dataset:
                 self._check_ids_consistency(hint=FeatureHint.QUERY_ID)
             if self.item_features is not None:
                 self._check_ids_consistency(hint=FeatureHint.ITEM_ID)
-
             if self._categorical_encoded:
                 self._check_encoded()
 
@@ -188,6 +196,167 @@ class Dataset:
         :returns: List of features.
         """
         return self._feature_schema
+
+    def get_df_type(self) -> str:
+        """
+        :returns: Stored dataframe type.
+        """
+        if self.is_spark:
+            return "spark"
+        if self.is_pandas:
+            return "pandas"
+        if self.is_polars:
+            return "polars"
+        raise ValueError(
+            "No known dataframe types are provided"
+        )
+
+    def to_parquet(self, df: DataFrameLike, path: Path) -> None:
+        """
+        Save the content of the dataframe in parquet format to the provided path.
+
+        :param df: Dataframe to save.
+        :param path: Path to save the dataframe to.
+        """
+        if self.is_spark:
+            path = str(path)
+            df.write.mode("overwrite").parquet(path)
+        elif self.is_pandas:
+            df.to_parquet(path)
+        elif self.is_polars:
+            df.write_parquet(path)
+        else:
+            raise TypeError(
+                """
+                to_parquet() can only be used to save polars|pandas|spark dataframes;
+                No known dataframe types are provided
+                """
+            )
+
+    @staticmethod
+    def read_parquet(
+        path: Path, mode: str, spark_session: Optional[SparkSession] = None
+    ) -> Union[SparkDataFrame, PandasDataFrame, PolarsDataFrame]:
+        """
+        Read the parquet file as dataframe.
+
+        :param path: The parquet file path.
+        :param mode: Dataframe type. Can be spark|pandas|polars.
+        :param spark_session: SparkSession to use (needed if argument mode = spark).
+        """
+        if mode == "spark":
+            path = str(path)
+            return spark_session.read.parquet(path)
+        if mode == "pandas":
+            return pd_read_parquet(path)
+        if mode == "polars":
+            return pl_read_parquet(path)
+        raise TypeError(
+            f"read_parquet() can only be used to read polars|pandas|spark dataframes, not {mode}"
+        )
+
+    def save(self, path: str) -> None:
+        """
+        Save the Dataset to the provided path.
+
+        :param path: Path to save the Dataset to.
+        """
+        dataset_dict = {}
+        dataset_dict["_class_name"] = self.__class__.__name__
+
+        interactions_type = self.get_df_type()
+        dataset_dict["init_args"] = {
+            "feature_schema": [],
+            "interactions": interactions_type,
+            "item_features": (
+                interactions_type if self.item_features is not None else None
+            ),
+            "query_features": (
+                interactions_type if self.query_features is not None else None
+            ),
+            "check_consistency": False,
+            "categorical_encoded": self._categorical_encoded,
+        }
+
+        for feature in self.feature_schema.all_features:
+            dataset_dict["init_args"]["feature_schema"].append(
+                {
+                    "column": feature.column,
+                    "feature_type": feature.feature_type.name,
+                    "feature_hint": (
+                        feature.feature_hint.name if feature.feature_hint else None
+                    ),
+                }
+            )
+
+        base_path = Path(path).with_suffix(".replay").resolve()
+        base_path.mkdir(parents=True, exist_ok=True)
+
+        with open(base_path / "init_args.json", "w+") as file:
+            json.dump(dataset_dict, file)
+
+        df_data = {
+            "interactions": self.interactions,
+            "item_features": self.item_features,
+            "query_features": self.query_features,
+        }
+
+        for df_name, df in df_data.items():
+            df_path = base_path / f"{df_name}.parquet"
+            self.to_parquet(df, df_path)
+
+    @classmethod
+    def load(
+        cls,
+        path: str,
+        dataframe_type: str = None,
+        spark_session: Optional[SparkSession] = None,
+    ) -> Dataset:
+        """
+        Load the Dataset from the provided path.
+
+        :param path: The file path
+        :dataframe_type: Dataframe type to use to store internal data.
+            Can be spark|pandas|polars|None.
+            If not provided automatically sets to the one used when the Dataset was saved.
+        :param spark_session: SparkSession to use (needed if dataframe_type = spark).
+        """
+        base_path = Path(path).with_suffix(".replay").resolve()
+        with open(base_path / "init_args.json", "r") as file:
+            dataset_dict = json.loads(file.read())
+
+        if dataframe_type not in ["pandas", "spark", "polars", None]:
+            raise ValueError(
+                f"Argument dataframe_type can be spark|pandas|polars|None, not {dataframe_type}"
+            )
+
+        if dataset_dict["init_args"]["interactions"] == "spark" and not spark_session:
+            raise ValueError(
+                """
+                The Dataset you're trying to load stores a pyspark.DataFrame;
+                Please provide SparkSession or change dataframe_type argument"""
+            )
+
+        feature_schema_data = dataset_dict["init_args"]["feature_schema"]
+        features_list = []
+        for feature_data in feature_schema_data:
+            f_type = feature_data["feature_type"]
+            f_hint = feature_data["feature_hint"]
+            feature_data["feature_type"] = FeatureType[f_type] if f_type else None
+            feature_data["feature_hint"] = FeatureHint[f_hint] if f_hint else None
+            features_list.append(FeatureInfo(**feature_data))
+        dataset_dict["init_args"]["feature_schema"] = FeatureSchema(features_list)
+
+        for df_name in ["interactions", "query_features", "item_features"]:
+            df_type = dataset_dict["init_args"][df_name]
+            if df_type:
+                df_type = dataframe_type or df_type
+                load_path = base_path / f"{df_name}.parquet"
+                dataset_dict["init_args"][df_name] = cls.read_parquet(
+                    load_path, df_type, spark_session=spark_session
+                )
+        dataset = cls(**dataset_dict["init_args"])
+        return dataset
 
     if PYSPARK_AVAILABLE:
 
