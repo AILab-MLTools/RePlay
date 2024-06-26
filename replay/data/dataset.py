@@ -243,6 +243,7 @@ class Dataset:
         :param path: The parquet file path.
         :param mode: Dataframe type. Can be spark|pandas|polars.
         :param spark_session: SparkSession to use (needed if argument mode = spark).
+        :returns: The dataframe read from the file.
         """
         if mode == "spark":
             path = str(path)
@@ -320,6 +321,7 @@ class Dataset:
             Can be spark|pandas|polars|None.
             If not provided automatically sets to the one used when the Dataset was saved.
         :param spark_session: SparkSession to use (needed if dataframe_type = spark).
+        :returns: Loaded Dataset.
         """
         base_path = Path(path).with_suffix(".replay").resolve()
         with open(base_path / "init_args.json", "r") as file:
