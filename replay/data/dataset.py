@@ -207,10 +207,8 @@ class Dataset:
             return "pandas"
         if self.is_polars:
             return "polars"
-        raise ValueError(
-            "No known dataframe types are provided"
-        )
-
+        raise ValueError("No known dataframe types are provided")
+    
     def to_parquet(self, df: DataFrameLike, path: Path) -> None:
         """
         Save the content of the dataframe in parquet format to the provided path.
@@ -252,9 +250,8 @@ class Dataset:
             return pd_read_parquet(path)
         if mode == "polars":
             return pl_read_parquet(path)
-        raise TypeError(
-            f"read_parquet() can only be used to read polars|pandas|spark dataframes, not {mode}"
-        )
+        msg = f"read_parquet() can only be used to read polars|pandas|spark dataframes, not {mode}"
+        raise TypeError(msg)
 
     def save(self, path: str) -> None:
         """
@@ -269,12 +266,8 @@ class Dataset:
         dataset_dict["init_args"] = {
             "feature_schema": [],
             "interactions": interactions_type,
-            "item_features": (
-                interactions_type if self.item_features is not None else None
-            ),
-            "query_features": (
-                interactions_type if self.query_features is not None else None
-            ),
+            "item_features": (interactions_type if self.item_features is not None else None),
+            "query_features": (interactions_type if self.query_features is not None else None),
             "check_consistency": False,
             "categorical_encoded": self._categorical_encoded,
         }
@@ -284,9 +277,7 @@ class Dataset:
                 {
                     "column": feature.column,
                     "feature_type": feature.feature_type.name,
-                    "feature_hint": (
-                        feature.feature_hint.name if feature.feature_hint else None
-                    ),
+                    "feature_hint": (feature.feature_hint.name if feature.feature_hint else None),
                 }
             )
 
@@ -310,7 +301,7 @@ class Dataset:
     def load(
         cls,
         path: str,
-        dataframe_type: str = None,
+        dataframe_type: Optional[str] = None,
         spark_session: Optional[SparkSession] = None,
     ) -> Dataset:
         """
@@ -328,9 +319,8 @@ class Dataset:
             dataset_dict = json.loads(file.read())
 
         if dataframe_type not in ["pandas", "spark", "polars", None]:
-            raise ValueError(
-                f"Argument dataframe_type can be spark|pandas|polars|None, not {dataframe_type}"
-            )
+            msg = f"Argument dataframe_type can be spark|pandas|polars|None, not {dataframe_type}"
+            raise ValueError(msg)
 
         if dataset_dict["init_args"]["interactions"] == "spark" and not spark_session:
             raise ValueError(
@@ -354,9 +344,7 @@ class Dataset:
             if df_type:
                 df_type = dataframe_type or df_type
                 load_path = base_path / f"{df_name}.parquet"
-                dataset_dict["init_args"][df_name] = cls.read_parquet(
-                    load_path, df_type, spark_session=spark_session
-                )
+                dataset_dict["init_args"][df_name] = cls.read_parquet(load_path, df_type, spark_session=spark_session)
         dataset = cls(**dataset_dict["init_args"])
         return dataset
 
