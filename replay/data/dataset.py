@@ -3,22 +3,19 @@
 """
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
-
-from polars import read_parquet as pl_read_parquet
 from pandas import read_parquet as pd_read_parquet
-
+from polars import read_parquet as pl_read_parquet
 from pyspark.sql import SparkSession
+from replay.utils import (PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame,
+                          PolarsDataFrame, SparkDataFrame)
 
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
-
-from .schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
-
-from pathlib import Path
-
-import json
+from .schema import (FeatureHint, FeatureInfo, FeatureSchema, FeatureSource,
+                     FeatureType)
 
 if PYSPARK_AVAILABLE:
     import pyspark.sql.functions as sf
@@ -207,8 +204,9 @@ class Dataset:
             return "pandas"
         if self.is_polars:
             return "polars"
-        raise ValueError("No known dataframe types are provided")
-    
+        msg = "No known dataframe types are provided"
+        raise ValueError(msg)
+
     def to_parquet(self, df: DataFrameLike, path: Path) -> None:
         """
         Save the content of the dataframe in parquet format to the provided path.
@@ -224,12 +222,11 @@ class Dataset:
         elif self.is_polars:
             df.write_parquet(path)
         else:
-            raise TypeError(
-                """
-                to_parquet() can only be used to save polars|pandas|spark dataframes;
-                No known dataframe types are provided
-                """
-            )
+            msg = """
+            to_parquet() can only be used to save polars|pandas|spark dataframes;
+            No known dataframe types are provided
+            """
+            raise TypeError(msg)
 
     @staticmethod
     def read_parquet(
@@ -323,11 +320,11 @@ class Dataset:
             raise ValueError(msg)
 
         if dataset_dict["init_args"]["interactions"] == "spark" and not spark_session:
-            raise ValueError(
-                """
-                The Dataset you're trying to load stores a pyspark.DataFrame;
-                Please provide SparkSession or change dataframe_type argument"""
-            )
+            msg = """
+            The Dataset you're trying to load stores a pyspark.DataFrame;
+            Please provide SparkSession or change dataframe_type argument
+            """
+            raise ValueError(msg)
 
         feature_schema_data = dataset_dict["init_args"]["feature_schema"]
         features_list = []
