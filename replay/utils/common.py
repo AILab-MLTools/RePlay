@@ -12,6 +12,7 @@ from replay.splitters import (
     TimeSplitter,
     TwoStageSplitter,
 )
+from replay.data.dataset import Dataset
 from replay.utils import TORCH_AVAILABLE
 
 SavableObject = Union[
@@ -23,6 +24,7 @@ SavableObject = Union[
     RatioSplitter,
     TimeSplitter,
     TwoStageSplitter,
+    Dataset
 ]
 
 if TORCH_AVAILABLE:

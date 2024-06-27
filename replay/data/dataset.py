@@ -10,7 +10,6 @@ from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
 import numpy as np
 from pandas import read_parquet as pd_read_parquet
 from polars import read_parquet as pl_read_parquet
-from pyspark.sql import SparkSession
 
 from replay.utils import (
     PYSPARK_AVAILABLE,
@@ -19,6 +18,7 @@ from replay.utils import (
     PolarsDataFrame,
     SparkDataFrame,
 )
+from replay.utils.session_handler import get_spark_session
 
 from .schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
 
@@ -234,19 +234,17 @@ class Dataset:
             raise TypeError(msg)
 
     @staticmethod
-    def read_parquet(
-        path: Path, mode: str, spark_session: Optional[SparkSession] = None
-    ) -> Union[SparkDataFrame, PandasDataFrame, PolarsDataFrame]:
+    def read_parquet(path: Path, mode: str) -> Union[SparkDataFrame, PandasDataFrame, PolarsDataFrame]:
         """
         Read the parquet file as dataframe.
 
         :param path: The parquet file path.
         :param mode: Dataframe type. Can be spark|pandas|polars.
-        :param spark_session: SparkSession to use (needed if argument mode = spark).
         :returns: The dataframe read from the file.
         """
         if mode == "spark":
             path = str(path)
+            spark_session = get_spark_session()
             return spark_session.read.parquet(path)
         if mode == "pandas":
             return pd_read_parquet(path)
@@ -304,7 +302,6 @@ class Dataset:
         cls,
         path: str,
         dataframe_type: Optional[str] = None,
-        spark_session: Optional[SparkSession] = None,
     ) -> Dataset:
         """
         Load the Dataset from the provided path.
@@ -313,7 +310,6 @@ class Dataset:
         :dataframe_type: Dataframe type to use to store internal data.
             Can be spark|pandas|polars|None.
             If not provided automatically sets to the one used when the Dataset was saved.
-        :param spark_session: SparkSession to use (needed if dataframe_type = spark).
         :returns: Loaded Dataset.
         """
         base_path = Path(path).with_suffix(".replay").resolve()
@@ -322,13 +318,6 @@ class Dataset:
 
         if dataframe_type not in ["pandas", "spark", "polars", None]:
             msg = f"Argument dataframe_type can be spark|pandas|polars|None, not {dataframe_type}"
-            raise ValueError(msg)
-
-        if dataset_dict["init_args"]["interactions"] == "spark" and not spark_session:
-            msg = """
-            The Dataset you're trying to load stores a pyspark.DataFrame;
-            Please provide SparkSession or change dataframe_type argument
-            """
             raise ValueError(msg)
 
         feature_schema_data = dataset_dict["init_args"]["feature_schema"]
@@ -346,7 +335,7 @@ class Dataset:
             if df_type:
                 df_type = dataframe_type or df_type
                 load_path = base_path / f"{df_name}.parquet"
-                dataset_dict["init_args"][df_name] = cls.read_parquet(load_path, df_type, spark_session=spark_session)
+                dataset_dict["init_args"][df_name] = cls.read_parquet(load_path, df_type)
         dataset = cls(**dataset_dict["init_args"])
         return dataset
 
