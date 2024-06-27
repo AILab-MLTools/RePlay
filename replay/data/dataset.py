@@ -433,23 +433,18 @@ class Dataset:
             categorical_encoded=self._categorical_encoded,
         )
 
-    def cardinality_callback(self, column: str) -> int:
-        feature = self.__cardinality_feature
-        if feature.feature_hint in [FeatureHint.ITEM_ID, FeatureHint.QUERY_ID]:
-            return nunique(self._ids_feature_map[feature.feature_hint], column)
-        assert feature.feature_source
-        return nunique(self._feature_source_map[feature.feature_source], column)
-
     def _get_cardinality(self, feature: FeatureInfo) -> Callable:
-        self.__cardinality_feature = feature
-        return self.cardinality_callback
+        def callback(column: str) -> int:
+            if feature.feature_hint in [FeatureHint.ITEM_ID, FeatureHint.QUERY_ID]:
+                return nunique(self._ids_feature_map[feature.feature_hint], column)
+            assert feature.feature_source
+            return nunique(self._feature_source_map[feature.feature_source], column)
+        return callback
 
     def _set_cardinality(self, features_list: Sequence[FeatureInfo]) -> None:
         for feature in features_list:
             if feature.feature_type == FeatureType.CATEGORICAL:
                 feature._set_cardinality_callback(self._get_cardinality(feature))
-        if hasattr(self, "__cardinality_feature"):
-            delattr(self, "__cardinality_feature")
 
     def _fill_feature_schema(self, feature_schema: FeatureSchema) -> FeatureSchema:
         features_list = self._fill_unlabeled_features_sources(feature_schema=feature_schema)

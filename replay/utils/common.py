@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Union
 
+from replay.data.dataset import Dataset
 from replay.splitters import (
     ColdUserRandomSplitter,
     KFolds,
@@ -12,7 +13,6 @@ from replay.splitters import (
     TimeSplitter,
     TwoStageSplitter,
 )
-from replay.data.dataset import Dataset
 from replay.utils import TORCH_AVAILABLE
 
 SavableObject = Union[
@@ -24,7 +24,7 @@ SavableObject = Union[
     RatioSplitter,
     TimeSplitter,
     TwoStageSplitter,
-    Dataset
+    Dataset,
 ]
 
 if TORCH_AVAILABLE:

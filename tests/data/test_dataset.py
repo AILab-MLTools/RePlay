@@ -1,9 +1,13 @@
+import os
+import shutil
+
 import pandas as pd
 import polars as pl
 import pytest
-
 from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
 from replay.utils import PYSPARK_AVAILABLE
+from replay.utils.common import load_from_replay, save_to_replay
+from tests.utils import assert_dataframelikes_equal
 
 if PYSPARK_AVAILABLE:
     from pyspark.sql.functions import asc
@@ -204,6 +208,15 @@ def compare_storage_level(resulting_storage_level, expected_storage_level):
     assert resulting_storage_level.useOffHeap == expected_storage_level.useOffHeap
     assert resulting_storage_level.deserialized == expected_storage_level.deserialized
     assert resulting_storage_level.replication == expected_storage_level.replication
+
+
+def compare_datasets(dataset, other_dataset, same_type=True):
+    for attr_name, attr in dataset.__dict__.items():
+        if attr.__class__.__module__ == "__builtin__":
+            assert attr == other_dataset.__dict__[attr_name]
+    assert_dataframelikes_equal([dataset.interactions, other_dataset.interactions], same_type=same_type)
+    assert_dataframelikes_equal([dataset.query_features, other_dataset.query_features], same_type=same_type)
+    assert_dataframelikes_equal([dataset.item_features, other_dataset.item_features], same_type=same_type)
 
 
 @pytest.mark.spark
@@ -1177,3 +1190,91 @@ def test_pandas_dataframe_in_storage_levels_of_spark(full_pandas_dataset):
     assert dataset.persist() is None
     assert dataset.unpersist() is None
     assert dataset.cache() is None
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_save_load(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    path = "test_save_load_dataset"
+    dataset.save(path)
+    dataset_loaded = Dataset.load(path)
+    compare_datasets(dataset, dataset_loaded, same_type=True)
+    try:
+        os.remove(path)
+    except IsADirectoryError:
+        shutil.rmtree(path)
+
+
+@pytest.mark.parametrize(
+    "data_dict, data_dict_to_overwrite",
+    [
+        (
+            pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+            pytest.param("full_spark_dataset_cutted_interactions", marks=pytest.mark.spark),
+        ),
+        (
+            pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+            pytest.param("full_pandas_dataset_cutted_interactions", marks=pytest.mark.core),
+        ),
+        (
+            pytest.param("full_polars_dataset", marks=pytest.mark.core),
+            pytest.param("full_polars_dataset_cutted_interactions", marks=pytest.mark.core),
+        ),
+    ],
+)
+def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
+    data_dict_to_overwrite = request.getfixturevalue(data_dict_to_overwrite)
+    dataset_to_overwrite = create_dataset(data_dict_to_overwrite)
+    path = "test_save_load_overwrite_dataset"
+    dataset_to_overwrite.save(path)
+    del data_dict_to_overwrite, dataset_to_overwrite
+    data_dict = request.getfixturevalue(data_dict)
+    dataset = create_dataset(data_dict)
+    dataset.save(path)
+    dataset_loaded = Dataset.load(path)
+    compare_datasets(dataset, dataset_loaded, same_type=True)
+    try:
+        os.remove(path)
+    except IsADirectoryError:
+        shutil.rmtree(path)
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+@pytest.mark.parametrize("_type", ["pandas", "spark", "polars"])
+def test_save_load_changed_dataframe_type(data_dict, _type, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    path = "test_save_load_overwrite_dataset"
+    dataset.save(path)
+    dataset_loaded = Dataset.load(path, dataframe_type=_type)
+    assert dataset_loaded.__dict__[f"is_{_type}"] is True
+    compare_datasets(dataset, dataset_loaded, same_type=False)
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_save_replay_load_replay_on_dataset(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    path = "test_save_load_overwrite_dataset"
+    save_to_replay(dataset, path)
+    dataset_loaded = load_from_replay(path)
+    compare_datasets(dataset, dataset_loaded)
