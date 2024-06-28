@@ -1256,10 +1256,10 @@ def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
         pytest.param("full_spark_dataset", "spark", marks=pytest.mark.spark),
         pytest.param("full_spark_dataset", "polars", marks=pytest.mark.spark),
         pytest.param("full_pandas_dataset", "pandas", marks=pytest.mark.core),
-        pytest.param("full_pandas_dataset", "spark", marks=pytest.mark.core),
+        pytest.param("full_pandas_dataset", "spark", marks=pytest.mark.spark),
         pytest.param("full_pandas_dataset", "polars", marks=pytest.mark.core),
         pytest.param("full_polars_dataset", "pandas", marks=pytest.mark.core),
-        pytest.param("full_polars_dataset", "spark", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", "spark", marks=pytest.mark.spark),
         pytest.param("full_polars_dataset", "polars", marks=pytest.mark.core),
     ],
 )
