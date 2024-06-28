@@ -3,11 +3,14 @@
 """
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
+from polars import from_pandas as pl_from_pandas
 
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
+
+from replay.utils.session_handler import get_spark_session
 
 from .schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
 
@@ -482,6 +485,30 @@ class Dataset:
                     feature.cardinality,
                 )
 
+    def df_to_pandas(self) -> None:
+        """
+        Convert internally stored dataframes to pandas.DataFrame.
+        """
+        self.interactions = convert2pandas(self.interactions)
+        self.query_features = convert2pandas(self.query_features)
+        self.item_features = convert2pandas(self.item_features)
+        self.is_pandas = True
+        self.is_spark = False
+        self.is_polars = False
+
+    def df_to_spark(self):
+        """
+        Convert internally stored dataframes to pyspark.sql.DataFrame.
+        """
+        pass
+
+    def df_to_polars(self):
+        """
+        Convert internally stored dataframes to polars.DataFrame.
+        """
+        pass
+
+
 
 def nunique(data: DataFrameLike, column: str) -> int:
     """
@@ -530,20 +557,30 @@ def check_dataframes_types_equal(dataframe: DataFrameLike, other: DataFrameLike)
         return True
     return False
 
-def df_to_pandas() -> None:
-    """
-    Convert internally stored dataframes to pandas.DataFrame.
-    """
-    pass
 
-def df_to_spark():
-    """
-    Convert internally stored dataframes to pyspark.sql.DataFrame.
-    """
-    pass
+def convert2pandas(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> PandasDataFrame:
+    if isinstance(df, PandasDataFrame):
+        return df
+    if isinstance(df, PolarsDataFrame):
+        return df.to_pandas()
+    if isinstance(df, SparkDataFrame):
+        return df.toPandas()
+    
 
-def df_to_polars():
-    """
-    Convert internally stored dataframes to polars.DataFrame.
-    """
-    pass
+def convert2polars(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> PolarsDataFrame:
+    if isinstance(df, PandasDataFrame):
+        return pl_from_pandas(df)
+    if isinstance(df, PolarsDataFrame):
+        return df
+    if isinstance(df, SparkDataFrame):
+        return pl_from_pandas(df.toPandas())
+
+ 
+def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
+    spark = get_spark_session()
+    if isinstance(df, PandasDataFrame):
+        return spark.createDataFrame(df)
+    if isinstance(df, PolarsDataFrame):
+        return spark.createDataFrame(df.to_pandas())
+    if isinstance(df, SparkDataFrame):
+        return df
