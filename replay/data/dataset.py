@@ -221,6 +221,7 @@ class Dataset:
         """
         if self.is_spark:
             path = str(path)
+            df = df.withColumn("idx", sf.monotonically_increasing_id())
             df.write.mode("overwrite").parquet(path)
         elif self.is_pandas:
             df.to_parquet(path)
@@ -245,11 +246,20 @@ class Dataset:
         if mode == "spark":
             path = str(path)
             spark_session = get_spark_session()
-            return spark_session.read.parquet(path)
+            df = spark_session.read.parquet(path)
+            if "idx" in df.columns:
+                df = df.orderBy("idx").drop("idx")
+            return df
         if mode == "pandas":
-            return pd_read_parquet(path)
+            df = pd_read_parquet(path)
+            if "idx" in df.columns:
+                df = df.set_index("idx").reset_index(drop=True)
+            return df
         if mode == "polars":
-            return pl_read_parquet(path)
+            df = pl_read_parquet(path, use_pyarrow=True)
+            if "idx" in df.columns:
+                df = df.sort("idx").drop("idx")
+            return df
         msg = f"_read_parquet() can only be used to read polars|pandas|spark dataframes, not {mode}"
         raise TypeError(msg)
 
@@ -294,8 +304,9 @@ class Dataset:
         }
 
         for df_name, df in df_data.items():
-            df_path = base_path / f"{df_name}.parquet"
-            self._to_parquet(df, df_path)
+            if df is not None:
+                df_path = base_path / f"{df_name}.parquet"
+                self._to_parquet(df, df_path)
 
     @classmethod
     def load(

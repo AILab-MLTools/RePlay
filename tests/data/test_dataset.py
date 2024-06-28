@@ -1,4 +1,3 @@
-import os
 import shutil
 
 import pandas as pd
@@ -215,9 +214,12 @@ def compare_datasets(dataset, other_dataset, same_type=True):
     for attr_name, attr in dataset.__dict__.items():
         if attr.__class__.__module__ == "__builtin__":
             assert attr == other_dataset.__dict__[attr_name]
-    assert_dataframelikes_equal([dataset.interactions, other_dataset.interactions], same_type=same_type)
-    assert_dataframelikes_equal([dataset.query_features, other_dataset.query_features], same_type=same_type)
-    assert_dataframelikes_equal([dataset.item_features, other_dataset.item_features], same_type=same_type)
+    if dataset.interactions is not None or other_dataset.interactions is not None:
+        assert_dataframelikes_equal([dataset.interactions, other_dataset.interactions], same_type=same_type)
+    if dataset.query_features is not None or other_dataset.query_features is not None:
+        assert_dataframelikes_equal([dataset.query_features, other_dataset.query_features], same_type=same_type)
+    if dataset.item_features is not None or other_dataset.item_features is not None:
+        assert_dataframelikes_equal([dataset.item_features, other_dataset.item_features], same_type=same_type)
 
 
 @pytest.mark.spark
@@ -1199,19 +1201,19 @@ def test_pandas_dataframe_in_storage_levels_of_spark(full_pandas_dataset):
         pytest.param("full_spark_dataset", marks=pytest.mark.spark),
         pytest.param("full_pandas_dataset", marks=pytest.mark.core),
         pytest.param("full_polars_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("interactions_rating_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_polars_dataset", marks=pytest.mark.core),
     ],
 )
 def test_save_load(data_dict, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    path = "test_save_load_dataset"
+    path = "test_save_load_dataset" + data_dict
     dataset.save(path)
     dataset_loaded = Dataset.load(path)
     compare_datasets(dataset, dataset_loaded, same_type=True)
     path = path + ".replay"
-    try:
-        os.remove(path)
-    except IsADirectoryError:
-        shutil.rmtree(path)
+    shutil.rmtree(path)
 
 
 @pytest.mark.parametrize(
@@ -1223,9 +1225,9 @@ def test_save_load(data_dict, request):
     ],
 )
 def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
+    path = "test_save_load_overwrite_dataset" + data_dict + data_dict_to_overwrite
     data_dict_to_overwrite = request.getfixturevalue(data_dict_to_overwrite)
     dataset_to_overwrite = create_dataset(data_dict_to_overwrite, check_consistency=False)
-    path = "test_save_load_overwrite_dataset"
     dataset_to_overwrite.save(path)
     del data_dict_to_overwrite, dataset_to_overwrite
     data_dict = request.getfixturevalue(data_dict)
@@ -1234,10 +1236,7 @@ def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
     dataset_loaded = Dataset.load(path)
     compare_datasets(dataset, dataset_loaded, same_type=True)
     path = path + ".replay"
-    try:
-        os.remove(path)
-    except IsADirectoryError:
-        shutil.rmtree(path)
+    shutil.rmtree(path)
 
 
 @pytest.mark.parametrize(
@@ -1256,16 +1255,13 @@ def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
 )
 def test_save_load_changed_dataframe_type(data_dict, _type, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    path = "test_save_load_overwrite_dataset"
+    path = "test_save_load_overwrite_dataset" + data_dict + _type
     dataset.save(path)
     dataset_loaded = Dataset.load(path, dataframe_type=_type)
     assert dataset_loaded.__dict__[f"is_{_type}"] is True
     compare_datasets(dataset, dataset_loaded, same_type=False)
     path = path + ".replay"
-    try:
-        os.remove(path)
-    except IsADirectoryError:
-        shutil.rmtree(path)
+    shutil.rmtree(path)
 
 
 @pytest.mark.parametrize(
@@ -1278,12 +1274,9 @@ def test_save_load_changed_dataframe_type(data_dict, _type, request):
 )
 def test_save_replay_load_replay_on_dataset(data_dict, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    path = "test_save_load_overwrite_dataset"
+    path = "test_save_load_overwrite_dataset" + data_dict
     save_to_replay(dataset, path)
     dataset_loaded = load_from_replay(path)
     compare_datasets(dataset, dataset_loaded)
     path = path + ".replay"
-    try:
-        os.remove(path)
-    except IsADirectoryError:
-        shutil.rmtree(path)
+    shutil.rmtree(path)
