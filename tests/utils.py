@@ -5,9 +5,8 @@ from typing import Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 from numpy.testing import assert_allclose
-
 from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureType, get_schema
-from replay.utils import PYSPARK_AVAILABLE, SparkDataFrame, PandasDataFrame, PolarsDataFrame, DataFrameLike
+from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
 from replay.utils.spark_utils import convert2spark
 
 if PYSPARK_AVAILABLE:

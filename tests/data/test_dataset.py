@@ -7,6 +7,7 @@ import pytest
 from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
 from replay.utils import PYSPARK_AVAILABLE
 from replay.utils.common import load_from_replay, save_to_replay
+
 from tests.utils import assert_dataframelikes_equal
 
 if PYSPARK_AVAILABLE:
@@ -1206,6 +1207,7 @@ def test_save_load(data_dict, request):
     dataset.save(path)
     dataset_loaded = Dataset.load(path)
     compare_datasets(dataset, dataset_loaded, same_type=True)
+    path = path + ".replay"
     try:
         os.remove(path)
     except IsADirectoryError:
@@ -1240,6 +1242,7 @@ def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
     dataset.save(path)
     dataset_loaded = Dataset.load(path)
     compare_datasets(dataset, dataset_loaded, same_type=True)
+    path = path + ".replay"
     try:
         os.remove(path)
     except IsADirectoryError:
@@ -1262,6 +1265,11 @@ def test_save_load_changed_dataframe_type(data_dict, _type, request):
     dataset_loaded = Dataset.load(path, dataframe_type=_type)
     assert dataset_loaded.__dict__[f"is_{_type}"] is True
     compare_datasets(dataset, dataset_loaded, same_type=False)
+    path = path + ".replay"
+    try:
+        os.remove(path)
+    except IsADirectoryError:
+        shutil.rmtree(path)
 
 
 @pytest.mark.parametrize(
@@ -1278,3 +1286,8 @@ def test_save_replay_load_replay_on_dataset(data_dict, request):
     save_to_replay(dataset, path)
     dataset_loaded = load_from_replay(path)
     compare_datasets(dataset, dataset_loaded)
+    path = path + ".replay"
+    try:
+        os.remove(path)
+    except IsADirectoryError:
+        shutil.rmtree(path)

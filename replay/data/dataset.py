@@ -439,6 +439,7 @@ class Dataset:
                 return nunique(self._ids_feature_map[feature.feature_hint], column)
             assert feature.feature_source
             return nunique(self._feature_source_map[feature.feature_source], column)
+
         return callback
 
     def _set_cardinality(self, features_list: Sequence[FeatureInfo]) -> None:
