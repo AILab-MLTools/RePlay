@@ -500,13 +500,23 @@ class Dataset:
         """
         Convert internally stored dataframes to pyspark.sql.DataFrame.
         """
-        pass
+        self.interactions = convert2spark(self.interactions)
+        self.query_features = convert2spark(self.query_features)
+        self.item_features = convert2spark(self.item_features)
+        self.is_pandas = False
+        self.is_spark = True
+        self.is_polars = False
 
     def df_to_polars(self):
         """
         Convert internally stored dataframes to polars.DataFrame.
         """
-        pass
+        self.interactions = convert2polars(self.interactions)
+        self.query_features = convert2polars(self.query_features)
+        self.item_features = convert2polars(self.item_features)
+        self.is_pandas = False
+        self.is_spark = False
+        self.is_polars = True
 
 
 
