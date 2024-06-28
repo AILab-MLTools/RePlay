@@ -1224,7 +1224,7 @@ def test_save_load(data_dict, request):
 )
 def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
     data_dict_to_overwrite = request.getfixturevalue(data_dict_to_overwrite)
-    dataset_to_overwrite = create_dataset(data_dict_to_overwrite)
+    dataset_to_overwrite = create_dataset(data_dict_to_overwrite, check_consistency=False)
     path = "test_save_load_overwrite_dataset"
     dataset_to_overwrite.save(path)
     del data_dict_to_overwrite, dataset_to_overwrite

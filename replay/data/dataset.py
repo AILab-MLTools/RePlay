@@ -199,7 +199,7 @@ class Dataset:
         """
         return self._feature_schema
 
-    def get_df_type(self) -> str:
+    def _get_df_type(self) -> str:
         """
         :returns: Stored dataframe type.
         """
@@ -212,7 +212,7 @@ class Dataset:
         msg = "No known dataframe types are provided"
         raise ValueError(msg)
 
-    def to_parquet(self, df: DataFrameLike, path: Path) -> None:
+    def _to_parquet(self, df: DataFrameLike, path: Path) -> None:
         """
         Save the content of the dataframe in parquet format to the provided path.
 
@@ -228,13 +228,13 @@ class Dataset:
             df.write_parquet(path)
         else:
             msg = """
-            to_parquet() can only be used to save polars|pandas|spark dataframes;
+            _to_parquet() can only be used to save polars|pandas|spark dataframes;
             No known dataframe types are provided
             """
             raise TypeError(msg)
 
     @staticmethod
-    def read_parquet(path: Path, mode: str) -> Union[SparkDataFrame, PandasDataFrame, PolarsDataFrame]:
+    def _read_parquet(path: Path, mode: str) -> Union[SparkDataFrame, PandasDataFrame, PolarsDataFrame]:
         """
         Read the parquet file as dataframe.
 
@@ -250,7 +250,7 @@ class Dataset:
             return pd_read_parquet(path)
         if mode == "polars":
             return pl_read_parquet(path)
-        msg = f"read_parquet() can only be used to read polars|pandas|spark dataframes, not {mode}"
+        msg = f"_read_parquet() can only be used to read polars|pandas|spark dataframes, not {mode}"
         raise TypeError(msg)
 
     def save(self, path: str) -> None:
@@ -262,7 +262,7 @@ class Dataset:
         dataset_dict = {}
         dataset_dict["_class_name"] = self.__class__.__name__
 
-        interactions_type = self.get_df_type()
+        interactions_type = self._get_df_type()
         dataset_dict["init_args"] = {
             "feature_schema": [],
             "interactions": interactions_type,
@@ -295,7 +295,7 @@ class Dataset:
 
         for df_name, df in df_data.items():
             df_path = base_path / f"{df_name}.parquet"
-            self.to_parquet(df, df_path)
+            self._to_parquet(df, df_path)
 
     @classmethod
     def load(
@@ -335,7 +335,7 @@ class Dataset:
             if df_type:
                 df_type = dataframe_type or df_type
                 load_path = base_path / f"{df_name}.parquet"
-                dataset_dict["init_args"][df_name] = cls.read_parquet(load_path, df_type)
+                dataset_dict["init_args"][df_name] = cls._read_parquet(load_path, df_type)
         dataset = cls(**dataset_dict["init_args"])
         return dataset
 
