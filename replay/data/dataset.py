@@ -529,3 +529,21 @@ def check_dataframes_types_equal(dataframe: DataFrameLike, other: DataFrameLike)
     if isinstance(dataframe, PolarsDataFrame) and isinstance(other, PolarsDataFrame):
         return True
     return False
+
+def df_to_pandas() -> None:
+    """
+    Convert internally stored dataframes to pandas.DataFrame.
+    """
+    pass
+
+def df_to_spark():
+    """
+    Convert internally stored dataframes to pyspark.sql.DataFrame.
+    """
+    pass
+
+def df_to_polars():
+    """
+    Convert internally stored dataframes to polars.DataFrame.
+    """
+    pass
