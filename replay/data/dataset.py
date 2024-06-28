@@ -489,9 +489,9 @@ class Dataset:
         """
         Convert internally stored dataframes to pandas.DataFrame.
         """
-        self.interactions = convert2pandas(self.interactions)
-        self.query_features = convert2pandas(self.query_features)
-        self.item_features = convert2pandas(self.item_features)
+        self._interactions = convert2pandas(self._interactions)
+        self._query_features = convert2pandas(self._query_features)
+        self._item_features = convert2pandas(self.item_features)
         self.is_pandas = True
         self.is_spark = False
         self.is_polars = False
@@ -500,9 +500,9 @@ class Dataset:
         """
         Convert internally stored dataframes to pyspark.sql.DataFrame.
         """
-        self.interactions = convert2spark(self.interactions)
-        self.query_features = convert2spark(self.query_features)
-        self.item_features = convert2spark(self.item_features)
+        self._interactions = convert2spark(self._interactions)
+        self._query_features = convert2spark(self._query_features)
+        self._item_features = convert2spark(self._item_features)
         self.is_pandas = False
         self.is_spark = True
         self.is_polars = False
@@ -511,9 +511,9 @@ class Dataset:
         """
         Convert internally stored dataframes to polars.DataFrame.
         """
-        self.interactions = convert2polars(self.interactions)
-        self.query_features = convert2polars(self.query_features)
-        self.item_features = convert2polars(self.item_features)
+        self._interactions = convert2polars(self._interactions)
+        self._query_features = convert2polars(self._query_features)
+        self._item_features = convert2polars(self._item_features)
         self.is_pandas = False
         self.is_spark = False
         self.is_polars = True
