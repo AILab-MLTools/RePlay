@@ -1263,14 +1263,6 @@ def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
         pytest.param("full_polars_dataset", "polars", marks=pytest.mark.core),
     ],
 )
-@pytest.mark.parametrize(
-    "_type",
-    [
-        pytest.param("pandas", marks=pytest.mark.core),
-        pytest.param("spark", marks=pytest.mark.spark),
-        pytest.param("polars", marks=pytest.mark.core),
-    ],
-)
 def test_save_load_changed_dataframe_type(data_dict, _type, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
     path = "test_save_load_overwrite_dataset"
