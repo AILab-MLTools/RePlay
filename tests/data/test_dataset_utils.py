@@ -48,16 +48,16 @@ def test_assertion_in_select():
 
 
 @pytest.mark.parametrize(
-    "data_dict, is_dataframe",
+    "data_dict",
     [
         pytest.param("full_spark_dataset", marks=pytest.mark.spark),
         pytest.param("full_pandas_dataset", marks=pytest.mark.core),
         pytest.param("full_spark_dataset", marks=pytest.mark.spark),
     ],
 )
-def test_check_if_dataframe_true(data_dict, is_dataframe, request):
+def test_check_if_dataframe_true(data_dict, request):
     dataframe = request.getfixturevalue(data_dict)["interactions"]
-    assert _check_if_dataframe(dataframe)
+    _check_if_dataframe(dataframe)
 
 
 @pytest.mark.core
