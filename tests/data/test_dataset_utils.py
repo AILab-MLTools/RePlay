@@ -1,6 +1,6 @@
 import pytest
 
-from replay.data.dataset import nunique, select
+from replay.data.dataset import _check_if_dataframe, nunique, select
 from replay.utils import SparkDataFrame
 
 
@@ -45,3 +45,23 @@ def test_assertion_in_select():
         select("string", ["user_id"])
 
     assert str(exc.value) == "Unknown data frame type"
+
+
+@pytest.mark.parametrize(
+    "data_dict, is_dataframe",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+    ],
+)
+def test_check_if_dataframe_true(data_dict, is_dataframe, request):
+    dataframe = request.getfixturevalue(data_dict)["interactions"]
+    assert _check_if_dataframe(dataframe)
+
+
+@pytest.mark.core
+def test_check_if_dataframe_false():
+    var = "Definitely not a dataframe"
+    with pytest.raises(ValueError):
+        _check_if_dataframe(var)

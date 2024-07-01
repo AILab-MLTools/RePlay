@@ -3,7 +3,7 @@ import polars as pl
 import pytest
 
 from replay.data import Dataset, FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
-from replay.utils import PYSPARK_AVAILABLE
+from replay.utils import PYSPARK_AVAILABLE, PandasDataFrame, PolarsDataFrame, SparkDataFrame
 
 if PYSPARK_AVAILABLE:
     from pyspark.sql.functions import asc
@@ -1177,3 +1177,75 @@ def test_pandas_dataframe_in_storage_levels_of_spark(full_pandas_dataset):
     assert dataset.persist() is None
     assert dataset.unpersist() is None
     assert dataset.cache() is None
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("interactions_rating_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_df_to_pandas(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    dataset.df_to_pandas()
+    assert dataset.is_pandas
+    assert not dataset.is_spark
+    assert not dataset.is_polars
+    assert isinstance(dataset.interactions, PandasDataFrame)
+    if "users" in data_dict:
+        assert isinstance(dataset.query_features, PandasDataFrame)
+    if "items" in data_dict:
+        assert isinstance(dataset.item_features, PandasDataFrame)
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("interactions_rating_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_df_to_spark(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    dataset.df_to_spark()
+    assert not dataset.is_pandas
+    assert dataset.is_spark
+    assert not dataset.is_polars
+    assert isinstance(dataset.interactions, SparkDataFrame)
+    if "users" in data_dict:
+        assert isinstance(dataset.query_features, SparkDataFrame)
+    if "items" in data_dict:
+        assert isinstance(dataset.item_features, SparkDataFrame)
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("interactions_rating_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_df_to_polars(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    dataset.df_to_polars()
+    assert not dataset.is_pandas
+    assert not dataset.is_spark
+    assert dataset.is_polars
+    assert isinstance(dataset.interactions, PolarsDataFrame)
+    if "users" in data_dict:
+        assert isinstance(dataset.query_features, PolarsDataFrame)
+    if "items" in data_dict:
+        assert isinstance(dataset.item_features, PolarsDataFrame)

@@ -3,7 +3,7 @@
 """
 from __future__ import annotations
 
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
 
 import numpy as np
 from polars import from_pandas as pl_from_pandas
@@ -492,8 +492,10 @@ class Dataset:
         Convert internally stored dataframes to pandas.DataFrame.
         """
         self._interactions = convert2pandas(self._interactions)
-        self._query_features = convert2pandas(self._query_features)
-        self._item_features = convert2pandas(self.item_features)
+        if self._query_features is not None:
+            self._query_features = convert2pandas(self._query_features)
+        if self._item_features is not None:
+            self._item_features = convert2pandas(self.item_features)
         self._assign_df_type()
 
     def df_to_spark(self):
@@ -501,8 +503,10 @@ class Dataset:
         Convert internally stored dataframes to pyspark.sql.DataFrame.
         """
         self._interactions = convert2spark(self._interactions)
-        self._query_features = convert2spark(self._query_features)
-        self._item_features = convert2spark(self._item_features)
+        if self._query_features is not None:
+            self._query_features = convert2spark(self._query_features)
+        if self._item_features is not None:
+            self._item_features = convert2spark(self._item_features)
         self._assign_df_type()
 
     def df_to_polars(self):
@@ -510,8 +514,10 @@ class Dataset:
         Convert internally stored dataframes to polars.DataFrame.
         """
         self._interactions = convert2polars(self._interactions)
-        self._query_features = convert2polars(self._query_features)
-        self._item_features = convert2polars(self._item_features)
+        if self._query_features is not None:
+            self._query_features = convert2polars(self._query_features)
+        if self._item_features is not None:
+            self._item_features = convert2polars(self._item_features)
         self._assign_df_type()
 
 
@@ -563,7 +569,14 @@ def check_dataframes_types_equal(dataframe: DataFrameLike, other: DataFrameLike)
     return False
 
 
+def _check_if_dataframe(var: Any):
+    if not isinstance(var, (SparkDataFrame, PolarsDataFrame, PandasDataFrame)):
+        msg = f"Object of type {type(var)} is not a dataframe of known type (can be pandas|spark|polars)"
+        raise ValueError(msg)
+
+
 def convert2pandas(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> PandasDataFrame:
+    _check_if_dataframe(df)
     if isinstance(df, PandasDataFrame):
         return df
     if isinstance(df, PolarsDataFrame):
@@ -573,6 +586,7 @@ def convert2pandas(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) 
 
 
 def convert2polars(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> PolarsDataFrame:
+    _check_if_dataframe(df)
     if isinstance(df, PandasDataFrame):
         return pl_from_pandas(df)
     if isinstance(df, PolarsDataFrame):
@@ -582,6 +596,7 @@ def convert2polars(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) 
 
 
 def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
+    _check_if_dataframe(df)
     spark = get_spark_session()
     if isinstance(df, PandasDataFrame):
         return spark.createDataFrame(df)
