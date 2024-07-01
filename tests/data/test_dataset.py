@@ -1,4 +1,7 @@
+import inspect
+import json
 import shutil
+from pathlib import Path
 
 import pandas as pd
 import polars as pl
@@ -220,6 +223,10 @@ def compare_datasets(dataset, other_dataset, same_type=True):
         assert_dataframelikes_equal([dataset.query_features, other_dataset.query_features], same_type=same_type)
     if dataset.item_features is not None or other_dataset.item_features is not None:
         assert_dataframelikes_equal([dataset.item_features, other_dataset.item_features], same_type=same_type)
+
+
+def get_test_name():
+    return inspect.stack()[0][3]
 
 
 @pytest.mark.spark
@@ -1208,7 +1215,7 @@ def test_pandas_dataframe_in_storage_levels_of_spark(full_pandas_dataset):
 )
 def test_save_load(data_dict, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    path = "test_save_load_dataset" + data_dict
+    path = get_test_name() + data_dict
     dataset.save(path)
     dataset_loaded = Dataset.load(path)
     compare_datasets(dataset, dataset_loaded, same_type=True)
@@ -1225,7 +1232,7 @@ def test_save_load(data_dict, request):
     ],
 )
 def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
-    path = "test_save_load_overwrite_dataset" + data_dict + data_dict_to_overwrite
+    path = get_test_name() + data_dict + data_dict_to_overwrite
     data_dict_to_overwrite = request.getfixturevalue(data_dict_to_overwrite)
     dataset_to_overwrite = create_dataset(data_dict_to_overwrite, check_consistency=False)
     dataset_to_overwrite.save(path)
@@ -1255,7 +1262,7 @@ def test_save_load_overwrite(data_dict, data_dict_to_overwrite, request):
 )
 def test_save_load_changed_dataframe_type(data_dict, _type, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    path = "test_save_load_overwrite_dataset" + data_dict + _type
+    path = get_test_name() + data_dict + _type
     dataset.save(path)
     dataset_loaded = Dataset.load(path, dataframe_type=_type)
     assert dataset_loaded.__dict__[f"is_{_type}"] is True
@@ -1274,9 +1281,86 @@ def test_save_load_changed_dataframe_type(data_dict, _type, request):
 )
 def test_save_replay_load_replay_on_dataset(data_dict, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    path = "test_save_load_overwrite_dataset" + data_dict
+    path = get_test_name() + data_dict
     save_to_replay(dataset, path)
     dataset_loaded = load_from_replay(path)
     compare_datasets(dataset, dataset_loaded)
     path = path + ".replay"
     shutil.rmtree(path)
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_save_with_unknown_df_type(data_dict, request):
+    with pytest.raises(ValueError):
+        dataset = create_dataset(request.getfixturevalue(data_dict))
+        dataset.is_pandas = False
+        dataset.is_spark = False
+        dataset.is_polars = False
+        setattr(dataset, "is_new_df_type", True)
+        path = get_test_name() + data_dict
+        dataset.save(path)
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_load_with_unknown_convertion_type(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    path = get_test_name() + data_dict
+    dataset.save(path)
+    with pytest.raises(ValueError):
+        Dataset.load(path, dataframe_type="new_df_type")
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_load_with_unknown_df_type(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    path = get_test_name() + data_dict
+    dataset.save(path)
+    base_path = Path(path).with_suffix(".replay").resolve()
+    with open(base_path / "init_args.json", "r+") as file:
+        dataset_dict = json.loads(file.read())
+    for df_key in ["interactions", "item_features", "query_features"]:
+        dataset_dict["init_args"][df_key] = "new_df_type"
+    with open(base_path / "init_args.json", "w+") as file:
+        json.dump(dataset_dict, file)
+    with pytest.raises(TypeError):
+        Dataset.load(path)
+
+
+@pytest.mark.parametrize(
+    "data_dict",
+    [
+        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
+        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+    ],
+)
+def test_to_parquet_with_unknown_df_type(data_dict, request):
+    dataset = create_dataset(request.getfixturevalue(data_dict))
+    path = get_test_name() + data_dict
+    dataset.is_pandas = False
+    dataset.is_spark = False
+    dataset.is_polars = False
+    setattr(dataset, "is_new_df_type", True)
+    with pytest.raises(TypeError):
+        dataset._to_parquet(dataset.interactions, path)
