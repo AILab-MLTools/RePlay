@@ -9,7 +9,6 @@ import numpy as np
 from polars import from_pandas as pl_from_pandas
 
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
-
 from replay.utils.session_handler import get_spark_session
 
 from .schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
@@ -50,9 +49,7 @@ class Dataset:
         self._query_features = query_features
         self._item_features = item_features
 
-        self.is_pandas = isinstance(interactions, PandasDataFrame)
-        self.is_spark = isinstance(interactions, SparkDataFrame)
-        self.is_polars = isinstance(interactions, PolarsDataFrame)
+        self._assign_df_type()
 
         self._categorical_encoded = categorical_encoded
 
@@ -286,6 +283,11 @@ class Dataset:
             categorical_encoded=self._categorical_encoded,
         )
 
+    def _assign_df_type(self):
+        self.is_pandas = isinstance(self.interactions, PandasDataFrame)
+        self.is_spark = isinstance(self.interactions, SparkDataFrame)
+        self.is_polars = isinstance(self.interactions, PolarsDataFrame)
+
     def _get_cardinality(self, feature: FeatureInfo) -> Callable:
         def callback(column: str) -> int:
             if feature.feature_hint in [FeatureHint.ITEM_ID, FeatureHint.QUERY_ID]:
@@ -492,9 +494,7 @@ class Dataset:
         self._interactions = convert2pandas(self._interactions)
         self._query_features = convert2pandas(self._query_features)
         self._item_features = convert2pandas(self.item_features)
-        self.is_pandas = True
-        self.is_spark = False
-        self.is_polars = False
+        self._assign_df_type()
 
     def df_to_spark(self):
         """
@@ -503,9 +503,7 @@ class Dataset:
         self._interactions = convert2spark(self._interactions)
         self._query_features = convert2spark(self._query_features)
         self._item_features = convert2spark(self._item_features)
-        self.is_pandas = False
-        self.is_spark = True
-        self.is_polars = False
+        self._assign_df_type()
 
     def df_to_polars(self):
         """
@@ -514,10 +512,7 @@ class Dataset:
         self._interactions = convert2polars(self._interactions)
         self._query_features = convert2polars(self._query_features)
         self._item_features = convert2polars(self._item_features)
-        self.is_pandas = False
-        self.is_spark = False
-        self.is_polars = True
-
+        self._assign_df_type()
 
 
 def nunique(data: DataFrameLike, column: str) -> int:
@@ -575,7 +570,7 @@ def convert2pandas(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) 
         return df.to_pandas()
     if isinstance(df, SparkDataFrame):
         return df.toPandas()
-    
+
 
 def convert2polars(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> PolarsDataFrame:
     if isinstance(df, PandasDataFrame):
@@ -585,7 +580,7 @@ def convert2polars(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) 
     if isinstance(df, SparkDataFrame):
         return pl_from_pandas(df.toPandas())
 
- 
+
 def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
     spark = get_spark_session()
     if isinstance(df, PandasDataFrame):
