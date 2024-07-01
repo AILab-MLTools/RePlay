@@ -1207,11 +1207,11 @@ def test_df_to_pandas(data_dict, request):
     "data_dict",
     [
         pytest.param("full_spark_dataset", marks=pytest.mark.spark),
-        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
-        pytest.param("full_polars_dataset", marks=pytest.mark.core),
+        pytest.param("full_pandas_dataset", marks=pytest.mark.spark),
+        pytest.param("full_polars_dataset", marks=pytest.mark.spark),
         pytest.param("interactions_rating_spark_dataset", marks=pytest.mark.spark),
-        pytest.param("interactions_rating_pandas_dataset", marks=pytest.mark.core),
-        pytest.param("interactions_rating_polars_dataset", marks=pytest.mark.core),
+        pytest.param("interactions_rating_pandas_dataset", marks=pytest.mark.spark),
+        pytest.param("interactions_rating_polars_dataset", marks=pytest.mark.spark),
     ],
 )
 def test_df_to_spark(data_dict, request):
