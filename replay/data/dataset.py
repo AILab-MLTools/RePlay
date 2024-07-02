@@ -501,6 +501,7 @@ class Dataset:
         Convert internally stored dataframes to pandas.DataFrame.
         """
         from replay.utils.common import convert2pandas
+
         self._interactions = convert2pandas(self._interactions)
         if self._query_features is not None:
             self._query_features = convert2pandas(self._query_features)
@@ -515,6 +516,7 @@ class Dataset:
         Convert internally stored dataframes to pyspark.sql.DataFrame.
         """
         from replay.utils.common import convert2spark
+
         self._interactions = convert2spark(self._interactions)
         if self._query_features is not None:
             self._query_features = convert2spark(self._query_features)
@@ -529,6 +531,7 @@ class Dataset:
         Convert internally stored dataframes to polars.DataFrame.
         """
         from replay.utils.common import convert2polars
+
         self._interactions = convert2polars(self._interactions)
         if self._query_features is not None:
             self._query_features = convert2polars(self._query_features)
