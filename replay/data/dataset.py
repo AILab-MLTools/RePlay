@@ -3,13 +3,20 @@
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Callable, Dict, Iterable, List, Optional, Sequence
 
 import numpy as np
-from polars import from_pandas as pl_from_pandas
 
-from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
-from replay.utils.session_handler import get_spark_session
+from replay.utils import (
+    PYSPARK_AVAILABLE,
+    DataFrameLike,
+    PandasDataFrame,
+    PolarsDataFrame,
+    SparkDataFrame,
+    convert2pandas,
+    convert2polars,
+    convert2spark,
+)
 
 from .schema import FeatureHint, FeatureInfo, FeatureSchema, FeatureSource, FeatureType
 
@@ -74,16 +81,8 @@ class Dataset:
             msg = "Interactions and query features should have the same type."
             raise TypeError(msg)
 
-        self._feature_source_map: Dict[FeatureSource, DataFrameLike] = {
-            FeatureSource.INTERACTIONS: self.interactions,
-            FeatureSource.QUERY_FEATURES: self.query_features,
-            FeatureSource.ITEM_FEATURES: self.item_features,
-        }
-
-        self._ids_feature_map: Dict[FeatureHint, DataFrameLike] = {
-            FeatureHint.QUERY_ID: self.query_features if self.query_features is not None else self.interactions,
-            FeatureHint.ITEM_ID: self.item_features if self.item_features is not None else self.interactions,
-        }
+        self._get_feature_source_map()
+        self._get_ids_source_map()
 
         self._feature_schema = self._fill_feature_schema(feature_schema)
 
@@ -282,6 +281,19 @@ class Dataset:
             check_consistency=False,
             categorical_encoded=self._categorical_encoded,
         )
+
+    def _get_feature_source_map(self):
+        self._feature_source_map: Dict[FeatureSource, DataFrameLike] = {
+            FeatureSource.INTERACTIONS: self.interactions,
+            FeatureSource.QUERY_FEATURES: self.query_features,
+            FeatureSource.ITEM_FEATURES: self.item_features,
+        }
+
+    def _get_ids_source_map(self):
+        self._ids_feature_map: Dict[FeatureHint, DataFrameLike] = {
+            FeatureHint.QUERY_ID: self.query_features if self.query_features is not None else self.interactions,
+            FeatureHint.ITEM_ID: self.item_features if self.item_features is not None else self.interactions,
+        }
 
     def _assign_df_type(self):
         self.is_pandas = isinstance(self.interactions, PandasDataFrame)
@@ -487,7 +499,7 @@ class Dataset:
                     feature.cardinality,
                 )
 
-    def df_to_pandas(self) -> None:
+    def to_pandas(self) -> None:
         """
         Convert internally stored dataframes to pandas.DataFrame.
         """
@@ -496,9 +508,11 @@ class Dataset:
             self._query_features = convert2pandas(self._query_features)
         if self._item_features is not None:
             self._item_features = convert2pandas(self.item_features)
+        self._get_feature_source_map()
+        self._get_ids_source_map()
         self._assign_df_type()
 
-    def df_to_spark(self):
+    def to_spark(self):
         """
         Convert internally stored dataframes to pyspark.sql.DataFrame.
         """
@@ -507,9 +521,11 @@ class Dataset:
             self._query_features = convert2spark(self._query_features)
         if self._item_features is not None:
             self._item_features = convert2spark(self._item_features)
+        self._get_feature_source_map()
+        self._get_ids_source_map()
         self._assign_df_type()
 
-    def df_to_polars(self):
+    def to_polars(self):
         """
         Convert internally stored dataframes to polars.DataFrame.
         """
@@ -518,6 +534,8 @@ class Dataset:
             self._query_features = convert2polars(self._query_features)
         if self._item_features is not None:
             self._item_features = convert2polars(self._item_features)
+        self._get_feature_source_map()
+        self._get_ids_source_map()
         self._assign_df_type()
 
 
@@ -567,40 +585,3 @@ def check_dataframes_types_equal(dataframe: DataFrameLike, other: DataFrameLike)
     if isinstance(dataframe, PolarsDataFrame) and isinstance(other, PolarsDataFrame):
         return True
     return False
-
-
-def _check_if_dataframe(var: Any):
-    if not isinstance(var, (SparkDataFrame, PolarsDataFrame, PandasDataFrame)):
-        msg = f"Object of type {type(var)} is not a dataframe of known type (can be pandas|spark|polars)"
-        raise ValueError(msg)
-
-
-def convert2pandas(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> PandasDataFrame:
-    _check_if_dataframe(df)
-    if isinstance(df, PandasDataFrame):
-        return df
-    if isinstance(df, PolarsDataFrame):
-        return df.to_pandas()
-    if isinstance(df, SparkDataFrame):
-        return df.toPandas()
-
-
-def convert2polars(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> PolarsDataFrame:
-    _check_if_dataframe(df)
-    if isinstance(df, PandasDataFrame):
-        return pl_from_pandas(df)
-    if isinstance(df, PolarsDataFrame):
-        return df
-    if isinstance(df, SparkDataFrame):
-        return pl_from_pandas(df.toPandas())
-
-
-def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
-    _check_if_dataframe(df)
-    spark = get_spark_session()
-    if isinstance(df, PandasDataFrame):
-        return spark.createDataFrame(df)
-    if isinstance(df, PolarsDataFrame):
-        return spark.createDataFrame(df.to_pandas())
-    if isinstance(df, SparkDataFrame):
-        return df

@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
+
+from polars import from_pandas as pl_from_pandas
 
 from replay.splitters import (
     ColdUserRandomSplitter,
@@ -12,7 +14,16 @@ from replay.splitters import (
     TimeSplitter,
     TwoStageSplitter,
 )
-from replay.utils import TORCH_AVAILABLE
+from replay.utils import (
+    TORCH_AVAILABLE,
+    PandasDataFrame,
+    PolarsDataFrame,
+    SparkDataFrame,
+)
+from replay.utils.spark_utils import (
+    convert2spark as pandas_to_spark,
+    spark_to_pandas,
+)
 
 SavableObject = Union[
     ColdUserRandomSplitter,
@@ -63,3 +74,41 @@ def load_from_replay(path: Union[str, Path], **kwargs) -> SavableObject:
     obj = obj_type.load(path, **kwargs)
 
     return obj
+
+
+def _check_if_dataframe(var: Any):
+    if not isinstance(var, (SparkDataFrame, PolarsDataFrame, PandasDataFrame)):
+        msg = f"Object of type {type(var)} is not a dataframe of known type (can be pandas|spark|polars)"
+        raise ValueError(msg)
+
+
+def convert2pandas(
+    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = True
+) -> PandasDataFrame:
+    _check_if_dataframe(df)
+    if isinstance(df, PandasDataFrame):
+        return spark_to_pandas(df, allow_collect_to_master)
+    if isinstance(df, PolarsDataFrame):
+        return df.to_pandas()
+    if isinstance(df, SparkDataFrame):
+        return df.toPandas()
+
+
+def convert2polars(
+    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = True
+) -> PolarsDataFrame:
+    _check_if_dataframe(df)
+    if isinstance(df, PandasDataFrame):
+        return pl_from_pandas(df)
+    if isinstance(df, PolarsDataFrame):
+        return df
+    if isinstance(df, SparkDataFrame):
+        return pl_from_pandas(spark_to_pandas(df, allow_collect_to_master))
+
+
+def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
+    _check_if_dataframe(df)
+    if isinstance(df, (PandasDataFrame, SparkDataFrame)):
+        return pandas_to_spark(df)
+    if isinstance(df, PolarsDataFrame):
+        return pandas_to_spark(df.to_pandas())
