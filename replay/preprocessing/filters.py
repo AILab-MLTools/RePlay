@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import Callable, Optional, Tuple, Union
 
+import numpy as np
+import pandas as pd
 import polars as pl
 
 from replay.utils import PYSPARK_AVAILABLE, DataFrameLike, PandasDataFrame, PolarsDataFrame, SparkDataFrame
@@ -823,3 +825,143 @@ class TimePeriodFilter(_BaseFilter):
         return interactions.filter(
             pl.col(self.timestamp_column).is_between(self.start_date, self.end_date, closed="left")
         )
+
+
+class PercentileItemsFilter(_BaseFilter):
+    """
+    Filters items based on percentile.
+
+    Filter finds the provided percentile of items distribution,
+    then removes `items_proportion` of every higher item in distribution
+    for users with the most interactions in original data.
+    """
+
+    def __init__(
+        self,
+        percentile: float = 0.99,
+        items_proportion: float = 0.5,
+        query_column: str = "query_id",
+        item_column: str = "item_id",
+    ) -> None:
+        """
+        :param percentile: percentile of items distribution values. All values
+            that exceeds this will be filtered.
+            Default: ``0.99``.
+        :param items_proportion: proportion of items that exceeds
+            `percentile` to filter.
+            Default: ``0.5``.
+        :param query_column: query column name.
+            Default: ``query_id``.
+        :param item_column: item column name.
+            Default: ``item_id``.
+        """
+        if not 0 < percentile < 1:
+            msg = "`percentile` value must be in (0, 1)"
+            raise ValueError(msg)
+        if not 0 < items_proportion < 1:
+            msg = "`items_proportion` value must be in (0, 1)"
+            raise ValueError(msg)
+
+        self.percentile = percentile
+        self.items_proportion = items_proportion
+        self.query_column = query_column
+        self.item_column = item_column
+
+    def _filter_pandas(self, df: pd.DataFrame):
+        items_distribution = df.groupby(self.item_column).size().reset_index().rename(columns={0: "counts"})
+        users_distribution = df.groupby(self.query_column).size().reset_index().rename(columns={0: "counts"})
+        count_threshold = items_distribution.loc[:, "counts"].quantile(self.percentile)
+        df_with_counts = df.merge(items_distribution, how="left", on=self.item_column).merge(
+            users_distribution, how="left", on=self.query_column, suffixes=["_items", "_users"]
+        )
+        long_tail = df_with_counts.loc[df_with_counts["counts_items"] <= count_threshold]
+        short_tail = df_with_counts.loc[df_with_counts["counts_items"] > count_threshold]
+        short_tail["num_items_to_delete"] = self.items_proportion * (
+            short_tail["counts_items"] - long_tail["counts_items"].max()
+        )
+        short_tail["num_items_to_delete"] = short_tail["num_items_to_delete"].astype("int")
+        short_tail = short_tail.sort_values("counts_users", ascending=False)
+
+        def get_mask(x):
+            mask = np.ones_like(x)
+            threshold = x.iloc[0]
+            mask[:threshold] = 0
+            return mask
+
+        mask = short_tail.groupby(self.item_column)["num_items_to_delete"].transform(get_mask).astype(bool)
+        return pd.concat([long_tail[df.columns], short_tail.loc[mask][df.columns]])
+
+    def _filter_polars(self, df: pl.DataFrame):
+        items_distribution = df.group_by(self.item_column).len()
+        users_distribution = df.group_by(self.query_column).len()
+        count_threshold = items_distribution.select("len").quantile(self.percentile, "midpoint")["len"][0]
+        df_with_counts = (
+            df.join(items_distribution, how="left", on=self.item_column).join(
+                users_distribution, how="left", on=self.query_column
+            )
+        ).rename({"len": "counts_items", "len_right": "counts_users"})
+        long_tail = df_with_counts.filter(pl.col("counts_items") <= count_threshold)
+        short_tail = df_with_counts.filter(pl.col("counts_items") > count_threshold)
+        max_long_tail_count = long_tail["counts_items"].max()
+        items_to_delete = (
+            short_tail.select(
+                self.query_column,
+                self.item_column,
+                self.items_proportion * (pl.col("counts_items") - max_long_tail_count),
+            )
+            .with_columns(pl.col("literal").cast(pl.Int64).alias("num_items_to_delete"))
+            .select(self.item_column, "num_items_to_delete")
+            .unique(maintain_order=True)
+        )
+        short_tail = short_tail.join(items_to_delete, how="left", on=self.item_column).sort(
+            "counts_users", descending=True
+        )
+        short_tail = short_tail.with_columns(index=pl.int_range(short_tail.shape[0]))
+        grouped = short_tail.group_by(self.item_column, maintain_order=True).agg(
+            pl.col("index"), pl.col("num_items_to_delete")
+        )
+        grouped = grouped.with_columns(
+            pl.col("num_items_to_delete").list.get(0),
+            (pl.col("index").list.len() - pl.col("num_items_to_delete").list.get(0)).alias("tail"),
+        )
+        grouped = grouped.with_columns(pl.col("index").list.tail(pl.col("tail")))
+        grouped = grouped.explode("index").select("index")
+        short_tail = grouped.join(short_tail, how="left", on="index")
+        return pl.concat([long_tail.select(df.columns), short_tail.select(df.columns)])
+
+    def _filter_spark(self, df: SparkDataFrame):
+        items_distribution = df.groupBy(self.item_column).agg(sf.count("*").alias("counts_items"))
+        users_distribution = df.groupBy(self.query_column).agg(sf.count("*").alias("counts_users"))
+        count_threshold = items_distribution.toPandas().loc[:, "counts_items"].quantile(self.percentile)
+        df_with_counts = df.join(items_distribution, on=self.item_column).join(users_distribution, on=self.query_column)
+        long_tail = df_with_counts.filter(sf.col("counts_items") <= count_threshold)
+        short_tail = df_with_counts.filter(sf.col("counts_items") > count_threshold)
+        max_long_tail_count = long_tail.agg({"counts_items": "max"}).collect()[0][0]
+        items_to_delete = (
+            short_tail.withColumn(
+                "num_items_to_delete",
+                (self.items_proportion * (sf.col("counts_items") - max_long_tail_count)).cast("int"),
+            )
+            .select(self.item_column, "num_items_to_delete")
+            .distinct()
+        )
+        short_tail = short_tail.join(items_to_delete, on=self.item_column, how="left")
+        short_tail = short_tail.withColumn("index", sf.row_number().over(Window.orderBy(sf.col("counts_users").desc())))
+        grouped = (
+            short_tail.sort(sf.col("counts_users").desc())
+            .groupBy(self.item_column)
+            .agg(
+                sf.collect_list("index").alias("index"),
+                sf.collect_list("num_items_to_delete").alias("num_items_to_delete"),
+            )
+        )
+        grouped = grouped.withColumn(
+            "num_items_to_delete",
+            sf.element_at(sf.col("num_items_to_delete"), 1),
+        ).withColumn("length", sf.size(sf.col("index")) - sf.col("num_items_to_delete"))
+        grouped = grouped.withColumn(
+            "index", sf.slice(sf.col("index"), sf.col("num_items_to_delete") + 1, sf.col("length"))
+        )
+        grouped = grouped.select("index").withColumn("index", sf.explode("index"))
+        short_tail = grouped.join(short_tail, how="left", on="index")
+        return long_tail.select(df.columns).union(short_tail.select(df.columns))
