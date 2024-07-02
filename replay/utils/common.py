@@ -87,11 +87,11 @@ def convert2pandas(
 ) -> PandasDataFrame:
     _check_if_dataframe(df)
     if isinstance(df, PandasDataFrame):
-        return spark_to_pandas(df, allow_collect_to_master)
+        return df
     if isinstance(df, PolarsDataFrame):
         return df.to_pandas()
     if isinstance(df, SparkDataFrame):
-        return df.toPandas()
+        return spark_to_pandas(df, allow_collect_to_master)
 
 
 def convert2polars(
