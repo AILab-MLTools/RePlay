@@ -1192,7 +1192,7 @@ def test_pandas_dataframe_in_storage_levels_of_spark(full_pandas_dataset):
 )
 def test_df_to_pandas(data_dict, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    dataset.df_to_pandas()
+    dataset.to_pandas()
     assert dataset.is_pandas
     assert not dataset.is_spark
     assert not dataset.is_polars
@@ -1216,7 +1216,7 @@ def test_df_to_pandas(data_dict, request):
 )
 def test_df_to_spark(data_dict, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    dataset.df_to_spark()
+    dataset.to_spark()
     assert not dataset.is_pandas
     assert dataset.is_spark
     assert not dataset.is_polars
@@ -1240,7 +1240,7 @@ def test_df_to_spark(data_dict, request):
 )
 def test_df_to_polars(data_dict, request):
     dataset = create_dataset(request.getfixturevalue(data_dict))
-    dataset.df_to_polars()
+    dataset.to_polars()
     assert not dataset.is_pandas
     assert not dataset.is_spark
     assert dataset.is_polars
