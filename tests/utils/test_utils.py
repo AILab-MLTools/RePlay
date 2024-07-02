@@ -197,13 +197,13 @@ def test_sample_top_k(long_log_with_features):
 @pytest.mark.parametrize(
     "data_dict",
     [
-        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
-        pytest.param("full_pandas_dataset", marks=pytest.mark.core),
-        pytest.param("full_spark_dataset", marks=pytest.mark.spark),
+        pytest.param("fake_fit_queries", marks=pytest.mark.spark),
+        pytest.param("fake_fit_queries_pandas", marks=pytest.mark.core),
+        pytest.param("fake_fit_queries_polars", marks=pytest.mark.core),
     ],
 )
 def test_check_if_dataframe_true(data_dict, request):
-    dataframe = request.getfixturevalue(data_dict)["interactions"]
+    dataframe = request.getfixturevalue(data_dict)
     _check_if_dataframe(dataframe)
 
 
