@@ -33,7 +33,9 @@ class SparkCollectToMasterWarning(Warning):  # pragma: no cover
     """
 
 
-def spark_to_pandas(data: SparkDataFrame, allow_collect_to_master: bool = False, from_constructor: bool= True) -> pd.DataFrame:  # pragma: no cover
+def spark_to_pandas(
+    data: SparkDataFrame, allow_collect_to_master: bool = False, from_constructor: bool = True
+) -> pd.DataFrame:  # pragma: no cover
     """
     Convert Spark DataFrame to Pandas DataFrame.
 
