@@ -834,6 +834,40 @@ class PercentileItemsFilter(_BaseFilter):
     Filter finds the provided percentile of items distribution,
     then removes `items_proportion` of every higher item in distribution
     for users with the most interactions in original data.
+
+    >>> import pandas as pd
+    >>> from replay.utils.spark_utils import convert2spark
+    >>> log_pd = pd.DataFrame({
+    ...        "user_id": [0, 0, 1, 2, 2, 2, 2],
+    ...        "item_id": [0, 2, 1, 1, 2, 2, 2]
+    ... })
+    >>> log_spark = convert2spark(log_pd)
+    >>> log_spark.show()
+    +-------+-------+
+    |user_id|item_id|
+    +-------+-------+
+    |      0|      0|
+    |      0|      2|
+    |      1|      1|
+    |      2|      1|
+    |      2|      2|
+    |      2|      2|
+    |      2|      2|
+    +-------+-------+
+    <BLANKLINE>
+
+    >>> PercentileItemsFilter(query_column="user_id").transform(log_spark).show()
+    +-------+-------+
+    |user_id|item_id|
+    +-------+-------+
+    |      0|      0|
+    |      1|      1|
+    |      2|      1|
+    |      2|      2|
+    |      2|      2|
+    |      0|      2|
+    +-------+-------+
+    <BLANKLINE>
     """
 
     def __init__(
