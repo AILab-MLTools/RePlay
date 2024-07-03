@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
-from typing import Any, Union
-
+from typing import Any, Union, Callable, Dict, Sequence
+import functools
+import inspect
 from polars import from_pandas as pl_from_pandas
 
 from replay.splitters import (
@@ -80,8 +81,34 @@ def _check_if_dataframe(var: Any):
     if not isinstance(var, (SparkDataFrame, PolarsDataFrame, PandasDataFrame)):
         msg = f"Object of type {type(var)} is not a dataframe of known type (can be pandas|spark|polars)"
         raise ValueError(msg)
+    
+    
+def check_if_dataframe(*args_to_check: str) -> Callable[..., Any]:
+    def decorator_func(func: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(func)
+        def wrap_func(*args: Any, **kwargs: Any) -> Any:
+            extended_kwargs = {}
+            extended_kwargs.update(kwargs)
+            extended_kwargs.update(dict(zip(inspect.signature(func).parameters.keys(), args)))
+            # add default param values to dict with arguments
+            extended_kwargs.update(
+                {
+                    x.name: x.default
+                    for x in inspect.signature(func).parameters.values()
+                    if x.name not in extended_kwargs and x.default is not x.empty
+                }
+            )
+            vals_to_check = [extended_kwargs[_arg] for _arg in args_to_check]
+            for val in vals_to_check:
+                _check_if_dataframe(val)
+            return func(*args, **kwargs)
+
+        return wrap_func
+
+    return decorator_func
 
 
+@check_if_dataframe("df")
 def convert2pandas(
     df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
 ) -> PandasDataFrame:
