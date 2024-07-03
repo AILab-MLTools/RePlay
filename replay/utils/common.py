@@ -83,7 +83,7 @@ def _check_if_dataframe(var: Any):
 
 
 def convert2pandas(
-    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = True
+    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
 ) -> PandasDataFrame:
     _check_if_dataframe(df)
     if isinstance(df, PandasDataFrame):
@@ -91,11 +91,11 @@ def convert2pandas(
     if isinstance(df, PolarsDataFrame):
         return df.to_pandas()
     if isinstance(df, SparkDataFrame):
-        return spark_to_pandas(df, allow_collect_to_master)
+        return spark_to_pandas(df, allow_collect_to_master, from_constructor=False)
 
 
 def convert2polars(
-    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = True
+    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
 ) -> PolarsDataFrame:
     _check_if_dataframe(df)
     if isinstance(df, PandasDataFrame):
@@ -103,7 +103,7 @@ def convert2polars(
     if isinstance(df, PolarsDataFrame):
         return df
     if isinstance(df, SparkDataFrame):
-        return pl_from_pandas(spark_to_pandas(df, allow_collect_to_master))
+        return pl_from_pandas(spark_to_pandas(df, allow_collect_to_master, from_constructor=False))
 
 
 def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
