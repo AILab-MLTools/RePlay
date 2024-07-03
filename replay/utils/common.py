@@ -85,6 +85,13 @@ def _check_if_dataframe(var: Any):
 def convert2pandas(
     df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
 ) -> PandasDataFrame:
+    """
+    Convert the spark|polars DataFrame to a pandas.DataFrame.
+    Returns unchanged dataframe if the input is already of type pandas.DataFrame. 
+
+    :param df: The dataframe to convert. Can be polars|spark|pandas DataFrame.
+    :param allow_collect_to_master: If set to False (default) raises a warning about collecting parallelized data to the master node.
+    """
     _check_if_dataframe(df)
     if isinstance(df, PandasDataFrame):
         return df
@@ -97,6 +104,13 @@ def convert2pandas(
 def convert2polars(
     df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
 ) -> PolarsDataFrame:
+    """
+    Convert the spark|pandas DataFrame to a polars.DataFrame.
+    Returns unchanged dataframe if the input is already of type polars.DataFrame. 
+
+    :param df: The dataframe to convert. Can be spark|pandas|polars DataFrame.
+    :param allow_collect_to_master: If set to False (default) raises a warning about collecting parallelized data to the master node.
+    """
     _check_if_dataframe(df)
     if isinstance(df, PandasDataFrame):
         return pl_from_pandas(df)
@@ -107,6 +121,12 @@ def convert2polars(
 
 
 def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
+    """
+    Convert the pandas|polars DataFrame to a pysaprk.sql.DataFrame.
+    Returns unchanged dataframe if the input is already of type pysaprk.sql.DataFrame. 
+
+    :param df: The dataframe to convert. Can be pandas|polars|spark Datarame.
+    """
     _check_if_dataframe(df)
     if isinstance(df, (PandasDataFrame, SparkDataFrame)):
         return pandas_to_spark(df)
