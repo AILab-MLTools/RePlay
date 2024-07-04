@@ -109,55 +109,55 @@ def check_if_dataframe(*args_to_check: str) -> Callable[..., Any]:
     return decorator_func
 
 
-@check_if_dataframe("df")
+@check_if_dataframe("data")
 def convert2pandas(
-    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
+    data: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
 ) -> PandasDataFrame:
     """
     Convert the spark|polars DataFrame to a pandas.DataFrame.
     Returns unchanged dataframe if the input is already of type pandas.DataFrame.
 
-    :param df: The dataframe to convert. Can be polars|spark|pandas DataFrame.
+    :param data: The dataframe to convert. Can be polars|spark|pandas DataFrame.
     :param allow_collect_to_master: If set to False (default) raises a warning
         about collecting parallelized data to the master node.
     """
-    if isinstance(df, PandasDataFrame):
-        return df
-    if isinstance(df, PolarsDataFrame):
-        return df.to_pandas()
-    if isinstance(df, SparkDataFrame):
-        return spark_to_pandas(df, allow_collect_to_master, from_constructor=False)
+    if isinstance(data, PandasDataFrame):
+        return data
+    if isinstance(data, PolarsDataFrame):
+        return data.to_pandas()
+    if isinstance(data, SparkDataFrame):
+        return spark_to_pandas(data, allow_collect_to_master, from_constructor=False)
 
 
-@check_if_dataframe("df")
+@check_if_dataframe("data")
 def convert2polars(
-    df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
+    data: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame], allow_collect_to_master: bool = False
 ) -> PolarsDataFrame:
     """
     Convert the spark|pandas DataFrame to a polars.DataFrame.
     Returns unchanged dataframe if the input is already of type polars.DataFrame.
 
-    :param df: The dataframe to convert. Can be spark|pandas|polars DataFrame.
+    :param data: The dataframe to convert. Can be spark|pandas|polars DataFrame.
     :param allow_collect_to_master: If set to False (default) raises a warning
         about collecting parallelized data to the master node.
     """
-    if isinstance(df, PandasDataFrame):
-        return pl_from_pandas(df)
-    if isinstance(df, PolarsDataFrame):
-        return df
-    if isinstance(df, SparkDataFrame):
-        return pl_from_pandas(spark_to_pandas(df, allow_collect_to_master, from_constructor=False))
+    if isinstance(data, PandasDataFrame):
+        return pl_from_pandas(data)
+    if isinstance(data, PolarsDataFrame):
+        return data
+    if isinstance(data, SparkDataFrame):
+        return pl_from_pandas(spark_to_pandas(data, allow_collect_to_master, from_constructor=False))
 
 
-@check_if_dataframe("df")
-def convert2spark(df: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
+@check_if_dataframe("data")
+def convert2spark(data: Union[SparkDataFrame, PolarsDataFrame, PandasDataFrame]) -> SparkDataFrame:
     """
     Convert the pandas|polars DataFrame to a pysaprk.sql.DataFrame.
     Returns unchanged dataframe if the input is already of type pysaprk.sql.DataFrame.
 
-    :param df: The dataframe to convert. Can be pandas|polars|spark Datarame.
+    :param data: The dataframe to convert. Can be pandas|polars|spark Datarame.
     """
-    if isinstance(df, (PandasDataFrame, SparkDataFrame)):
-        return pandas_to_spark(df)
-    if isinstance(df, PolarsDataFrame):
-        return pandas_to_spark(df.to_pandas())
+    if isinstance(data, (PandasDataFrame, SparkDataFrame)):
+        return pandas_to_spark(data)
+    if isinstance(data, PolarsDataFrame):
+        return pandas_to_spark(data.to_pandas())
