@@ -980,7 +980,9 @@ class PercentileItemsFilter(_BaseFilter):
             .distinct()
         )
         short_tail = short_tail.join(items_to_delete, on=self.item_column, how="left")
-        short_tail = short_tail.withColumn("index", sf.row_number().over(Window.orderBy(sf.col("counts_users").desc())))
+        short_tail = short_tail.withColumn(
+            "index", sf.row_number().over(Window.partitionBy(sf.lit(0)).orderBy(sf.col("counts_users").desc()))
+        )
         grouped = (
             short_tail.sort(sf.col("counts_users").desc())
             .groupBy(self.item_column)
