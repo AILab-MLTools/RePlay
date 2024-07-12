@@ -75,7 +75,7 @@ def test_item_ids_are_grouped_to_sequences_with_subset(dataset, item_id_and_item
     for tensor_feature_name in sequential_dataset.schema.keys():
         assert tensor_feature_name in {"item_id"}
 
-    with pytest.raises(KeyError):
+    with pytest.raises((KeyError, pl.ColumnNotFoundError)):
         sequential_dataset.get_sequence(0, "some_item_feature")
 
 
@@ -295,6 +295,15 @@ def test_process_numerical_features(dataset, request):
             is_seq=True,
             feature_sources=[TensorFeatureSource(FeatureSource.ITEM_FEATURES, "some_item_feature")],
         )
+        .numerical(
+            "doubled_feature",
+            tensor_dim=2,
+            is_seq=True,
+            feature_sources=[
+                TensorFeatureSource(FeatureSource.INTERACTIONS, "num_feature"),
+                TensorFeatureSource(FeatureSource.INTERACTIONS, "num_feature2"),
+            ],
+        )
         .build()
     )
     tokenizer = SequenceTokenizer(schema)
@@ -312,6 +321,13 @@ def test_process_numerical_features(dataset, request):
         "some_item_feature",
         answers,
     )
+    for num_feature_name in ["feature", "some_item_feature", "doubled_feature"]:
+        for query in sequential_dataset.get_all_query_ids():
+            query_decoded = tokenizer.query_id_encoder.inverse_mapping["user_id"][query]
+            seq = sequential_dataset.get_sequence_by_query_id(query, num_feature_name)
+            print(query, query_decoded, seq)
+            assert seq.shape == (len(answers[query_decoded]), len(tokenizer.tensor_schema.get(num_feature_name).feature_sources))
+    
 
 
 @pytest.mark.torch
@@ -617,9 +633,11 @@ def _compare_sequence(
             feature_inverse_mapping[x] if feature_inverse_mapping else x
             for x in dataset.get_sequence_by_query_id(query, feature_name)
         ]
+        tensor_seq = dataset.get_sequence_by_query_id(query, feature_name)
         query = tokenizer.query_id_encoder.inverse_mapping["user_id"][query]
         assert len(sequence) == len(answers[query])
         assert (sequence == np.array(answers[query])).all()
+        
 
 
 @pytest.mark.torch
