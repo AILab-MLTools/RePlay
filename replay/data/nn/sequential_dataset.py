@@ -215,13 +215,13 @@ class PolarsSequentialDataset(PandasSequentialDataset):
         )
 
     def _convert_polars_to_pandas(self, df: PolarsDataFrame) -> PandasDataFrame:
-        polars_df = PandasDataFrame(df.to_dict(as_series=False))
+        pandas_df = PandasDataFrame(df.to_dict(as_series=False))
 
-        for column in polars_df.select_dtypes(include="object").columns:
-            if isinstance(polars_df[column].iloc[0], list):
-                polars_df[column] = polars_df[column].apply(lambda x: np.array(x))
+        for column in pandas_df.select_dtypes(include="object").columns:
+            if isinstance(pandas_df[column].iloc[0], list):
+                pandas_df[column] = pandas_df[column].apply(lambda x: np.array(x))
 
-        return polars_df
+        return pandas_df
 
     def _convert_pandas_to_polars(self, df: PandasDataFrame) -> PolarsDataFrame:
         for column in df.select_dtypes(include="object").columns:
