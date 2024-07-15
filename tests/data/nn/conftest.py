@@ -405,10 +405,10 @@ def item_id_and_item_feature_schema():
 def sequential_info(scope="package"):
     sequences = pd.DataFrame(
         [
-            (0, [1], [0, 1], [1, 2], np.array([[1, 2], [1, 2, 3]])),
-            (1, [2], [0, 2, 3], [1, 3, 4], np.array([[1, 2], [1, 2, 3]])),
-            (2, [3], [1], [2], np.array([[1, 2], [1, 2, 3]])),
-            (3, [4], [0, 1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6], np.array([[1, 2], [1, 2, 3]])),
+            (0, [1], [0, 1], [1, 2], np.array([[1, 2], [1, 2], [1, 2]])),
+            (1, [2], [0, 2, 3], [1, 3, 4], np.array([[1, 2], [1, 2]])),
+            (2, [3], [1], [2], np.array([[1, 2]])),
+            (3, [4], [0, 1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6], np.array([[1, 2], [1, 2], [1, 2], [1, 2]])),
         ],
         columns=[
             "user_id",
@@ -454,9 +454,24 @@ def sequential_info(scope="package"):
 
 @pytest.fixture()
 def sequential_info_polars(sequential_info, scope="package"):
+    sequences = pl.from_records(
+        [
+            (0, [1], [0, 1], [1, 2], [[1, 2], [1, 2], [1, 2]]),
+            (1, [2], [0, 2, 3], [1, 3, 4], [[1, 2], [1, 2]]),
+            (2, [3], [1], [2], [[1, 2]]),
+            (3, [4], [0, 1, 2, 3, 4, 5], [1, 2, 3, 4, 5, 6], [[1, 2], [1, 2], [1, 2], [1, 2]]),
+        ],
+        schema=[
+            "user_id",
+            "some_user_feature",
+            "item_id",
+            "some_item_feature",
+            "some_tensor_feature",
+        ],
+    )
     return {
         "tensor_schema": sequential_info["tensor_schema"],
-        "sequences": pl.from_pandas(sequential_info["sequences"]),
+        "sequences": sequences,
         "query_id_column": "user_id",
         "item_id_column": "item_id",
     }
