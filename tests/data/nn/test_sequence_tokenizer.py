@@ -325,9 +325,10 @@ def test_process_numerical_features(dataset, request):
         for query in sequential_dataset.get_all_query_ids():
             query_decoded = tokenizer.query_id_encoder.inverse_mapping["user_id"][query]
             seq = sequential_dataset.get_sequence_by_query_id(query, num_feature_name)
-            print(query, query_decoded, seq)
-            assert seq.shape == (len(answers[query_decoded]), len(tokenizer.tensor_schema.get(num_feature_name).feature_sources))
-    
+            assert seq.shape == (
+                len(answers[query_decoded]),
+                len(tokenizer.tensor_schema.get(num_feature_name).feature_sources),
+            )
 
 
 @pytest.mark.torch
@@ -633,11 +634,9 @@ def _compare_sequence(
             feature_inverse_mapping[x] if feature_inverse_mapping else x
             for x in dataset.get_sequence_by_query_id(query, feature_name)
         ]
-        tensor_seq = dataset.get_sequence_by_query_id(query, feature_name)
         query = tokenizer.query_id_encoder.inverse_mapping["user_id"][query]
         assert len(sequence) == len(answers[query])
         assert (sequence == np.array(answers[query])).all()
-        
 
 
 @pytest.mark.torch

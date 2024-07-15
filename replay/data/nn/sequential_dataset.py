@@ -1,5 +1,5 @@
 import abc
-from typing import Tuple, Union, Any
+from typing import Any, Tuple, Union
 
 import numpy as np
 import polars as pl
@@ -213,12 +213,6 @@ class PolarsSequentialDataset(PandasSequentialDataset):
             item_id_column=self._item_id_column,
             sequences=self._convert_pandas_to_polars(filtered_sequences),
         )
-    
-    def _if_list(self, obj: Any) -> bool:
-        return isinstance(obj, list)
-    
-    def _if_numpy(self, obj: Any) -> bool:
-        return isinstance(obj, np.ndarray)
 
     def _convert_polars_to_pandas(self, df: PolarsDataFrame) -> PandasDataFrame:
         polars_df = PandasDataFrame(df.to_dict(as_series=False))
@@ -226,15 +220,21 @@ class PolarsSequentialDataset(PandasSequentialDataset):
         for column in polars_df.select_dtypes(include="object").columns:
             if self._if_list(polars_df[column].iloc[0]):
                 polars_df[column] = polars_df[column].apply(lambda x: np.array(x))
-        
+
         return polars_df
-    
+
     def _convert_pandas_to_polars(self, df: PandasDataFrame) -> PolarsDataFrame:
         for column in df.select_dtypes(include="object").columns:
             if self._if_numpy(df[column].iloc[0]):
                 df[column] = df[column].apply(lambda x: x.tolist())
-        
+
         return pl.from_dict(df.to_dict("list"))
+
+    def _if_list(self, obj: Any) -> bool:
+        return isinstance(obj, list)
+
+    def _if_numpy(self, obj: Any) -> bool:
+        return isinstance(obj, np.ndarray)
 
     @classmethod
     def _check_if_schema_matches_data(cls, tensor_schema: TensorSchema, data: PolarsDataFrame) -> None:

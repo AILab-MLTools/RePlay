@@ -1,4 +1,4 @@
-from typing import List, Any, Callable
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -164,6 +164,4 @@ def test_get_sequence_by_query_id(dataset_type, request):
     else:
         sequential_info = request.getfixturevalue("sequential_info_polars")
     dataset = dataset_type(**sequential_info)
-    assert np.array_equal(
-        dataset.get_sequence_by_query_id(10, "some_item_feature"), np.array([], dtype=np.int64)
-    )
+    assert np.array_equal(dataset.get_sequence_by_query_id(10, "some_item_feature"), np.array([], dtype=np.int64))
