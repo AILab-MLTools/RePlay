@@ -827,13 +827,15 @@ class TimePeriodFilter(_BaseFilter):
         )
 
 
-class PercentileItemsFilter(_BaseFilter):
+class QuantileItemsFilter(_BaseFilter):
     """
-    Filters items based on percentile.
+    Filter is aimed on undersampling the interactions dataset.
 
-    Filter finds the provided percentile of items distribution,
-    then removes `items_proportion` of every higher item in distribution
-    for users with the most interactions in original data.
+    Filter algorithm performs undersampling by removing `items_proportion` of interactions
+    for each items counts that exceeds the `alpha_quantile` value in distribution. Filter firstly
+    removes popular items (items that have most interactions). Filter also keeps the original
+    relation of items popularity among each other by removing interactions only in range of
+    current item count and quantile count (specified by `alpha_quantile`).
 
     >>> import pandas as pd
     >>> from replay.utils.spark_utils import convert2spark
@@ -856,7 +858,7 @@ class PercentileItemsFilter(_BaseFilter):
     +-------+-------+
     <BLANKLINE>
 
-    >>> PercentileItemsFilter(query_column="user_id").transform(log_spark).show()
+    >>> QuantileItemsFilter(query_column="user_id").transform(log_spark).show()
     +-------+-------+
     |user_id|item_id|
     +-------+-------+
@@ -872,31 +874,32 @@ class PercentileItemsFilter(_BaseFilter):
 
     def __init__(
         self,
-        percentile: float = 0.99,
+        alpha_quantile: float = 0.99,
         items_proportion: float = 0.5,
         query_column: str = "query_id",
         item_column: str = "item_id",
     ) -> None:
         """
-        :param percentile: percentile of items distribution values. All values
-            that exceeds this will be filtered.
+        :param alpha_quantile: Quantile value of items counts distribution to keep unchanged.
+            Every items count that exceeds this value will be undersampled.
             Default: ``0.99``.
-        :param items_proportion: proportion of items that exceeds
-            `percentile` to filter.
+        :param items_proportion: proportion of items counts to remove for items that
+            exceeds `alpha_quantile` value in range of current item count and quantile count
+            to make sure we keep original relation between items unchanged.
             Default: ``0.5``.
         :param query_column: query column name.
             Default: ``query_id``.
         :param item_column: item column name.
             Default: ``item_id``.
         """
-        if not 0 < percentile < 1:
-            msg = "`percentile` value must be in (0, 1)"
+        if not 0 < alpha_quantile < 1:
+            msg = "`alpha_quantile` value must be in (0, 1)"
             raise ValueError(msg)
         if not 0 < items_proportion < 1:
             msg = "`items_proportion` value must be in (0, 1)"
             raise ValueError(msg)
 
-        self.percentile = percentile
+        self.alpha_quantile = alpha_quantile
         self.items_proportion = items_proportion
         self.query_column = query_column
         self.item_column = item_column
@@ -904,7 +907,7 @@ class PercentileItemsFilter(_BaseFilter):
     def _filter_pandas(self, df: pd.DataFrame):
         items_distribution = df.groupby(self.item_column).size().reset_index().rename(columns={0: "counts"})
         users_distribution = df.groupby(self.query_column).size().reset_index().rename(columns={0: "counts"})
-        count_threshold = items_distribution.loc[:, "counts"].quantile(self.percentile)
+        count_threshold = items_distribution.loc[:, "counts"].quantile(self.alpha_quantile)
         df_with_counts = df.merge(items_distribution, how="left", on=self.item_column).merge(
             users_distribution, how="left", on=self.query_column, suffixes=["_items", "_users"]
         )
@@ -928,7 +931,7 @@ class PercentileItemsFilter(_BaseFilter):
     def _filter_polars(self, df: pl.DataFrame):
         items_distribution = df.group_by(self.item_column).len()
         users_distribution = df.group_by(self.query_column).len()
-        count_threshold = items_distribution.select("len").quantile(self.percentile, "midpoint")["len"][0]
+        count_threshold = items_distribution.select("len").quantile(self.alpha_quantile, "midpoint")["len"][0]
         df_with_counts = (
             df.join(items_distribution, how="left", on=self.item_column).join(
                 users_distribution, how="left", on=self.query_column
@@ -964,9 +967,9 @@ class PercentileItemsFilter(_BaseFilter):
         return pl.concat([long_tail.select(df.columns), short_tail.select(df.columns)])
 
     def _filter_spark(self, df: SparkDataFrame):
-        items_distribution = df.groupBy(self.item_column).agg(sf.count("*").alias("counts_items"))
-        users_distribution = df.groupBy(self.query_column).agg(sf.count("*").alias("counts_users"))
-        count_threshold = items_distribution.toPandas().loc[:, "counts_items"].quantile(self.percentile)
+        items_distribution = df.groupBy(self.item_column).agg(sf.count(self.query_column).alias("counts_items"))
+        users_distribution = df.groupBy(self.query_column).agg(sf.count(self.item_column).alias("counts_users"))
+        count_threshold = items_distribution.toPandas().loc[:, "counts_items"].quantile(self.alpha_quantile)
         df_with_counts = df.join(items_distribution, on=self.item_column).join(users_distribution, on=self.query_column)
         long_tail = df_with_counts.filter(sf.col("counts_items") <= count_threshold)
         short_tail = df_with_counts.filter(sf.col("counts_items") > count_threshold)
@@ -983,13 +986,10 @@ class PercentileItemsFilter(_BaseFilter):
         short_tail = short_tail.withColumn(
             "index", sf.row_number().over(Window.partitionBy(sf.lit(0)).orderBy(sf.col("counts_users").desc()))
         )
-        grouped = (
-            short_tail.sort(sf.col("counts_users").desc())
-            .groupBy(self.item_column)
-            .agg(
-                sf.collect_list("index").alias("index"),
-                sf.collect_list("num_items_to_delete").alias("num_items_to_delete"),
-            )
+        short_tail = short_tail.sort(sf.col("counts_users").desc())
+        grouped = short_tail.groupBy(self.item_column).agg(
+            sf.collect_list("index").alias("index"),
+            sf.collect_list("num_items_to_delete").alias("num_items_to_delete"),
         )
         grouped = grouped.withColumn(
             "num_items_to_delete",

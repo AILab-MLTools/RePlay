@@ -10,7 +10,7 @@ from replay.preprocessing.filters import (
     LowRatingFilter,
     MinCountFilter,
     NumInteractionsFilter,
-    PercentileItemsFilter,
+    QuantileItemsFilter,
     TimePeriodFilter,
 )
 from replay.utils import PandasDataFrame, PolarsDataFrame, get_spark_session
@@ -236,9 +236,9 @@ def test_timeperiod_filter(dataset_type, start, end, answer, item_ids, request):
         pytest.param("simple_data_to_filter_polars", marks=pytest.mark.core),
     ],
 )
-def test_percentile_items_filter(dataset_type, request):
+def test_quantile_items_filter(dataset_type, request):
     test_dataframe = request.getfixturevalue(dataset_type)
-    filtered_dataframe = PercentileItemsFilter(percentile=0.7).transform(test_dataframe)
+    filtered_dataframe = QuantileItemsFilter(0.7).transform(test_dataframe)
 
     if isinstance(test_dataframe, PandasDataFrame):
         users_init = set(test_dataframe["query_id"].unique().tolist())
@@ -291,10 +291,10 @@ def test_percentile_items_filter(dataset_type, request):
 
 
 @pytest.mark.core
-@pytest.mark.parametrize("percentile, items_proportion", [(2, 0.5), (0.5, -1)])
-def test_percentile_error(percentile, items_proportion):
+@pytest.mark.parametrize("quantile, items_proportion", [(2, 0.5), (0.5, -1)])
+def test_quantile_filter_error(quantile, items_proportion):
     with pytest.raises(ValueError):
-        PercentileItemsFilter(percentile=percentile, items_proportion=items_proportion)
+        QuantileItemsFilter(quantile, items_proportion=items_proportion)
 
 
 @pytest.mark.core
