@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Counter
 
 import pandas as pd
 import polars as pl
@@ -241,15 +242,15 @@ def test_quantile_items_filter(dataset_type, request):
     filtered_dataframe = QuantileItemsFilter(0.7).transform(test_dataframe)
 
     if isinstance(test_dataframe, PandasDataFrame):
-        users_init = set(test_dataframe["query_id"].unique().tolist())
-        users_filtered = set(filtered_dataframe["query_id"].unique().tolist())
+        users_init = test_dataframe["query_id"].tolist()
+        users_filtered = filtered_dataframe["query_id"].tolist()
         items_init = set(test_dataframe["item_id"].unique().tolist())
         items_filtered = set(filtered_dataframe["item_id"].unique().tolist())
         items_distribution_init = test_dataframe.groupby("item_id").size()
         items_distribution_filtered = filtered_dataframe.groupby("item_id").size()
     elif isinstance(test_dataframe, PolarsDataFrame):
-        users_init = set(test_dataframe["query_id"].unique().to_list())
-        users_filtered = set(filtered_dataframe["query_id"].unique().to_list())
+        users_init = test_dataframe["query_id"].to_list()
+        users_filtered = filtered_dataframe["query_id"].to_list()
         items_init = set(test_dataframe["item_id"].unique().to_list())
         items_filtered = set(filtered_dataframe["item_id"].unique().to_list())
         items_distribution_init_df = test_dataframe.group_by("item_id").count()
@@ -261,8 +262,8 @@ def test_quantile_items_filter(dataset_type, request):
             zip(items_distribution_filtered_df["item_id"].to_list(), items_distribution_filtered_df["count"].to_list())
         )
     else:
-        users_init = {x.query_id for x in test_dataframe.select("query_id").distinct().collect()}
-        users_filtered = {x.query_id for x in filtered_dataframe.select("query_id").distinct().collect()}
+        users_init = [x.query_id for x in test_dataframe.select("query_id").collect()]
+        users_filtered = [x.query_id for x in filtered_dataframe.select("query_id").collect()]
         items_init = {x.item_id for x in test_dataframe.select("item_id").distinct().collect()}
         items_filtered = {x.item_id for x in filtered_dataframe.select("item_id").distinct().collect()}
         items_distribution_init_df = test_dataframe.groupBy("item_id").count()
@@ -280,7 +281,12 @@ def test_quantile_items_filter(dataset_type, request):
             )
         )
 
-    assert users_init == users_filtered
+    users_init = Counter(users_init)
+    users_filtered = Counter(users_filtered)
+    assert users_init[0] == users_filtered[0] + 3
+    for key in [1, 2, 3, 4, 5]:
+        assert users_init[key] == users_filtered[key]
+
     assert items_init == items_filtered
     assert items_distribution_init[12] == items_distribution_filtered[12]
     assert items_distribution_init[13] == items_distribution_filtered[13]
