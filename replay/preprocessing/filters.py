@@ -907,7 +907,7 @@ class QuantileItemsFilter(_BaseFilter):
     def _filter_pandas(self, df: pd.DataFrame):
         items_distribution = df.groupby(self.item_column).size().reset_index().rename(columns={0: "counts"})
         users_distribution = df.groupby(self.query_column).size().reset_index().rename(columns={0: "counts"})
-        count_threshold = items_distribution.loc[:, "counts"].quantile(self.alpha_quantile)
+        count_threshold = items_distribution.loc[:, "counts"].quantile(self.alpha_quantile, interpolation="midpoint")
         df_with_counts = df.merge(items_distribution, how="left", on=self.item_column).merge(
             users_distribution, how="left", on=self.query_column, suffixes=["_items", "_users"]
         )
@@ -969,7 +969,7 @@ class QuantileItemsFilter(_BaseFilter):
     def _filter_spark(self, df: SparkDataFrame):
         items_distribution = df.groupBy(self.item_column).agg(sf.count(self.query_column).alias("counts_items"))
         users_distribution = df.groupBy(self.query_column).agg(sf.count(self.item_column).alias("counts_users"))
-        count_threshold = items_distribution.toPandas().loc[:, "counts_items"].quantile(self.alpha_quantile)
+        count_threshold = items_distribution.toPandas().loc[:, "counts_items"].quantile(self.alpha_quantile, "midpoint")
         df_with_counts = df.join(items_distribution, on=self.item_column).join(users_distribution, on=self.query_column)
         long_tail = df_with_counts.filter(sf.col("counts_items") <= count_threshold)
         short_tail = df_with_counts.filter(sf.col("counts_items") > count_threshold)
