@@ -987,9 +987,14 @@ class QuantileItemsFilter(_BaseFilter):
             "index", sf.row_number().over(Window.partitionBy(sf.lit(0)).orderBy(sf.col("counts_users").desc()))
         )
         short_tail = short_tail.sort(sf.col("counts_users").desc())
-        grouped = short_tail.groupBy(self.item_column).agg(
-            sf.collect_list("index").alias("index"),
-            sf.collect_list("num_items_to_delete").alias("num_items_to_delete"),
+        w = Window.partitionBy(self.item_column).orderBy(sf.col("counts_users").desc())
+        grouped = short_tail.withColumn(
+            "index", sf.collect_list("index").over(w)
+        ).withColumn(
+            "to_delete", sf.collect_list("num_items_to_delete").over(w)
+        ).groupBy(self.item_column).agg(
+            sf.max('index').alias('index'),
+            sf.max("to_delete").alias("num_items_to_delete")
         )
         grouped = grouped.withColumn(
             "num_items_to_delete",
