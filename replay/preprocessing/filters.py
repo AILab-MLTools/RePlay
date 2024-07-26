@@ -984,23 +984,7 @@ class QuantileItemsFilter(_BaseFilter):
         )
         short_tail = short_tail.join(items_to_delete, on=self.item_column, how="left")
         short_tail = short_tail.withColumn(
-            "index", sf.row_number().over(Window.partitionBy(sf.lit(0)).orderBy(sf.col("counts_users").desc()))
+            "index", sf.row_number().over(Window.partitionBy(self.item_column).orderBy(sf.col("counts_users").desc()))
         )
-        short_tail = short_tail.sort(sf.col("counts_users").desc())
-        w = Window.partitionBy(self.item_column).orderBy(sf.col("counts_users").desc())
-        grouped = (
-            short_tail.withColumn("index", sf.collect_list("index").over(w))
-            .withColumn("to_delete", sf.collect_list("num_items_to_delete").over(w))
-            .groupBy(self.item_column)
-            .agg(sf.max("index").alias("index"), sf.max("to_delete").alias("num_items_to_delete"))
-        )
-        grouped = grouped.withColumn(
-            "num_items_to_delete",
-            sf.element_at(sf.col("num_items_to_delete"), 1),
-        ).withColumn("length", sf.size(sf.col("index")) - sf.col("num_items_to_delete"))
-        grouped = grouped.withColumn(
-            "index", sf.slice(sf.col("index"), sf.col("num_items_to_delete") + 1, sf.col("length"))
-        )
-        grouped = grouped.select("index").withColumn("index", sf.explode("index"))
-        short_tail = grouped.join(short_tail, how="left", on="index")
+        short_tail = short_tail.filter(sf.col("index") > sf.col("num_items_to_delete"))
         return long_tail.select(df.columns).union(short_tail.select(df.columns))
