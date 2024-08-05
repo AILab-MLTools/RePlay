@@ -108,6 +108,7 @@ class SequentialDataset(abc.ABC):
         base_path.mkdir(parents=True, exist_ok=True)
 
         sequential_dict = {}
+        sequential_dict["_class_name"] = self.__class__.__name__
         self._sequences.reset_index().to_json(base_path / "sequences.json")
         sequential_dict["init_args"] = {
             "tensor_schema": self._tensor_schema._get_object_args(),

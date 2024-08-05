@@ -10,6 +10,7 @@ pytest.importorskip("torch")
 
 from replay.data import FeatureHint
 from replay.utils import TORCH_AVAILABLE
+from replay.utils.common import load_from_replay, save_to_replay
 
 if TORCH_AVAILABLE:
     from replay.data.nn import PandasSequentialDataset, PolarsSequentialDataset
@@ -179,8 +180,8 @@ def test_save_and_load_sequential_dataset(dataset, request):
         obj_type = PolarsSequentialDataset
 
     sequential_dataset = obj_type(**data)
-    sequential_dataset.save("sequential_dataset.replay")
-    loaded_sequential_dataset = obj_type.load("sequential_dataset.replay")
+    save_to_replay(sequential_dataset, "sequential_dataset.replay")
+    loaded_sequential_dataset = load_from_replay("sequential_dataset.replay")
 
     assert sequential_dataset._query_id_column == loaded_sequential_dataset._query_id_column
     assert sequential_dataset._item_id_column == loaded_sequential_dataset._item_id_column
