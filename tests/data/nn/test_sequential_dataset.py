@@ -1,4 +1,3 @@
-import shutil
 from typing import List
 
 import numpy as np
@@ -171,7 +170,7 @@ def test_get_sequence_by_query_id(dataset_type, request):
 
 @pytest.mark.core
 @pytest.mark.parametrize("dataset", ["sequential_info", "sequential_info_polars"])
-def test_save_and_load_sequential_dataset(dataset, request):
+def test_save_and_load_sequential_dataset(dataset, request, tmp_path):
     data = request.getfixturevalue(dataset)
 
     if isinstance(data["sequences"], pd.DataFrame):
@@ -180,8 +179,8 @@ def test_save_and_load_sequential_dataset(dataset, request):
         obj_type = PolarsSequentialDataset
 
     sequential_dataset = obj_type(**data)
-    save_to_replay(sequential_dataset, "sequential_dataset.replay")
-    loaded_sequential_dataset = load_from_replay("sequential_dataset.replay")
+    save_to_replay(sequential_dataset, tmp_path)
+    loaded_sequential_dataset = load_from_replay(tmp_path)
 
     assert sequential_dataset._query_id_column == loaded_sequential_dataset._query_id_column
     assert sequential_dataset._item_id_column == loaded_sequential_dataset._item_id_column
@@ -191,5 +190,3 @@ def test_save_and_load_sequential_dataset(dataset, request):
     )
     assert all(sequential_dataset._sequences.columns == loaded_sequential_dataset._sequences.columns)
     assert sequential_dataset._sequences.equals(loaded_sequential_dataset._sequences)
-
-    shutil.rmtree("sequential_dataset.replay")
