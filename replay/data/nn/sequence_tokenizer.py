@@ -439,7 +439,7 @@ class SequenceTokenizer:
                 rule_data = rules_dict[rule]
                 if rule_data["mapping"] and rule_data["is_int"]:
                     rule_data["mapping"] = {int(key): value for key, value in rule_data["mapping"].items()}
-                    del rule_data["is_int"]
+                del rule_data["is_int"]
 
                 tokenizer_dict["encoder"]["encoding_rules"][rule] = LabelEncodingRule(**rule_data)
 
